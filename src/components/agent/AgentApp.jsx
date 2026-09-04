@@ -124,6 +124,20 @@ export const AgentApp = () => {
             <AgentChat />
           </div>
         )}
+
+        {/* Dedicated Agent Station Footer */}
+        <footer className="mt-16 pt-6 border-t border-slate-200 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="font-extrabold text-navy-900 tracking-tight">WrikMart Agent Station</span>
+            <span className="text-slate-300">|</span>
+            <span>{activeAgent.country} Hub • {activeAgent.name}</span>
+          </div>
+          <div className="flex items-center gap-4 text-[11px] text-slate-400">
+            <span>Operating Currency: {activeAgent.currency} ({activeAgent.symbol})</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Live Agent Portal</span>
+          </div>
+        </footer>
       </main>
 
       {/* Fixed Bottom Navigation for Mobile */}

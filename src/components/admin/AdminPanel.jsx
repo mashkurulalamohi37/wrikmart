@@ -184,6 +184,20 @@ export const AdminPanel = () => {
         {activeNav === 'settings' && (
           <AdminSystemSettings />
         )}
+
+        {/* Dedicated Admin Workspace Footer */}
+        <footer className="mt-16 pt-6 border-t border-slate-200 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="font-extrabold text-navy-900 tracking-tight">WrikMart Enterprise</span>
+            <span className="text-slate-300">|</span>
+            <span>Cross-Border Logistics Control Suite</span>
+          </div>
+          <div className="flex items-center gap-4 text-[11px] text-slate-400">
+            <span>Admin Console v2.6</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>All Hubs Connected (BD 🇧🇩 • IN 🇮🇳 • AE 🇦🇪 • TH 🇹🇭)</span>
+          </div>
+        </footer>
       </main>
 
       {/* 360 Order Detail Modal */}

@@ -20,7 +20,7 @@ const AppContent = () => {
         {currentRole === 'customer' && <CustomerApp />}
       </div>
 
-      <Footer />
+      {currentRole === 'customer' && <Footer />}
       <Toast />
     </div>
   );
