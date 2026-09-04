@@ -85,7 +85,7 @@ export const AdminPanel = () => {
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed top-0 lg:top-[92px] left-0 z-40 lg:z-30 h-screen lg:h-[calc(100vh-92px)] w-64 bg-[#0D1B3D] text-white flex flex-col justify-between border-r border-slate-800 transition-transform duration-300 shadow-xl ${
+        className={`fixed lg:sticky top-0 lg:top-[92px] left-0 z-40 lg:z-30 h-screen lg:h-[calc(100vh-92px)] w-64 bg-[#0D1B3D] text-white flex flex-col justify-between border-r border-slate-800 transition-transform duration-300 shadow-xl flex-shrink-0 self-start ${
           sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -135,7 +135,7 @@ export const AdminPanel = () => {
       </aside>
 
       {/* Main Content Viewport */}
-      <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full min-w-0">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full min-w-0">
         {activeNav === 'dashboard' && (
           <AdminDashboard 
             onNavigateToOrder={(order) => setSelectedOrder360(order)}

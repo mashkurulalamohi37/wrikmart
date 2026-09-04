@@ -11,10 +11,10 @@ const AppContent = () => {
   const { currentRole } = useApp();
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#F2F7FB] flex flex-col font-sans">
+    <div className="min-h-screen w-full bg-[#F2F7FB] flex flex-col font-sans">
       <Header />
       
-      <div className="flex-1 w-full max-w-full">
+      <div className="flex-1 w-full">
         {currentRole === 'admin' && <AdminPanel />}
         {currentRole === 'agent' && <AgentApp />}
         {currentRole === 'customer' && <CustomerApp />}
