@@ -85,11 +85,11 @@ export const AdminPanel = () => {
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed lg:sticky top-0 lg:top-[92px] z-40 lg:z-30 h-screen lg:h-[calc(100vh-92px)] w-64 bg-[#0D1B3D] text-white flex flex-col justify-between border-r border-slate-800 transition-transform duration-300 ${
+        className={`fixed top-0 lg:top-[92px] left-0 z-40 lg:z-30 h-screen lg:h-[calc(100vh-92px)] w-64 bg-[#0D1B3D] text-white flex flex-col justify-between border-r border-slate-800 transition-transform duration-300 shadow-xl ${
           sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="p-4 overflow-y-auto flex-1 space-y-1">
+        <div className="p-4 overflow-y-auto flex-1 space-y-1 scrollbar-thin">
           <div className="px-3 py-2 text-[10px] uppercase font-bold tracking-wider text-slate-400">
             Navigation Menu
           </div>
@@ -121,7 +121,7 @@ export const AdminPanel = () => {
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-slate-800 bg-[#08132B]">
+        <div className="p-4 border-t border-slate-800 bg-[#08132B] flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-xs">
               AD
@@ -135,7 +135,7 @@ export const AdminPanel = () => {
       </aside>
 
       {/* Main Content Viewport */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+      <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full min-w-0">
         {activeNav === 'dashboard' && (
           <AdminDashboard 
             onNavigateToOrder={(order) => setSelectedOrder360(order)}
