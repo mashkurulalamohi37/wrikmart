@@ -186,7 +186,7 @@ export const Header = () => {
 
             {/* Dropdown Card */}
             {dropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-[#0D1B3D] border border-slate-700 rounded-3xl shadow-2xl overflow-hidden z-50 animate-fade-in divide-y divide-slate-800">
+              <div className="absolute -right-2 sm:right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-sm bg-[#0D1B3D] border border-slate-700 rounded-3xl shadow-2xl overflow-hidden z-50 animate-fade-in divide-y divide-slate-800">
                 
                 {/* Dropdown Header */}
                 <div className="p-4 bg-[#08132B]">

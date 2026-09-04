@@ -65,19 +65,28 @@ export const AdminPanel = () => {
     <div className="flex min-h-[calc(100vh-92px)] bg-[#F2F7FB]">
       
       {/* Mobile Sidebar Toggle Button */}
-      <div className="lg:hidden fixed bottom-4 right-4 z-40">
+      <div className="lg:hidden fixed bottom-5 right-5 z-50">
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-3.5 bg-navy-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-navy-800 transition-colors"
+          className="p-3.5 bg-brand-500 hover:bg-brand-600 text-white rounded-full shadow-2xl flex items-center justify-center transition-all ring-4 ring-brand-400/20"
+          title="Toggle Navigation Menu"
         >
           {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
+      {/* Mobile Backdrop Overlay */}
+      {sidebarOpen && (
+        <div 
+          onClick={() => setSidebarOpen(false)}
+          className="lg:hidden fixed inset-0 z-30 bg-navy-950/70 backdrop-blur-sm animate-fade-in"
+        />
+      )}
+
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed lg:sticky top-0 lg:top-[92px] z-30 h-screen lg:h-[calc(100vh-92px)] w-64 bg-[#0D1B3D] text-white flex flex-col justify-between border-r border-slate-800 transition-transform duration-300 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        className={`fixed lg:sticky top-0 lg:top-[92px] z-40 lg:z-30 h-screen lg:h-[calc(100vh-92px)] w-64 bg-[#0D1B3D] text-white flex flex-col justify-between border-r border-slate-800 transition-transform duration-300 ${
+          sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         <div className="p-4 overflow-y-auto flex-1 space-y-1">
