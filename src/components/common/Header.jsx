@@ -65,20 +65,20 @@ export const Header = () => {
   const pendingTransferCount = balanceTransfers.filter(t => t.status === 'Pending').length;
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0D1B3D] text-white border-b border-slate-800 shadow-lg select-none">
+    <header className="sticky top-0 z-50 bg-[#0D1B3D] text-white border-b border-slate-800 shadow-lg select-none w-full max-w-full">
       
       {/* 1. Top Mini Utility & Live FX Bar */}
-      <div className="bg-[#08132B] px-3 sm:px-6 lg:px-8 h-8 text-[11px] text-slate-300 border-b border-slate-800/80 flex items-center justify-between gap-4">
+      <div className="bg-[#08132B] px-3 sm:px-6 lg:px-8 h-8 text-[11px] text-slate-300 border-b border-slate-800/80 flex items-center justify-between gap-2 sm:gap-4 w-full max-w-full overflow-hidden">
         
         {/* Left: Live Multi-Currency Conversion Ticker with Modal Trigger */}
-        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto scrollbar-none py-0.5">
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto scrollbar-none py-0.5 max-w-full flex-1">
           <button
             onClick={() => setShowFxModal(true)}
             className="inline-flex items-center gap-1.5 font-extrabold text-brand-400 bg-brand-500/15 hover:bg-brand-500/25 px-2.5 py-0.5 rounded-full text-[10px] transition-colors border border-brand-500/30 flex-shrink-0"
             title="Open Live Currency Calculator"
           >
             <ArrowRightLeft className="w-3 h-3 text-brand-400" />
-            <span>Live FX Calculator</span>
+            <span>Live FX</span>
           </button>
 
           <div className="flex items-center gap-2 sm:gap-2.5 font-mono text-[10px] sm:text-[11px] whitespace-nowrap">
@@ -119,29 +119,28 @@ export const Header = () => {
       </div>
 
       {/* 2. Main Navigation & Brand Header */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-6">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-4">
         
-        {/* Brand Logo & Tagline */}
+        {/* Brand Logo */}
         <div 
           onClick={() => {
             setCurrentRole('customer');
             if (setCustomerTab) setCustomerTab('home');
           }}
-          className="flex items-center gap-2 sm:gap-3 cursor-pointer group flex-shrink-0"
+          className="flex items-center gap-1.5 sm:gap-2.5 cursor-pointer group flex-shrink-0"
         >
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-brand-600 via-brand-500 to-cyan-400 flex items-center justify-center shadow-teal-glow group-hover:scale-105 transition-transform flex-shrink-0">
-            <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-cyan-400 flex items-center justify-center shadow-teal-glow group-hover:scale-105 transition-transform flex-shrink-0">
+            <ShoppingBag className="w-4 h-4 text-white" />
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-white font-sans">
+            <div className="flex items-center gap-1">
+              <span className="font-extrabold text-base sm:text-xl tracking-tight text-white font-sans">
                 Wrik<span className="text-brand-400">Mart</span>
               </span>
-              <span className="text-[8px] sm:text-[9px] uppercase font-extrabold tracking-wider px-1.5 sm:px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 hidden xs:inline-block">
+              <span className="text-[8px] sm:text-[9px] uppercase font-extrabold tracking-wider px-1.5 py-0.5 rounded-full bg-brand-500/20 text-brand-300 border border-brand-500/30 hidden sm:inline-block">
                 Pre-Order
               </span>
             </div>
-            <p className="text-[9px] sm:text-[10px] text-slate-400 hidden sm:block">Bangladesh to India, Dubai & Thailand</p>
           </div>
         </div>
 
@@ -157,63 +156,62 @@ export const Header = () => {
         </div>
 
         {/* Right Section: New Pre-Order CTA + Workspace / Role Switcher Menu */}
-        <div className="flex items-center gap-1.5 sm:gap-3" ref={dropdownRef}>
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0" ref={dropdownRef}>
           
           {/* Quick Pre-Order CTA Button (Visible on ALL devices) */}
           <button
             onClick={handleStartPreOrder}
-            className="flex items-center gap-1 sm:gap-1.5 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 active:scale-95 text-white font-extrabold text-[11px] sm:text-xs px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl shadow-md transition-all whitespace-nowrap flex-shrink-0"
+            className="flex items-center gap-1 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 active:scale-95 text-white font-bold text-[11px] sm:text-xs px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-xl shadow-md transition-all whitespace-nowrap flex-shrink-0"
             title="Create New Pre-Order"
           >
-            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
-            <span className="hidden xs:inline">New Pre-Order</span>
-            <span className="xs:hidden">Pre-Order</span>
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Pre-Order</span>
           </button>
 
           {/* Main Portal Switcher Dropdown Button */}
           <div className="relative flex-shrink-0">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-1.5 sm:gap-3 bg-[#14234B] hover:bg-[#1A2E63] border border-slate-700/80 rounded-2xl p-1.5 sm:px-3.5 sm:py-2 text-left transition-all shadow-md focus:outline-none focus:ring-2 focus:ring-brand-400"
+              className="flex items-center gap-1.5 sm:gap-2 bg-[#14234B] hover:bg-[#1A2E63] border border-slate-700/80 rounded-xl sm:rounded-2xl px-2 py-1.5 sm:px-3 sm:py-2 text-left transition-all shadow-md focus:outline-none focus:ring-2 focus:ring-brand-400 flex-shrink-0"
             >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-brand-500 to-cyan-500 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-sm">
-                {currentRole === 'admin' && <ShieldCheck className="w-4 h-4" />}
-                {currentRole === 'agent' && <span className="text-sm">{activeAgent.flag}</span>}
-                {currentRole === 'customer' && <User className="w-4 h-4" />}
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-gradient-to-tr from-brand-500 to-cyan-500 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-sm">
+                {currentRole === 'admin' && <ShieldCheck className="w-3.5 h-3.5" />}
+                {currentRole === 'agent' && <span className="text-xs">{activeAgent.flag}</span>}
+                {currentRole === 'customer' && <User className="w-3.5 h-3.5" />}
               </div>
 
-              <div className="text-left min-w-0 max-w-[85px] xs:max-w-[120px] sm:max-w-none sm:min-w-[130px]">
-                <span className="text-[7.5px] sm:text-[9px] uppercase font-extrabold tracking-wider text-slate-400 block leading-none mb-0.5 sm:mb-1">
-                  Active Portal / Role
+              <div className="text-left hidden xs:block">
+                <span className="text-[7.5px] uppercase font-extrabold tracking-wider text-slate-400 block leading-none">
+                  ROLE
                 </span>
-                <span className="text-[10.5px] sm:text-xs font-bold text-white block truncate">
+                <span className="text-[11px] sm:text-xs font-bold text-white block max-w-[70px] sm:max-w-none truncate">
                   {currentRole === 'admin' && (
                     <>
-                      <span className="hidden sm:inline">👑 Super Admin Panel</span>
+                      <span className="hidden sm:inline">👑 Super Admin</span>
                       <span className="sm:hidden">👑 Admin</span>
                     </>
                   )}
                   {currentRole === 'agent' && (
                     <>
                       <span className="hidden sm:inline">{activeAgent.name} ({activeAgent.country})</span>
-                      <span className="sm:hidden">{activeAgent.country} Agent</span>
+                      <span className="sm:hidden">{activeAgent.country}</span>
                     </>
                   )}
                   {currentRole === 'customer' && (
                     <>
                       <span className="hidden sm:inline">🛍️ Customer Storefront</span>
-                      <span className="sm:hidden">🛍️ Storefront</span>
+                      <span className="sm:hidden">🛍️ Customer</span>
                     </>
                   )}
                 </span>
               </div>
 
-              <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 flex-shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 flex-shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Dropdown Card */}
             {dropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-[calc(100vw-1.5rem)] sm:w-96 max-w-sm bg-[#0D1B3D] border border-slate-700 rounded-3xl shadow-2xl overflow-hidden z-50 animate-fade-in divide-y divide-slate-800">
+              <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] bg-[#0D1B3D] border border-slate-700 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden z-50 animate-fade-in divide-y divide-slate-800">
                 
                 {/* Dropdown Header */}
                 <div className="p-4 bg-[#08132B]">
