@@ -15,7 +15,7 @@ export const AppProvider = ({ children }) => {
   // Navigation & Role State
   const [currentRole, setCurrentRole] = useState('admin'); // 'admin' | 'agent' | 'customer'
   const [activeAgentId, setActiveAgentId] = useState('agent-1'); // Currently simulated agent
-  
+  const [customerTab, setCustomerTab] = useState('home'); // 'home' | 'preorder' | 'orders' | 'chat' | 'profile'
   // Data States
   const [orders, setOrders] = useState(() => {
     const saved = localStorage.getItem('wrikmart_orders');
@@ -507,6 +507,8 @@ export const AppProvider = ({ children }) => {
     <AppContext.Provider value={{
       currentRole,
       setCurrentRole,
+      customerTab,
+      setCustomerTab,
       activeAgentId,
       setActiveAgentId,
       activeAgent,

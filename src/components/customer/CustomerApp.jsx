@@ -17,9 +17,13 @@ import {
   Search
 } from 'lucide-react';
 
+import { useApp } from '../../context/AppContext';
+
 export const CustomerApp = () => {
   // Navigation Tabs: 'home' | 'preorder' | 'orders' | 'chat' | 'profile'
-  const [activeTab, setActiveTab] = useState('home');
+  const { customerTab, setCustomerTab } = useApp();
+  const activeTab = customerTab;
+  const setActiveTab = setCustomerTab;
 
   return (
     <div className="min-h-[calc(100vh-92px)] flex flex-col bg-[#F4F7FB]">
