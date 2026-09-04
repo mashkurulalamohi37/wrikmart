@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { X, Receipt, Upload, CheckCircle2, AlertCircle, Building, Calendar } from 'lucide-react';
 
 export const AgentPurchaseUpdateModal = ({ order, onClose }) => {
-  const { activeAgent, updateOrderPurchase } = useApp();
+  const { activeAgent, updateOrderPurchase, showToast } = useApp();
 
   // Initialize state with current order items or defaults
   const [itemsData, setItemsData] = useState(() => {
@@ -29,11 +29,11 @@ export const AgentPurchaseUpdateModal = ({ order, onClose }) => {
     // Validation: Ensure mandatory purchase price and MRP
     for (let i = 0; i < itemsData.length; i++) {
       if (!itemsData[i].actualPurchasePrice || Number(itemsData[i].actualPurchasePrice) <= 0) {
-        alert(`Please enter a valid Purchase Price for Item #${i + 1}`);
+        showToast(`Please enter a valid Purchase Price for Item #${i + 1}`, 'warning');
         return;
       }
       if (!itemsData[i].mrp || Number(itemsData[i].mrp) <= 0) {
-        alert(`Please enter MRP for Item #${i + 1}`);
+        showToast(`Please enter MRP for Item #${i + 1}`, 'warning');
         return;
       }
     }

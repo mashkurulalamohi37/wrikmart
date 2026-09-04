@@ -110,7 +110,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
 
   const handleRemoveItem = (id) => {
     if (items.length <= 1) {
-      alert("Pre-order must have at least one product.");
+      showToast("Pre-order must have at least one product.", "warning");
       return;
     }
     setItems(prev => prev.filter(it => it.id !== id));

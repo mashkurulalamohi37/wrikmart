@@ -3,6 +3,13 @@ import { useApp } from '../../context/AppContext';
 import { BarChart3, TrendingUp, DollarSign, Download, ArrowUpRight, Globe2, ShoppingBag } from 'lucide-react';
 
 export const AdminReportsAnalytics = () => {
+  const { showToast } = useApp();
+
+  const handleDownloadReport = () => {
+    window.print();
+    showToast('Financial Audit & Cross-Border Logistics Report ready for Print/PDF saving!', 'success');
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -13,11 +20,11 @@ export const AdminReportsAnalytics = () => {
         </div>
 
         <button
-          onClick={() => alert("Downloading Complete Financial Audit Report (PDF)...")}
-          className="flex items-center gap-1.5 px-4 py-2 bg-navy-900 text-white rounded-xl text-xs font-bold hover:bg-navy-800 transition-colors shadow"
+          onClick={handleDownloadReport}
+          className="flex items-center gap-1.5 px-4 py-2 bg-navy-900 hover:bg-navy-800 active:scale-95 text-white rounded-xl text-xs font-bold transition-all shadow"
         >
           <Download className="w-3.5 h-3.5" />
-          <span>Download Financial Report</span>
+          <span>Download Financial Report (PDF)</span>
         </button>
       </div>
 

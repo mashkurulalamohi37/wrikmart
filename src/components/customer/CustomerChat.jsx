@@ -29,13 +29,15 @@ export const CustomerChat = () => {
           </div>
         </div>
 
-        <button 
-          onClick={() => alert("WhatsApp hotline: +880 1700-000000")}
-          className="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-1 text-slate-200 transition-colors"
+        <a 
+          href="https://wa.me/8801700000000"
+          target="_blank"
+          rel="noreferrer"
+          className="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-slate-200 transition-colors"
         >
           <PhoneCall className="w-3.5 h-3.5 text-emerald-400" />
           <span className="hidden sm:inline">WhatsApp Help</span>
-        </button>
+        </a>
       </div>
 
       {/* Messages Scroll Area */}

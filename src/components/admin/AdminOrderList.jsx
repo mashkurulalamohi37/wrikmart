@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export const AdminOrderList = ({ onSelectOrder }) => {
-  const { orders, agents, assignAgentToOrder, updateOrderStatus } = useApp();
+  const { orders, agents, assignAgentToOrder, updateOrderStatus, showToast } = useApp();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('All');
@@ -35,6 +35,38 @@ export const AdminOrderList = ({ onSelectOrder }) => {
     return true;
   });
 
+  const exportOrdersToCSV = () => {
+    if (filteredOrders.length === 0) {
+      showToast('No orders found to export', 'warning');
+      return;
+    }
+    const headers = ['Order Number', 'Date', 'Customer Name', 'Phone', 'District', 'Country', 'Assigned Agent', 'Items Count', 'Estimated Total (BDT)', 'Advance Paid (BDT)', 'Status', 'Payment Status'];
+    const rows = filteredOrders.map(o => [
+      o.orderNumber,
+      `"${o.createdAt}"`,
+      `"${o.customer.name}"`,
+      `"${o.customer.phone}"`,
+      `"${o.customer.district || 'Dhaka'}"`,
+      o.country,
+      `"${o.assignedAgentName || 'Unassigned'}"`,
+      o.items.length,
+      o.financials.estimatedTotal,
+      o.financials.advancePaid,
+      o.status,
+      o.paymentStatus
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `WrikMart_Orders_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`Exported ${filteredOrders.length} orders to CSV!`, 'success');
+  };
+
   return (
     <div className="space-y-5">
       {/* Header & Filter Controls */}
@@ -46,11 +78,11 @@ export const AdminOrderList = ({ onSelectOrder }) => {
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
-            onClick={() => alert("Orders Exported as CSV/Excel")}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-soft hover:bg-slate-50 transition-colors"
+            onClick={exportOrdersToCSV}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 active:scale-95 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-soft transition-all"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export</span>
+            <span>Export CSV ({filteredOrders.length})</span>
           </button>
         </div>
       </div>

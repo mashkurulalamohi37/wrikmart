@@ -477,6 +477,29 @@ export const AppProvider = ({ children }) => {
     showToast(`Updated BDT to ${currencyCode} conversion rate to ${newRateFromBDT}`, 'success');
   };
 
+  // Add Agent
+  const addAgent = (newAgentData) => {
+    const newAgent = {
+      id: `agent-${Date.now()}`,
+      name: newAgentData.name,
+      country: newAgentData.country,
+      flag: newAgentData.country === 'India' ? '🇮🇳' : newAgentData.country === 'Dubai' ? '🇦🇪' : '🇹🇭',
+      currency: newAgentData.currency || (newAgentData.country === 'India' ? 'INR' : newAgentData.country === 'Dubai' ? 'AED' : 'THB'),
+      symbol: newAgentData.country === 'India' ? '₹' : newAgentData.country === 'Dubai' ? 'AED ' : '฿',
+      phone: newAgentData.phone,
+      email: newAgentData.email,
+      balance: Number(newAgentData.initialBalance || 0),
+      pendingBalance: 0,
+      totalSpent: 0,
+      activeOrders: 0,
+      completedOrders: 0,
+      status: 'Active',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+    };
+    setAgents(prev => [...prev, newAgent]);
+    showToast(`Agent ${newAgent.name} registered for ${newAgent.country}!`, 'success');
+  };
+
   // Add Delivery Hub
   const addHub = (newHub) => {
     const hub = {
@@ -532,6 +555,7 @@ export const AppProvider = ({ children }) => {
       addAgentExpense,
       reviewExpense,
       updateExchangeRate,
+      addAgent,
       addHub,
       sendChatMessage
     }}>
