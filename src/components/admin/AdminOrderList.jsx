@@ -89,10 +89,10 @@ export const AdminOrderList = ({ onSelectOrder }) => {
           <p className="text-xs text-slate-500">Monitor all customer pre-orders, local warehouse stock, agent sourcing & damage logs</p>
         </div>
 
-        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto flex-wrap sm:flex-nowrap">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs font-bold rounded-xl shadow transition-all"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-4 py-2.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs font-bold rounded-xl shadow transition-all whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             <span>+ Create Order</span>
@@ -100,7 +100,7 @@ export const AdminOrderList = ({ onSelectOrder }) => {
 
           <button
             onClick={exportOrdersToCSV}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 active:scale-95 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-soft transition-all"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white hover:bg-slate-50 active:scale-95 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-soft transition-all whitespace-nowrap"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export CSV</span>
@@ -109,7 +109,7 @@ export const AdminOrderList = ({ onSelectOrder }) => {
       </div>
 
       {/* Filter Toolbar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft grid grid-cols-1 sm:grid-cols-4 gap-3">
+      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         <div className="relative">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
           <input
@@ -169,28 +169,28 @@ export const AdminOrderList = ({ onSelectOrder }) => {
 
       {/* Orders Master Table */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-soft overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto no-scrollbar sm:scrollbar-thin">
+          <table className="w-full text-left text-xs min-w-[760px]">
             <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase tracking-wider text-[10px]">
               <tr>
-                <th className="px-5 py-3.5">Order Number</th>
-                <th className="px-5 py-3.5">Type & Region</th>
-                <th className="px-5 py-3.5">Customer & Phone</th>
-                <th className="px-5 py-3.5">Assigned Agent</th>
-                <th className="px-5 py-3.5">Financials (BDT)</th>
-                <th className="px-5 py-3.5">Status & Incidents</th>
-                <th className="px-5 py-3.5 text-right">Actions</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Order Number</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Type & Region</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Customer & Phone</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Assigned Agent</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Financials (BDT)</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Status & Incidents</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {filteredOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="px-5 py-3.5">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
                     <span className="font-mono font-bold text-navy-900 block">{order.orderNumber}</span>
                     <span className="text-[10px] text-slate-400">{order.createdAt}</span>
                   </td>
 
-                  <td className="px-5 py-3.5">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
                     <div className="flex items-center gap-1.5 font-bold text-slate-800">
                       <CountryFlag country={order.country || order.countryFlag} className="w-4 h-3 rounded-[2px]" />
                       <span>{order.country}</span>
@@ -204,13 +204,13 @@ export const AdminOrderList = ({ onSelectOrder }) => {
                     </span>
                   </td>
 
-                  <td className="px-5 py-3.5">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
                     <span className="font-bold text-slate-900 block">{order.customer.name}</span>
                     <span className="text-[11px] text-slate-500 font-mono">{order.customer.phone}</span>
                     <span className="text-[10px] text-slate-400 block">{order.customer.district || 'Dhaka'}</span>
                   </td>
 
-                  <td className="px-5 py-3.5">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
                     {order.orderType === 'Stock Product' ? (
                       <span className="text-slate-500 font-medium italic">Dhaka Central Hub</span>
                     ) : order.assignedAgentName ? (
@@ -225,7 +225,7 @@ export const AdminOrderList = ({ onSelectOrder }) => {
                     )}
                   </td>
 
-                  <td className="px-5 py-3.5">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
                     <span className="font-bold text-navy-900 block">৳{order.financials.estimatedTotal?.toLocaleString()}</span>
                     <span className="text-[11px] text-emerald-600 font-semibold block">
                       Adv: ৳{order.financials.advancePaid?.toLocaleString()}
@@ -237,7 +237,7 @@ export const AdminOrderList = ({ onSelectOrder }) => {
                     )}
                   </td>
 
-                  <td className="px-5 py-3.5">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
                     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                       order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
                       order.status === 'Damaged' ? 'bg-rose-100 text-rose-700 border border-rose-200' :
@@ -261,7 +261,7 @@ export const AdminOrderList = ({ onSelectOrder }) => {
                     )}
                   </td>
 
-                  <td className="px-5 py-3.5 text-right">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 text-right">
                     <div className="flex items-center justify-end gap-1.5">
                       <button
                         onClick={() => setSelectedOrderForDamage(order)}

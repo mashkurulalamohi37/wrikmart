@@ -162,7 +162,7 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
               <div style={{ width: '38%' }} className="bg-cyan-500" title="Dubai (38%)" />
               <div style={{ width: '20%' }} className="bg-emerald-500" title="Thailand (20%)" />
             </div>
-            <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2 font-medium">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 mt-2 font-medium">
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span> India: 42% (1,070 orders)</span>
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-cyan-500"></span> Dubai: 38% (968 orders)</span>
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Thailand: 20% (510 orders)</span>
@@ -227,40 +227,40 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto no-scrollbar sm:scrollbar-thin">
+          <table className="w-full text-left text-xs min-w-[640px]">
             <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase tracking-wider text-[10px]">
               <tr>
-                <th className="px-5 py-3.5">Order ID</th>
-                <th className="px-5 py-3.5">Customer (Admin View)</th>
-                <th className="px-5 py-3.5">Country</th>
-                <th className="px-5 py-3.5">Assigned Agent</th>
-                <th className="px-5 py-3.5">Advance Paid</th>
-                <th className="px-5 py-3.5">Status</th>
-                <th className="px-5 py-3.5 text-right">Action</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Order ID</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Customer (Admin View)</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Country</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Assigned Agent</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Advance Paid</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Status</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {orders.slice(0, 5).map((order) => (
                 <tr key={order.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="px-5 py-3.5 font-mono font-bold text-navy-900">{order.orderNumber}</td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-mono font-bold text-navy-900">{order.orderNumber}</td>
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
                     <span className="font-bold text-slate-900 block">{order.customer.name}</span>
                     <span className="text-[11px] text-slate-400">{order.customer.phone}</span>
                   </td>
-                  <td className="px-5 py-3.5 font-semibold">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-semibold">
                     <span className="inline-flex items-center gap-1.5">
                       <CountryFlag country={order.country || order.countryFlag} className="w-4 h-3 rounded-[2px]" />
                       <span>{order.country}</span>
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 font-semibold text-brand-700">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-semibold text-brand-700">
                     {order.assignedAgentName}
                   </td>
-                  <td className="px-5 py-3.5 font-bold text-emerald-600">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-bold text-emerald-600">
                     ৳{order.financials.advancePaid.toLocaleString()}
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
                     <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                       order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
                       order.status === 'Purchased' ? 'bg-cyan-100 text-cyan-700' :
@@ -270,7 +270,7 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
                       {order.status}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-right">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 text-right">
                     <button
                       onClick={() => onNavigateToOrder(order)}
                       className="text-xs font-bold text-brand-600 hover:bg-brand-50 px-2.5 py-1 rounded-lg transition-colors"

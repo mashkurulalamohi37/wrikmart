@@ -55,8 +55,8 @@ export const AdminGenerateMonthlyCostsModal = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-navy-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden my-auto">
+    <div className="fixed inset-0 z-50 bg-navy-950/70 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto animate-fade-in">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-2xl max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden my-auto">
         
         {/* Modal Header */}
         <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-navy-900 via-[#14234B] to-brand-900 text-white">
@@ -194,16 +194,16 @@ export const AdminGenerateMonthlyCostsModal = ({ onClose }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <button
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-white text-slate-600 font-bold text-xs transition-colors flex-1 sm:flex-initial"
+              className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-white text-slate-600 font-bold text-xs transition-colors w-full sm:w-auto text-center"
             >
               Cancel
             </button>
             <button
               onClick={handleGenerate}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 active:scale-95 text-white font-bold text-xs shadow-md shadow-brand-500/20 transition-all flex items-center justify-center gap-2 flex-1 sm:flex-initial"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 active:scale-95 text-white font-bold text-xs shadow-md shadow-brand-500/20 transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <Sparkles className="w-4 h-4" />
               <span>Generate & Post {selectedItems.length} Bills</span>

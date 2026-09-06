@@ -306,8 +306,8 @@ export const AdminExpenseManagement = () => {
 
           {/* HQ Expenses Ledger Table */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-soft overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto no-scrollbar sm:scrollbar-thin">
+              <table className="w-full text-left text-xs min-w-[760px]">
                 <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase tracking-wider text-[10px]">
                   <tr>
                     <th className="px-4 py-3.5">Voucher ID</th>
@@ -431,8 +431,8 @@ export const AdminExpenseManagement = () => {
             </span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto no-scrollbar sm:scrollbar-thin">
+            <table className="w-full text-left text-xs min-w-[720px]">
               <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase tracking-wider text-[10px]">
                 <tr>
                   <th className="px-5 py-3.5">Expense ID</th>

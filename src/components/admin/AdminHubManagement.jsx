@@ -34,7 +34,7 @@ export const AdminHubManagement = () => {
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-xl shadow transition-all"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-xl shadow transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>+ Register New Hub</span>
@@ -90,8 +90,8 @@ export const AdminHubManagement = () => {
 
       {/* Add Hub Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+        <div className="fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-slate-200 space-y-4 animate-scale-in">
             <h3 className="font-bold text-navy-900 text-base">Register New Delivery Hub</h3>
 
             <form onSubmit={handleAddHub} className="space-y-3 text-xs">

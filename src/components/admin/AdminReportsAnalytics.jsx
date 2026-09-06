@@ -340,8 +340,8 @@ export const AdminReportsAnalytics = () => {
       {/* ========================================================= */}
       {/* 2. PERSISTENT EXECUTIVE KPI RIBBON */}
       {/* ========================================================= */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-soft">
           <span className="text-[10px] font-black uppercase text-slate-400 block">Gross Sales</span>
           <p className="text-xl sm:text-2xl font-black text-navy-900 mt-1">৳{grossRevenue.toLocaleString()}</p>
           <span className="text-[11px] text-emerald-600 font-bold flex items-center mt-1">
@@ -349,7 +349,7 @@ export const AdminReportsAnalytics = () => {
           </span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft">
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-soft">
           <span className="text-[10px] font-black uppercase text-slate-400 block">Net Profit (Margin)</span>
           <p className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">৳{netProfit.toLocaleString()}</p>
           <span className="text-[11px] text-emerald-800 font-bold bg-emerald-50 px-1.5 py-0.2 rounded mt-1 inline-block">
@@ -357,7 +357,7 @@ export const AdminReportsAnalytics = () => {
           </span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft">
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-soft">
           <span className="text-[10px] font-black uppercase text-slate-400 block">Order Volume</span>
           <p className="text-xl sm:text-2xl font-black text-navy-900 mt-1">{totalOrdersCount} Orders</p>
           <span className="text-[11px] text-slate-400 block mt-1">
@@ -365,7 +365,7 @@ export const AdminReportsAnalytics = () => {
           </span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft">
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-soft">
           <span className="text-[10px] font-black uppercase text-slate-400 block">Warehouse Stock Value</span>
           <p className="text-xl sm:text-2xl font-black text-brand-600 mt-1">৳{totalStockValue.toLocaleString()}</p>
           <span className="text-[11px] text-slate-500 font-medium block mt-1">
@@ -373,7 +373,7 @@ export const AdminReportsAnalytics = () => {
           </span>
         </div>
 
-        <div className="col-span-2 lg:col-span-1 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft">
+        <div className="col-span-2 sm:col-span-1 lg:col-span-1 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-soft">
           <span className="text-[10px] font-black uppercase text-slate-400 block">Doorstep COD Dues</span>
           <p className="text-xl sm:text-2xl font-black text-amber-600 mt-1">
             ৳{orders.reduce((sum, o) => sum + (o.financials?.dueAmount || 0), 0).toLocaleString()}
@@ -387,11 +387,11 @@ export const AdminReportsAnalytics = () => {
       {/* ========================================================= */}
       <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden no-print">
         {/* Left: Dropdown Selector with Category Optgroups */}
-        <div className="flex flex-1 items-center gap-2.5">
+        <div className="flex flex-1 items-center gap-2.5 w-full">
           <div className="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0">
             <Layers className="w-4 h-4" />
           </div>
-          <div className="flex-1 max-w-lg relative">
+          <div className="flex-1 w-full max-w-full sm:max-w-lg relative">
             <label htmlFor="report-dropdown-nav" className="sr-only">Select Report Module</label>
             <select
               id="report-dropdown-nav"
@@ -414,20 +414,20 @@ export const AdminReportsAnalytics = () => {
         </div>
 
         {/* Right: Step Navigation (Prev / Next) & Quick Indicator */}
-        <div className="flex items-center gap-1.5 self-end sm:self-auto">
+        <div className="flex items-center justify-between sm:justify-end gap-1.5 w-full sm:w-auto">
           <button
             onClick={() => {
               const currentIndex = allReportsFlat.findIndex(r => r.id === activeReport);
               const prevIndex = (currentIndex - 1 + allReportsFlat.length) % allReportsFlat.length;
               setActiveReport(allReportsFlat[prevIndex].id);
             }}
-            className="px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 transition-all flex items-center gap-1 hover:border-slate-300 active:scale-98"
+            className="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 transition-all flex items-center gap-1 hover:border-slate-300 active:scale-98"
             title="Previous Report"
           >
             <span>← Prev</span>
           </button>
 
-          <span className="text-[11px] font-mono font-black text-slate-500 px-2 py-1 rounded-lg bg-slate-100 border border-slate-200/60">
+          <span className="text-[11px] font-mono font-black text-slate-500 px-2.5 py-2 rounded-lg bg-slate-100 border border-slate-200/60 text-center">
             {currentReportObj.num} / 10
           </span>
 
@@ -437,7 +437,7 @@ export const AdminReportsAnalytics = () => {
               const nextIndex = (currentIndex + 1) % allReportsFlat.length;
               setActiveReport(allReportsFlat[nextIndex].id);
             }}
-            className="px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 transition-all flex items-center gap-1 hover:border-slate-300 active:scale-98"
+            className="flex-1 sm:flex-initial justify-center px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 transition-all flex items-center gap-1 hover:border-slate-300 active:scale-98"
             title="Next Report"
           >
             <span>Next →</span>

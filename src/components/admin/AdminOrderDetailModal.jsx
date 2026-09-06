@@ -35,11 +35,11 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
   const estimatedProfit = grossSellingPrice - totalPurchaseInBDT - order.financials.deliveryCharge;
 
   return (
-    <div className="fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 animate-scale-in">
+    <div className="fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl sm:rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 animate-scale-in">
         {/* Top Sticky Bar */}
-        <div className="sticky top-0 bg-white px-6 py-4 border-b border-slate-200 flex items-center justify-between z-10">
-          <div>
+        <div className="sticky top-0 bg-white px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 z-10">
+          <div className="min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600">Admin 360° Order Details</span>
               <span className={`px-2 py-0.2 rounded-full text-[9px] font-extrabold uppercase ${
@@ -48,8 +48,8 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
                 {order.orderType || 'Pre-Order'}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-navy-900 text-lg">{order.orderNumber}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-bold text-navy-900 text-base sm:text-lg">{order.orderNumber}</h3>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-50 text-brand-700 border border-brand-200 inline-flex items-center gap-1.5">
                 <CountryFlag country={order.country || order.countryFlag} className="w-4 h-3 rounded-[2px]" />
                 <span>{order.country}</span>
@@ -57,7 +57,7 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
             <button
               onClick={() => setShowDamageModal(true)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
@@ -87,7 +87,7 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-5 sm:space-y-6">
           {/* Incident / Damage Alert Banner */}
           {order.damageDetails && (
             <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl space-y-2 text-xs">
@@ -161,8 +161,8 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
             <h4 className="font-bold text-xs uppercase tracking-wider text-slate-500 mb-3">
               Order Items ({order.items.length}) & Sourcing Financials
             </h4>
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
-              <table className="w-full text-left text-xs">
+            <div className="border border-slate-200 rounded-xl overflow-x-auto no-scrollbar sm:scrollbar-thin">
+              <table className="w-full text-left text-xs min-w-[600px]">
                 <thead className="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
                   <tr>
                     <th className="p-3">Product</th>
@@ -210,10 +210,10 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
           </div>
 
           {/* Financial Calculation & Profit Breakdown */}
-          <div className="bg-slate-900 text-white p-5 rounded-2xl space-y-3">
+          <div className="bg-slate-900 text-white p-4 sm:p-5 rounded-2xl space-y-3">
             <h4 className="font-bold text-xs uppercase tracking-wider text-slate-400">Order Financial Summary & Profit Margin</h4>
             
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs border-b border-slate-800 pb-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-xs border-b border-slate-800 pb-3">
               <div>
                 <span className="text-slate-400 block text-[10px]">Customer Selling Price:</span>
                 <span className="text-base font-bold text-white">৳{grossSellingPrice.toLocaleString()}</span>

@@ -77,21 +77,21 @@ export const AdminDamageReturnModal = ({ order, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 animate-scale-in">
+    <div className="fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl sm:rounded-3xl max-w-xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 animate-scale-in">
         {/* Sticky Header */}
-        <div className="sticky top-0 bg-white px-6 py-4 border-b border-slate-100 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-white px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 flex items-center justify-between z-10">
           <div className="flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold ${
+            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center font-bold flex-shrink-0 ${
               status === 'Damaged' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
             }`}>
-              {status === 'Damaged' ? <AlertTriangle className="w-5 h-5" /> : <RotateCcw className="w-5 h-5" />}
+              {status === 'Damaged' ? <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" /> : <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />}
             </div>
             <div>
-              <h3 className="font-extrabold text-base text-navy-900">
+              <h3 className="font-extrabold text-sm sm:text-base text-navy-900">
                 {isExistingDamage ? 'Manage Damage / Return Resolution' : 'Report Product Damage or Return'}
               </h3>
-              <p className="text-[11px] text-slate-400">Order: {order?.orderNumber} • {order?.country}</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-400">Order: {order?.orderNumber} • {order?.country}</p>
             </div>
           </div>
           <button 
@@ -102,7 +102,7 @@ export const AdminDamageReturnModal = ({ order, onClose }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 text-xs">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5 text-xs">
           {/* Classification Selection */}
           <div>
             <label className="block font-bold text-slate-700 mb-1.5">Action / Classification *</label>
@@ -267,17 +267,17 @@ export const AdminDamageReturnModal = ({ order, onClose }) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-100">
+          <div className="pt-3 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors text-center"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className={`px-6 py-2.5 text-white text-xs font-bold rounded-xl shadow-lg transition-all flex items-center gap-1.5 ${
+              className={`w-full sm:w-auto px-6 py-2.5 text-white text-xs font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 ${
                 status === 'Damaged' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-amber-600 hover:bg-amber-700'
               }`}
             >

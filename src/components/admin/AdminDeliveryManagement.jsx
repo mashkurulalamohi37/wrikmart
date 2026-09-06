@@ -60,7 +60,7 @@ export const AdminDeliveryManagement = () => {
       </div>
 
       {/* Sub Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto no-scrollbar flex-nowrap sm:flex-wrap">
         {[
           { id: 'To Hub', label: 'Overseas & Hub Staging' },
           { id: 'To Customer', label: 'In-Transit & Last-Mile BD' },
@@ -70,7 +70,7 @@ export const AdminDeliveryManagement = () => {
           <button
             key={tab.id}
             onClick={() => setActiveSubTab(tab.id)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 ${
               activeSubTab === tab.id 
                 ? (tab.id === 'Damaged & Returns' ? 'bg-rose-600 text-white shadow-sm' : 'bg-navy-900 text-white shadow-sm')
                 : 'text-slate-600 bg-white border border-slate-200 hover:bg-slate-100'
@@ -90,49 +90,49 @@ export const AdminDeliveryManagement = () => {
 
       {/* Deliveries Table */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-soft overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto no-scrollbar sm:scrollbar-thin">
+          <table className="w-full text-left text-xs min-w-[720px]">
             <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase tracking-wider text-[10px]">
               <tr>
-                <th className="px-5 py-3.5">Consignment ID</th>
-                <th className="px-5 py-3.5">Type & Region</th>
-                <th className="px-5 py-3.5">Staging Hub</th>
-                <th className="px-5 py-3.5">Courier Partner</th>
-                <th className="px-5 py-3.5">Scheduled Date</th>
-                <th className="px-5 py-3.5">Logistics Status</th>
-                <th className="px-5 py-3.5 text-right">Actions</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Consignment ID</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Type & Region</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Staging Hub</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Courier Partner</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Scheduled Date</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Logistics Status</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {filteredDeliveries.map((del) => (
                 <tr key={del.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="px-5 py-3.5 font-mono font-bold text-navy-900">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-mono font-bold text-navy-900">
                     {del.orderNumber}
                     <span className="text-[10px] text-slate-400 block font-normal">{del.customer}</span>
                   </td>
 
-                  <td className="px-5 py-3.5">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
                     <span className="font-semibold text-slate-900 block">{del.country}</span>
                     <span className="text-[9px] font-extrabold uppercase text-brand-600 bg-brand-50 px-1.5 py-0.2 rounded">
                       {del.orderType}
                     </span>
                   </td>
 
-                  <td className="px-5 py-3.5 font-semibold text-brand-700 flex items-center gap-1.5">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-semibold text-brand-700 flex items-center gap-1.5">
                     <Building className="w-3.5 h-3.5 text-brand-500 flex-shrink-0" />
                     <span>{del.hubName}</span>
                   </td>
 
-                  <td className="px-5 py-3.5 font-medium text-slate-800">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-medium text-slate-800">
                     <div className="flex items-center gap-1.5">
                       <Truck className="w-3.5 h-3.5 text-slate-400" />
                       <span>{del.courierName}</span>
                     </div>
                   </td>
 
-                  <td className="px-5 py-3.5 text-slate-600">{del.deliveryDate}</td>
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 text-slate-600">{del.deliveryDate}</td>
 
-                  <td className="px-5 py-3.5">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
                     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                       del.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
                       del.status === 'Damaged' ? 'bg-rose-100 text-rose-700 border border-rose-200' :
@@ -154,7 +154,7 @@ export const AdminDeliveryManagement = () => {
                     )}
                   </td>
 
-                  <td className="px-5 py-3.5 text-right">
+                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 text-right">
                     <button
                       onClick={() => setSelectedOrderForDamage(del.rawOrder)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${

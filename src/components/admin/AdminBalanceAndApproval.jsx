@@ -65,7 +65,7 @@ export const AdminBalanceAndApproval = () => {
 
         <button
           onClick={() => setShowSendModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-xl shadow-md transition-all"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-xl shadow-md transition-all"
         >
           <Send className="w-4 h-4" />
           <span>+ Send Balance to Agent</span>
@@ -73,7 +73,7 @@ export const AdminBalanceAndApproval = () => {
       </div>
 
       {/* Top Summary Metrics Cards (Matching Visual Board 1 Screen 6) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft">
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending Acceptance Requests</span>
           <div className="flex items-baseline gap-2 mt-2">
@@ -129,16 +129,16 @@ export const AdminBalanceAndApproval = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto no-scrollbar sm:scrollbar-thin">
+          <table className="w-full text-left text-xs min-w-[680px]">
             <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase tracking-wider text-[10px]">
               <tr>
-                <th className="px-5 py-3.5">Agent Name</th>
-                <th className="px-5 py-3.5">Country & Flag</th>
-                <th className="px-5 py-3.5">Live Available Balance</th>
-                <th className="px-5 py-3.5">Pending Acceptance</th>
-                <th className="px-5 py-3.5">Total Spent Sourcing</th>
-                <th className="px-5 py-3.5 text-right">Action</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Agent Name</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Country & Flag</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Live Available Balance</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Pending Acceptance</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Total Spent Sourcing</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -194,18 +194,18 @@ export const AdminBalanceAndApproval = () => {
           <span className="text-xs text-slate-400">Full audit log of remittances</span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto no-scrollbar sm:scrollbar-thin">
+          <table className="w-full text-left text-xs min-w-[680px]">
             <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase tracking-wider text-[10px]">
               <tr>
-                <th className="px-5 py-3.5">Transfer ID</th>
-                <th className="px-5 py-3.5">Agent</th>
-                <th className="px-5 py-3.5">Remitted (BDT)</th>
-                <th className="px-5 py-3.5">FX Rate</th>
-                <th className="px-5 py-3.5">Credited (Local)</th>
-                <th className="px-5 py-3.5">Date</th>
-                <th className="px-5 py-3.5">Status</th>
-                <th className="px-5 py-3.5 text-right">Actions</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Transfer ID</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Agent</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Remitted (BDT)</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">FX Rate</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Credited (Local)</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Date</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Status</th>
+                <th className="px-3.5 sm:px-5 py-3 sm:py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">

@@ -42,14 +42,14 @@ export const AdminHqVoucherModal = ({ voucher, onClose }) => {
   const netPayable = Math.max(0, voucher.amount - (voucher.vatTaxDeduction || 0));
 
   return (
-    <div className="fixed inset-0 z-50 bg-navy-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl max-w-2xl w-full max-h-[95vh] flex flex-col overflow-hidden my-auto print:shadow-none print:border-none print:max-w-none print:w-full print:m-0 print:p-0">
+    <div className="fixed inset-0 z-50 bg-navy-950/70 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto animate-fade-in">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-2xl max-w-2xl w-full max-h-[95vh] flex flex-col overflow-hidden my-auto print:shadow-none print:border-none print:max-w-none print:w-full print:m-0 print:p-0">
         
         {/* Top Screen Action Toolbar (Hidden during Print) */}
-        <div className="p-4 bg-slate-900 text-white flex items-center justify-between print:hidden">
+        <div className="p-3.5 sm:p-4 bg-slate-900 text-white flex items-center justify-between print:hidden">
           <div className="flex items-center gap-2">
             <FileCheck2 className="w-5 h-5 text-brand-400" />
-            <span className="font-bold text-sm">Official HQ Debit Voucher #{voucher.id}</span>
+            <span className="font-bold text-xs sm:text-sm">Official HQ Debit Voucher #{voucher.id}</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -70,7 +70,7 @@ export const AdminHqVoucherModal = ({ voucher, onClose }) => {
         </div>
 
         {/* Printable Voucher Paper */}
-        <div className="p-6 sm:p-8 overflow-y-auto flex-1 text-slate-800 text-xs bg-white font-sans space-y-5 print:p-6 print:text-black">
+        <div className="p-4 sm:p-8 overflow-y-auto flex-1 text-slate-800 text-xs bg-white font-sans space-y-5 print:p-6 print:text-black">
           
           {/* Company Header */}
           <div className="border-b-2 border-slate-900 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

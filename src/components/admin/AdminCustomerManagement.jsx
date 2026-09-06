@@ -516,16 +516,16 @@ export const AdminCustomerManagement = () => {
         </div>
 
         {/* Customer Directory Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        <div className="overflow-x-auto no-scrollbar sm:scrollbar-thin">
+          <table className="w-full text-left text-xs min-w-[680px]">
             <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
               <tr>
-                <th className="py-3 px-4">Client Name & Contacts</th>
-                <th className="py-3 px-4">Date of Birth</th>
-                <th className="py-3 px-4">Birthday Status</th>
-                <th className="py-3 px-4">Orders & Spend</th>
-                <th className="py-3 px-4">Birthday Voucher</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+                <th className="py-2.5 sm:py-3 px-3 sm:px-4">Client Name & Contacts</th>
+                <th className="py-2.5 sm:py-3 px-3 sm:px-4">Date of Birth</th>
+                <th className="py-2.5 sm:py-3 px-3 sm:px-4">Birthday Status</th>
+                <th className="py-2.5 sm:py-3 px-3 sm:px-4">Orders & Spend</th>
+                <th className="py-2.5 sm:py-3 px-3 sm:px-4">Birthday Voucher</th>
+                <th className="py-2.5 sm:py-3 px-3 sm:px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -653,8 +653,8 @@ export const AdminCustomerManagement = () => {
       {/* 6. MODAL: WISH & SEND BIRTHDAY PROMO */}
       {/* ========================================================= */}
       {wishModalCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white w-full max-w-lg rounded-3xl border border-slate-200 shadow-2xl p-6 space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-navy-950/60 backdrop-blur-xs overflow-y-auto animate-fade-in">
+          <div className="bg-white w-full max-w-lg rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl p-4 sm:p-6 space-y-4 sm:space-y-5 my-auto">
             
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -767,8 +767,8 @@ export const AdminCustomerManagement = () => {
       {/* 7. MODAL: EDIT CUSTOMER DOB & PROFILE */}
       {/* ========================================================= */}
       {editCustomerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white w-full max-w-md rounded-3xl border border-slate-200 shadow-2xl p-6 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-navy-950/60 backdrop-blur-xs overflow-y-auto animate-fade-in">
+          <div className="bg-white w-full max-w-md rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl p-4 sm:p-6 space-y-4 my-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <Edit3 className="w-4 h-4 text-brand-600" />
@@ -805,17 +805,17 @@ export const AdminCustomerManagement = () => {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2 border-t border-slate-100">
               <button
                 onClick={() => setEditCustomerModal(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs"
+                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs w-full sm:w-auto text-center"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveCustomerDOB}
                 disabled={!editDobInput}
-                className="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-40 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
+                className="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-40 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 w-full sm:w-auto"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>Save Birthday</span>
