@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CountryFlag } from '../common/CountryFlag';
 import { StoreBrandBadge } from '../common/BrandLogo';
+import { useApp } from '../../context/AppContext';
 import { 
   ShoppingBag, 
   Package, 
@@ -9,22 +10,28 @@ import {
   BadgePercent, 
   Globe2, 
   Truck, 
-  ArrowRight,
-  ExternalLink,
-  Sparkles,
-  Zap,
-  CheckCircle2,
-  Clock,
-  Search,
-  ArrowRightLeft
+  ArrowRight, 
+  ExternalLink, 
+  Sparkles, 
+  Zap, 
+  CheckCircle2, 
+  Clock, 
+  Search, 
+  ArrowRightLeft,
+  Flame,
+  Plus
 } from 'lucide-react';
 
-export const CustomerHome = ({ onStartPreOrder, onOpenChat, onOpenOrders }) => {
+export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpenOrders }) => {
+  const { inventory = [], addToCart } = useApp();
   const [quickUrl, setQuickUrl] = useState('');
 
   const handleQuickPaste = () => {
     onStartPreOrder();
   };
+
+  // Top 4 in-stock showcase items
+  const featuredStock = inventory.filter(i => i.currentStock > 0).slice(0, 4);
 
   return (
     <div className="space-y-10 pb-12">
@@ -37,7 +44,7 @@ export const CustomerHome = ({ onStartPreOrder, onOpenChat, onOpenOrders }) => {
           <div className="lg:col-span-7 space-y-5">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 text-xs font-semibold backdrop-blur-md border border-white/20">
               <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>Cross-Border Pre-Order Commerce</span>
+              <span>Cross-Border Pre-Order & Ready Stock Commerce</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.15]">
@@ -47,7 +54,7 @@ export const CustomerHome = ({ onStartPreOrder, onOpenChat, onOpenOrders }) => {
 
             <p className="text-sm sm:text-base text-cyan-100 max-w-xl leading-relaxed">
               Found something on <strong>Amazon, Nike, Apple, Zara, Flipkart or Noon</strong>? 
-              Paste the product URL or image. Our local purchasing agents buy directly from authentic stores and deliver to your doorstep in Bangladesh.
+              Paste the product URL or image. Our local purchasing agents buy directly from authentic stores and deliver to your doorstep in Bangladesh. Or order from our <strong>Dhaka Ready Stock</strong> for 24-48h delivery!
             </p>
 
             {/* Quick URL Input Bar inside Hero */}
@@ -72,8 +79,8 @@ export const CustomerHome = ({ onStartPreOrder, onOpenChat, onOpenOrders }) => {
 
             {/* Key Trust Micro Badges */}
             <div className="flex flex-wrap items-center gap-4 text-xs text-cyan-100/90 pt-2 font-medium">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-amber-300" /> 25% Advance Payment</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-amber-300" /> 100% Genuine Receipts</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-amber-300" /> 25% Advance on Pre-Order</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-amber-300" /> Cash on Delivery for Stock</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-amber-300" /> Doorstep Courier in BD</span>
             </div>
           </div>
@@ -123,7 +130,96 @@ export const CustomerHome = ({ onStartPreOrder, onOpenChat, onOpenOrders }) => {
         <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
       </section>
 
-      {/* 2. Popular Pre-Order Stores & Brands */}
+      {/* 2. Ready Stock in Bangladesh Spotlight Section */}
+      <section className="space-y-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <h2 className="text-lg sm:text-xl font-extrabold text-navy-900 flex items-center gap-2">
+                ⚡ Ready Stock in Bangladesh Hub
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Dispatched directly from Dhaka Tejgaon Warehouse within 24 hours. Cash on Delivery & Free Delivery vouchers available!
+            </p>
+          </div>
+
+          <button
+            onClick={onBrowseStock}
+            className="text-xs font-bold text-brand-600 hover:text-brand-500 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 transition-colors border border-brand-200"
+          >
+            <span>Explore All Ready Stock ({inventory.length})</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {featuredStock.map(prod => {
+            const discountPercent = prod.originalMrp 
+              ? Math.round(((prod.originalMrp - prod.sellingPrice) / prod.originalMrp) * 100) 
+              : 0;
+
+            return (
+              <div
+                key={prod.id}
+                className="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-soft hover:shadow-card hover:border-brand-400 transition-all flex flex-col justify-between group"
+              >
+                <div className="space-y-3">
+                  <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 cursor-pointer" onClick={onBrowseStock}>
+                    <img
+                      src={prod.image}
+                      alt={prod.name}
+                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {discountPercent > 0 && (
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-rose-600 text-white font-extrabold text-[9px] shadow-sm">
+                        -{discountPercent}% OFF
+                      </span>
+                    )}
+                    <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-slate-800 font-bold text-[9px] shadow-sm">
+                      ⚡ 24h Dhaka
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold text-brand-600 uppercase tracking-wider block">{prod.brand}</span>
+                    <h3 
+                      onClick={onBrowseStock}
+                      className="font-bold text-xs text-navy-900 line-clamp-2 cursor-pointer hover:text-brand-600 transition-colors mt-0.5"
+                    >
+                      {prod.name}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div>
+                    <span className="font-extrabold text-sm text-navy-900 block">
+                      ৳{prod.sellingPrice.toLocaleString()}
+                    </span>
+                    {prod.originalMrp && (
+                      <span className="text-[10px] text-slate-400 line-through">
+                        ৳{prod.originalMrp.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => addToCart(prod, 1)}
+                    className="p-2 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white shadow-sm transition-all"
+                    title="Add to Cart"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 3. Popular Pre-Order Stores & Brands */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <div>

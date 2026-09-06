@@ -9,7 +9,8 @@ import {
   DEFAULT_RECURRING_HQ_TEMPLATES,
   INITIAL_BALANCE_TRANSFERS,
   INITIAL_CHAT_MESSAGES,
-  INITIAL_STOCK_INVENTORY
+  INITIAL_STOCK_INVENTORY,
+  INITIAL_COUPONS
 } from '../data/mockData';
 
 const AppContext = createContext();
@@ -18,7 +19,7 @@ export const AppProvider = ({ children }) => {
   // Navigation & Role State
   const [currentRole, setCurrentRole] = useState('admin'); // 'admin' | 'agent' | 'customer'
   const [activeAgentId, setActiveAgentId] = useState('agent-1'); // Currently simulated agent
-  const [customerTab, setCustomerTab] = useState('home'); // 'home' | 'preorder' | 'orders' | 'chat' | 'profile'
+  const [customerTab, setCustomerTab] = useState('home'); // 'home' | 'stock' | 'preorder' | 'orders' | 'chat' | 'profile'
 
   // Data States with automatic migration for fresh schema
   const [orders, setOrders] = useState(() => {
@@ -44,7 +45,51 @@ export const AppProvider = ({ children }) => {
 
   const [inventory, setInventory] = useState(() => {
     const saved = localStorage.getItem('wrikmart_inventory');
-    return saved ? JSON.parse(saved) : INITIAL_STOCK_INVENTORY;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Merge with INITIAL_STOCK_INVENTORY so newly added items and fields are present
+        const existingIds = new Set(parsed.map(p => p.id));
+        const enriched = parsed.map(item => {
+          const initial = INITIAL_STOCK_INVENTORY.find(i => i.id === item.id);
+          return initial ? { ...initial, ...item, image: item.image || initial.image, description: item.description || initial.description, originalMrp: item.originalMrp || initial.originalMrp } : item;
+        });
+        INITIAL_STOCK_INVENTORY.forEach(initialItem => {
+          if (!existingIds.has(initialItem.id)) {
+            enriched.push(initialItem);
+          }
+        });
+        return enriched;
+      } catch (e) {}
+    }
+    return INITIAL_STOCK_INVENTORY;
+  });
+
+  // Ready Stock Cart State
+  const [cart, setCart] = useState(() => {
+    const saved = localStorage.getItem('wrikmart_cart');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [];
+  });
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Discount & Coupon State
+  const [coupons, setCoupons] = useState(() => {
+    const saved = localStorage.getItem('wrikmart_coupons');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return INITIAL_COUPONS;
+  });
+
+  const [appliedCoupon, setAppliedCoupon] = useState(() => {
+    const saved = localStorage.getItem('wrikmart_applied_coupon');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return null;
   });
 
   const [exchangeRates, setExchangeRates] = useState(() => {
@@ -118,6 +163,22 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('wrikmart_chat', JSON.stringify(chatMessages));
   }, [chatMessages]);
+
+  useEffect(() => {
+    localStorage.setItem('wrikmart_cart', JSON.stringify(cart));
+  }, [cart]);
+
+  useEffect(() => {
+    localStorage.setItem('wrikmart_coupons', JSON.stringify(coupons));
+  }, [coupons]);
+
+  useEffect(() => {
+    if (appliedCoupon) {
+      localStorage.setItem('wrikmart_applied_coupon', JSON.stringify(appliedCoupon));
+    } else {
+      localStorage.removeItem('wrikmart_applied_coupon');
+    }
+  }, [appliedCoupon]);
 
   // Current active agent profile
   const activeAgent = agents.find(a => a.id === activeAgentId) || agents[0];
@@ -302,6 +363,282 @@ export const AppProvider = ({ children }) => {
 
     setOrders(prev => [newOrder, ...prev]);
     showToast(`Order #${orderNumber} Confirmed with Advance ৳${advancePaid.toLocaleString()}!`, 'success');
+    return newOrder;
+  };
+
+  // ==========================================
+  // ACTIONS: READY STOCK CART & COUPON WORKFLOW
+  // ==========================================
+
+  const addToCart = (product, quantity = 1) => {
+    if (!product || product.currentStock <= 0) {
+      showToast(`${product?.name || 'Product'} is currently Out of Stock!`, 'error');
+      return false;
+    }
+
+    let addedSuccessfully = true;
+
+    setCart(prev => {
+      const existingIndex = prev.findIndex(item => item.id === product.id);
+      if (existingIndex > -1) {
+        const existing = prev[existingIndex];
+        const newQty = existing.quantity + quantity;
+        if (newQty > product.currentStock) {
+          showToast(`Cannot add more. Only ${product.currentStock} units available in stock!`, 'warning');
+          addedSuccessfully = false;
+          return prev;
+        }
+        const updated = [...prev];
+        updated[existingIndex] = { ...existing, quantity: newQty };
+        showToast(`Updated ${product.name} quantity to ${newQty}!`, 'success');
+        return updated;
+      } else {
+        const addQty = Math.min(quantity, product.currentStock);
+        showToast(`Added ${product.name} to Cart!`, 'success');
+        return [...prev, { ...product, quantity: addQty }];
+      }
+    });
+
+    return addedSuccessfully;
+  };
+
+  const updateCartQuantity = (productId, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+
+    const prod = inventory.find(i => i.id === productId);
+    const maxStock = prod ? prod.currentStock : 99;
+
+    let finalQty = newQuantity;
+    if (newQuantity > maxStock) {
+      showToast(`Only ${maxStock} unit(s) available in stock!`, 'warning');
+      finalQty = maxStock;
+    }
+
+    setCart(prev => prev.map(item => item.id === productId ? { ...item, quantity: finalQty } : item));
+  };
+
+  const removeFromCart = (productId) => {
+    setCart(prev => {
+      const remaining = prev.filter(item => item.id !== productId);
+      // If applied coupon no longer qualifies, revoke it
+      if (appliedCoupon) {
+        const newSubtotal = remaining.reduce((sum, it) => sum + ((it.sellingPrice || 0) * (it.quantity || 1)), 0);
+        if (newSubtotal < (appliedCoupon.minOrderBDT || 0)) {
+          setAppliedCoupon(null);
+          showToast(`Coupon "${appliedCoupon.code}" removed (minimum order amount no longer met).`, 'warning');
+        }
+      }
+      return remaining;
+    });
+    showToast('Item removed from cart', 'info');
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    setAppliedCoupon(null);
+  };
+
+  const applyCoupon = (rawCode, currentSubtotal, deliveryFee = 0, items = []) => {
+    if (!rawCode || !rawCode.trim()) {
+      showToast('Please enter a coupon code.', 'warning');
+      return { success: false, message: 'Code is empty' };
+    }
+
+    const cleanCode = rawCode.trim().toUpperCase();
+    const foundCoupon = coupons.find(c => c.code.toUpperCase() === cleanCode && c.status === 'Active');
+
+    if (!foundCoupon) {
+      showToast(`Coupon "${cleanCode}" is invalid or inactive.`, 'error');
+      return { success: false, message: 'Invalid coupon' };
+    }
+
+    if (currentSubtotal < (foundCoupon.minOrderBDT || 0)) {
+      showToast(`Minimum order of ৳${foundCoupon.minOrderBDT.toLocaleString()} required for this coupon.`, 'warning');
+      return { success: false, message: `Min order ৳${foundCoupon.minOrderBDT}` };
+    }
+
+    // Category restriction check
+    if (foundCoupon.applicableCategory && foundCoupon.applicableCategory !== 'All') {
+      const hasApplicableItem = items.some(it => it.category?.toLowerCase() === foundCoupon.applicableCategory.toLowerCase());
+      if (!hasApplicableItem) {
+        showToast(`This coupon is only valid for ${foundCoupon.applicableCategory} products.`, 'warning');
+        return { success: false, message: `Valid for ${foundCoupon.applicableCategory} only` };
+      }
+    }
+
+    // Calculate exact discount
+    let discountAmount = 0;
+    if (foundCoupon.discountType === 'percentage') {
+      const calculated = Math.round(currentSubtotal * (foundCoupon.discountValue / 100));
+      discountAmount = foundCoupon.maxDiscountBDT ? Math.min(calculated, foundCoupon.maxDiscountBDT) : calculated;
+    } else if (foundCoupon.discountType === 'fixed') {
+      discountAmount = Math.min(foundCoupon.discountValue, currentSubtotal);
+    } else if (foundCoupon.discountType === 'free_shipping') {
+      discountAmount = deliveryFee;
+    }
+
+    const couponPayload = {
+      ...foundCoupon,
+      discountAmount
+    };
+
+    setAppliedCoupon(couponPayload);
+    showToast(`Coupon "${foundCoupon.code}" applied! You saved ৳${discountAmount.toLocaleString()}!`, 'success');
+    return { success: true, coupon: couponPayload, discountAmount };
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    showToast('Coupon removed.', 'info');
+  };
+
+  // CHECKOUT STOCK ORDER
+  const createCustomerStockOrder = ({
+    customerInfo,
+    items,
+    deliveryMethod = 'Standard Courier',
+    deliveryFee = 80,
+    paymentMethod = 'COD',
+    transactionId = null,
+    subtotal,
+    discountAmount = 0,
+    grandTotal,
+    advancePaid = 0,
+    paymentStatus = 'Unpaid'
+  }) => {
+    const orderNumber = `ORD-STK-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
+    
+    // 1. Auto-decrement stock in inventory
+    setInventory(prev => prev.map(invItem => {
+      const ordered = items.find(it => it.id === invItem.id);
+      if (ordered) {
+        const remainingStock = Math.max(0, (invItem.currentStock || 0) - (ordered.quantity || 1));
+        const newSoldQty = (invItem.soldQty || 0) + (ordered.quantity || 1);
+        const newStatus = remainingStock === 0 ? 'Out of Stock' : (remainingStock <= (invItem.reorderLevel || 5) ? 'Low Stock' : 'In Stock');
+        return {
+          ...invItem,
+          currentStock: remainingStock,
+          soldQty: newSoldQty,
+          status: newStatus
+        };
+      }
+      return invItem;
+    }));
+
+    // 2. Increment coupon usage
+    if (appliedCoupon?.id) {
+      setCoupons(prev => prev.map(c => c.id === appliedCoupon.id ? { ...c, usedCount: (c.usedCount || 0) + 1 } : c));
+    }
+
+    const isCod = paymentMethod === 'COD';
+    const effectivePaymentStatus = isCod ? 'Unpaid (COD)' : 'Fully Paid';
+    const effectiveStatus = isCod ? 'Processing' : 'Ready for Delivery';
+
+    const newOrder = {
+      id: orderNumber,
+      orderNumber,
+      orderType: 'Stock Product',
+      country: 'Bangladesh',
+      countryFlag: '🇧🇩',
+      status: effectiveStatus,
+      paymentStatus: effectivePaymentStatus,
+      createdAt: new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      purchaseDeadline: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      assignedAgentId: null,
+      assignedAgentName: 'Dhaka Warehouse Hub',
+      hubId: 'hub-1',
+      hubName: 'Dhaka Main Hub',
+      courierName: deliveryMethod.includes('Express') ? 'Pathao Express' : 'Steadfast Courier',
+      deliveryMethod,
+      customer: {
+        id: `cust-${Date.now()}`,
+        name: customerInfo.name,
+        phone: customerInfo.phone,
+        email: customerInfo.email || '',
+        address: customerInfo.address,
+        district: customerInfo.district || 'Dhaka',
+        note: customerInfo.note || '',
+        isReturning: true
+      },
+      financials: {
+        currency: 'BDT',
+        symbol: '৳',
+        estimatedSubtotal: subtotal,
+        deliveryCharge: deliveryFee,
+        discountAmount,
+        couponCode: appliedCoupon?.code || null,
+        estimatedTotal: grandTotal,
+        advanceRequired: advancePaid,
+        advancePaid,
+        finalSellingPrice: grandTotal,
+        dueAmount: Math.max(0, grandTotal - advancePaid),
+        agentCostBDT: items.reduce((sum, it) => sum + ((it.costPrice || it.sellingPrice * 0.75) * (it.quantity || 1)), 0),
+        shippingCostBDT: 0,
+        localCourierCostBDT: deliveryFee,
+        grossProfitBDT: Math.round(grandTotal - items.reduce((sum, it) => sum + ((it.costPrice || it.sellingPrice * 0.75) * (it.quantity || 1)), 0) - deliveryFee)
+      },
+      items: items.map((it, idx) => ({
+        id: `item-${Date.now()}-${idx}`,
+        name: it.name,
+        category: it.category || 'General',
+        brand: it.brand || 'Authentic Brand',
+        url: it.image,
+        image: it.image,
+        specs: it.specs || { unit: it.quantity || 1 },
+        expectedPrice: it.sellingPrice,
+        actualPurchasePrice: it.costPrice || Math.round(it.sellingPrice * 0.75),
+        actualPurchaseCurrency: 'BDT',
+        mrp: it.originalMrp || it.sellingPrice,
+        purchasedFrom: `Dhaka Warehouse Local Stock (${it.warehouse || 'Dhaka Main Hub'})`,
+        purchaseDate: new Date().toLocaleString(),
+        receiptImage: it.image,
+        notes: `Immediate dispatch stock order. Qty: ${it.quantity || 1}`
+      })),
+      timeline: [
+        { 
+          step: 'Order Placed', 
+          time: new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), 
+          actor: 'Customer', 
+          note: `Ready Stock order placed with ${items.length} item(s)`, 
+          done: true 
+        },
+        { 
+          step: 'Payment Confirmed', 
+          time: new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), 
+          actor: `${paymentMethod} Gateway`, 
+          note: isCod ? `Cash on Delivery (৳${grandTotal.toLocaleString()} due at delivery)` : `Paid online via ${paymentMethod} (TrxID: ${transactionId || 'ONLINE-SUCCESS'})`, 
+          done: !isCod 
+        },
+        { 
+          step: 'Bangladesh Received', 
+          time: new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), 
+          actor: 'Tejgaon Fulfillment Center', 
+          note: 'Items picked from warehouse shelf and packaged with tamper-evident seal', 
+          done: true 
+        },
+        { 
+          step: 'Ready for Delivery', 
+          time: 'Pending', 
+          actor: `${deliveryMethod.includes('Express') ? 'Pathao Rider' : 'Steadfast Courier'}`, 
+          note: 'Assigned for doorstep dispatch', 
+          done: false 
+        },
+        { 
+          step: 'Delivered', 
+          time: 'Pending', 
+          actor: 'Customer', 
+          note: '', 
+          done: false 
+        }
+      ]
+    };
+
+    setOrders(prev => [newOrder, ...prev]);
+    clearCart();
+    showToast(`Stock Order #${orderNumber} placed successfully!`, 'success');
     return newOrder;
   };
 
@@ -855,8 +1192,23 @@ export const AppProvider = ({ children }) => {
       deleteHqExpense,
       updateExchangeRate,
       addAgent,
-      addHub,
-      sendChatMessage
+      sendChatMessage,
+      // Ready Stock Cart & Coupons
+      cart,
+      setCart,
+      isCartOpen,
+      setIsCartOpen,
+      coupons,
+      setCoupons,
+      appliedCoupon,
+      setAppliedCoupon,
+      addToCart,
+      updateCartQuantity,
+      removeFromCart,
+      clearCart,
+      applyCoupon,
+      removeCoupon,
+      createCustomerStockOrder
     }}>
       {children}
     </AppContext.Provider>

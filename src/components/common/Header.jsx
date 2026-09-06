@@ -31,7 +31,9 @@ export const Header = () => {
     setActiveAgentId, 
     activeAgent, 
     balanceTransfers,
-    exchangeRates
+    exchangeRates,
+    cart = [],
+    setIsCartOpen
   } = useApp();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -111,6 +113,24 @@ export const Header = () => {
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Pre-Order</span>
+          </button>
+
+          {/* Quick Cart Button */}
+          <button
+            onClick={() => {
+              setCurrentRole('customer');
+              if (setIsCartOpen) setIsCartOpen(true);
+            }}
+            className="flex items-center gap-1.5 bg-[#14234B] hover:bg-[#1A2E63] border border-slate-700/80 rounded-xl sm:rounded-2xl px-2.5 py-1.5 sm:px-3 sm:py-2 text-white font-bold text-xs shadow-md transition-all relative flex-shrink-0"
+            title="Open Shopping Cart"
+          >
+            <ShoppingBag className="w-4 h-4 text-brand-400" />
+            <span className="hidden sm:inline">Cart</span>
+            {cart.length > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-brand-500 text-white font-extrabold text-[10px] min-w-[18px] text-center">
+                {cart.reduce((sum, item) => sum + (item.quantity || 1), 0)}
+              </span>
+            )}
           </button>
 
           {/* Main Portal Switcher Dropdown Button */}
