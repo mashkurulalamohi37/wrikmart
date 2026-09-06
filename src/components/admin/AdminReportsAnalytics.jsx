@@ -43,6 +43,7 @@ export const AdminReportsAnalytics = () => {
     expenses = [], 
     hqExpenses = [], 
     balanceTransfers = [], 
+    exchangeRates = {},
     showToast 
   } = useApp();
 
@@ -76,12 +77,15 @@ export const AdminReportsAnalytics = () => {
   }, [period]);
 
   const periodDateLabel = useMemo(() => {
+    const now = new Date();
+    const dayStr = now.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+    const monthStr = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     switch (period) {
-      case 'today': return 'Today • 6 Sep 2026';
-      case 'week': return 'Current Week • 1 Sep – 7 Sep 2026';
-      case 'month': return 'Current Month • September 2026';
-      case 'all': return 'All Time Cumulative (2025–2026)';
-      default: return 'Current Month • September 2026';
+      case 'today': return `Today • ${dayStr}`;
+      case 'week': return `Current Week (${monthStr})`;
+      case 'month': return `Current Month • ${monthStr}`;
+      case 'all': return `All Time Cumulative (2025–${now.getFullYear()})`;
+      default: return `Current Month • ${monthStr}`;
     }
   }, [period]);
 
@@ -107,7 +111,12 @@ export const AdminReportsAnalytics = () => {
   const rawLocalCourierCost = orders.reduce((sum, o) => sum + (o.financials?.localCourierCostBDT || 120), 0);
   const totalLocalCourierCost = Math.round(rawLocalCourierCost * periodMultiplier);
   
-  const totalAgentExpensesAmount = Math.round(expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0) * periodMultiplier);
+  const totalAgentExpensesAmount = Math.round(
+    expenses.reduce((sum, e) => {
+      const rateToBDT = exchangeRates[e.currency]?.rateToBDT || (e.currency === 'AED' ? 31.5 : e.currency === 'THB' ? 3.4 : 1.43);
+      return sum + (Number(e.amount || 0) * rateToBDT);
+    }, 0) * periodMultiplier
+  );
   const totalHqExpensesAmount = Math.round(hqExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0) * periodMultiplier);
   const totalExpensesAmount = totalAgentExpensesAmount + totalHqExpensesAmount;
   const totalRefundsAmount = Math.round(damagedOrders.reduce((sum, o) => sum + (o.damageDetails?.refundAmount || 0), 0) * periodMultiplier);

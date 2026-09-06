@@ -78,7 +78,7 @@ export const AdminDamageReturnModal = ({ order, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl sm:rounded-3xl max-w-xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 animate-scale-in">
+      <div className="bg-white rounded-2xl sm:rounded-3xl max-w-xl w-full my-auto max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 animate-scale-in">
         {/* Sticky Header */}
         <div className="sticky top-0 bg-white px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 flex items-center justify-between z-10">
           <div className="flex items-center gap-3">
@@ -95,7 +95,9 @@ export const AdminDamageReturnModal = ({ order, onClose }) => {
             </div>
           </div>
           <button 
+            type="button"
             onClick={onClose}
+            aria-label="Close modal"
             className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />

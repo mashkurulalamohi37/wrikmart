@@ -57,7 +57,9 @@ export const AgentPurchaseUpdateModal = ({ order, onClose }) => {
             </div>
           </div>
           <button 
+            type="button"
             onClick={onClose}
+            aria-label="Close Purchase Update Modal"
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />

@@ -30,9 +30,10 @@ export const CustomerChat = () => {
         </div>
 
         <a 
-          href="https://wa.me/8801700000000"
+          href="https://wa.me/8801712345678?text=Hello%20WrikMart%20Support%2C%20I%20need%20assistance%20with%20my%20order."
           target="_blank"
           rel="noreferrer"
+          aria-label="Contact WrikMart Support on WhatsApp"
           className="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-slate-200 transition-colors"
         >
           <PhoneCall className="w-3.5 h-3.5 text-emerald-400" />

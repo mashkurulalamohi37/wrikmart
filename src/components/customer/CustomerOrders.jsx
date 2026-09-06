@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   Package, 
@@ -200,9 +201,14 @@ export const CustomerOrders = ({ onNewOrder }) => {
       </div>
 
       {/* 9-Stage Customer Tracking Timeline Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
+      {selectedOrder && createPortal(
+        <div 
+          className="fixed inset-0 z-[100] bg-navy-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedOrder(null);
+          }}
+        >
+          <div className="bg-white rounded-3xl max-w-xl w-full my-auto max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200">
             {/* Modal Header */}
             <div className="sticky top-0 bg-white px-6 py-4 border-b border-slate-200 flex items-center justify-between z-10">
               <div>
@@ -210,7 +216,9 @@ export const CustomerOrders = ({ onNewOrder }) => {
                 <h3 className="font-extrabold text-navy-900 text-lg">{selectedOrder.orderNumber}</h3>
               </div>
               <button 
+                type="button"
                 onClick={() => setSelectedOrder(null)}
+                aria-label="Close delivery pipeline modal"
                 className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -301,7 +309,8 @@ export const CustomerOrders = ({ onNewOrder }) => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

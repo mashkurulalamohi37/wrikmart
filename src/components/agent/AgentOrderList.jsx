@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { AdminDamageReturnModal } from '../admin/AdminDamageReturnModal';
+import { AgentDamageReportModal } from './AgentDamageReportModal';
 import { 
   Search, 
   Filter, 
@@ -194,9 +194,9 @@ export const AgentOrderList = ({ onSelectOrderForPurchase, onSelectOrderForHub, 
         )}
       </div>
 
-      {/* Damage / Return Modal */}
+      {/* Damage / Return Modal for Agent */}
       {selectedOrderForDamage && (
-        <AdminDamageReturnModal
+        <AgentDamageReportModal
           order={selectedOrderForDamage}
           onClose={() => setSelectedOrderForDamage(null)}
         />

@@ -17,6 +17,22 @@ import {
 
 const AppContext = createContext();
 
+export const safeLocalStorageSet = (key, value) => {
+  try {
+    localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+  } catch (e) {
+    console.warn(`[WrikMart Storage Warning] Could not write ${key} to storage:`, e);
+  }
+};
+
+export const safeLocalStorageRemove = (key) => {
+  try {
+    localStorage.removeItem(key);
+  } catch (e) {
+    console.warn(`[WrikMart Storage Warning] Could not remove ${key} from storage:`, e);
+  }
+};
+
 const VALID_ROLES = ['admin', 'agent', 'customer'];
 const VALID_CUSTOMER_TABS = ['home', 'stock', 'preorder', 'orders', 'chat', 'profile'];
 const VALID_ADMIN_NAVS = [
@@ -328,70 +344,108 @@ export const AppProvider = ({ children }) => {
     }, 4000);
   };
 
-  // Sync to local storage
+  // Shared customer district selection between Cart Drawer and Checkout Modal
+  const [selectedDistrict, setSelectedDistrict] = useState(() => {
+    try {
+      return localStorage.getItem('wrikmart_selected_district') || 'Dhaka';
+    } catch (e) {
+      return 'Dhaka';
+    }
+  });
+
+  // Pre-Order form settings configurable from Admin
+  const [preOrderFormSettings, setPreOrderFormSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('wrikmart_preorder_settings');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      countries: { india: true, dubai: true, thailand: true },
+      requiredFields: {
+        name: true,
+        whatsapp: true,
+        address: true,
+        productLinkOrImage: true,
+        size: false,
+        color: false,
+        quantity: true,
+        advancePayment: true
+      }
+    };
+  });
+
+  // Sync to local storage safely protected against quota / private mode exceptions
   useEffect(() => {
-    localStorage.setItem('wrikmart_orders_v2', JSON.stringify(orders));
+    safeLocalStorageSet('wrikmart_orders_v2', orders);
   }, [orders]);
 
   useEffect(() => {
-    localStorage.setItem('wrikmart_agents_v2', JSON.stringify(agents));
+    safeLocalStorageSet('wrikmart_agents_v2', agents);
   }, [agents]);
 
   useEffect(() => {
-    localStorage.setItem('wrikmart_inventory', JSON.stringify(inventory));
+    safeLocalStorageSet('wrikmart_inventory', inventory);
   }, [inventory]);
 
   useEffect(() => {
-    localStorage.setItem('wrikmart_transfers', JSON.stringify(balanceTransfers));
+    safeLocalStorageSet('wrikmart_transfers', balanceTransfers);
   }, [balanceTransfers]);
 
   useEffect(() => {
-    localStorage.setItem('wrikmart_expenses', JSON.stringify(expenses));
+    safeLocalStorageSet('wrikmart_expenses', expenses);
   }, [expenses]);
 
   useEffect(() => {
-    localStorage.setItem('wrikmart_hq_expenses', JSON.stringify(hqExpenses));
+    safeLocalStorageSet('wrikmart_hq_expenses', hqExpenses);
   }, [hqExpenses]);
 
   useEffect(() => {
-    localStorage.setItem('wrikmart_fx_rates', JSON.stringify(exchangeRates));
+    safeLocalStorageSet('wrikmart_fx_rates', exchangeRates);
   }, [exchangeRates]);
 
   useEffect(() => {
-    localStorage.setItem('wrikmart_hubs', JSON.stringify(hubs));
+    safeLocalStorageSet('wrikmart_hubs', hubs);
   }, [hubs]);
 
   useEffect(() => {
-    localStorage.setItem('wrikmart_chat', JSON.stringify(chatMessages));
+    safeLocalStorageSet('wrikmart_chat', chatMessages);
   }, [chatMessages]);
 
   useEffect(() => {
-    localStorage.setItem('wrikmart_cart', JSON.stringify(cart));
+    safeLocalStorageSet('wrikmart_cart', cart);
   }, [cart]);
 
   useEffect(() => {
-    localStorage.setItem('wrikmart_coupons', JSON.stringify(coupons));
+    safeLocalStorageSet('wrikmart_coupons', coupons);
   }, [coupons]);
 
   useEffect(() => {
     if (appliedCoupon) {
-      localStorage.setItem('wrikmart_applied_coupon', JSON.stringify(appliedCoupon));
+      safeLocalStorageSet('wrikmart_applied_coupon', appliedCoupon);
     } else {
-      localStorage.removeItem('wrikmart_applied_coupon');
+      safeLocalStorageRemove('wrikmart_applied_coupon');
     }
   }, [appliedCoupon]);
 
   useEffect(() => {
-    localStorage.setItem('wrikmart_customers_v1', JSON.stringify(customers));
+    safeLocalStorageSet('wrikmart_customers_v1', customers);
   }, [customers]);
 
   useEffect(() => {
-    localStorage.setItem('wrikmart_customer_profile', JSON.stringify(customerProfile));
+    safeLocalStorageSet('wrikmart_customer_profile', customerProfile);
   }, [customerProfile]);
 
   useEffect(() => {
-    localStorage.setItem('wrikmart_birthday_settings', JSON.stringify(birthdaySettings));
+    safeLocalStorageSet('wrikmart_birthday_settings', birthdaySettings);
   }, [birthdaySettings]);
+
+  useEffect(() => {
+    safeLocalStorageSet('wrikmart_selected_district', selectedDistrict);
+  }, [selectedDistrict]);
+
+  useEffect(() => {
+    safeLocalStorageSet('wrikmart_preorder_settings', preOrderFormSettings);
+  }, [preOrderFormSettings]);
 
   // Current active agent profile
   const activeAgent = agents.find(a => a.id === activeAgentId) || agents[0];
@@ -1535,6 +1589,11 @@ export const AppProvider = ({ children }) => {
 
   // Update Exchange Rate
   const updateExchangeRate = (currencyCode, newRateFromBDT) => {
+    const rateNum = Number(newRateFromBDT);
+    if (!rateNum || rateNum <= 0 || isNaN(rateNum)) {
+      showToast('Exchange rate must be a valid positive number greater than 0', 'error');
+      return;
+    }
     setExchangeRates(prev => {
       const existing = prev[currencyCode];
       if (!existing) return prev;
@@ -1542,12 +1601,12 @@ export const AppProvider = ({ children }) => {
         ...prev,
         [currencyCode]: {
           ...existing,
-          rateFromBDT: Number(newRateFromBDT),
-          rateToBDT: Number((1 / newRateFromBDT).toFixed(2))
+          rateFromBDT: rateNum,
+          rateToBDT: Number((1 / rateNum).toFixed(4))
         }
       };
     });
-    showToast(`Updated BDT to ${currencyCode} conversion rate to ${newRateFromBDT}`, 'success');
+    showToast(`Updated BDT to ${currencyCode} conversion rate to ${rateNum}`, 'success');
   };
 
   // Add Agent with Full 8 KYC Fields
@@ -1687,12 +1746,18 @@ export const AppProvider = ({ children }) => {
     stockSearchQuery,
     setStockSearchQuery,
     prefilledPreOrder,
-    setPrefilledPreOrder
+    setPrefilledPreOrder,
+    // District Sync & Pre-Order Form Settings
+    selectedDistrict,
+    setSelectedDistrict,
+    preOrderFormSettings,
+    setPreOrderFormSettings
   }), [
     currentRole, customerTab, adminNav, agentTab, activeAgentId, activeAgent,
     orders, agents, hubs, inventory, exchangeRates, expenses, hqExpenses,
     balanceTransfers, chatMessages, toast, cart, isCartOpen, coupons, appliedCoupon,
-    customers, customerProfile, birthdaySettings, stockSearchQuery, prefilledPreOrder
+    customers, customerProfile, birthdaySettings, stockSearchQuery, prefilledPreOrder,
+    selectedDistrict, preOrderFormSettings
   ]);
 
   return (

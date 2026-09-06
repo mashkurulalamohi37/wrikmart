@@ -4,14 +4,14 @@ import { Settings, Copy, Check, Link, Globe, CheckSquare } from 'lucide-react';
 import { CountryFlag } from '../common/CountryFlag';
 
 export const AdminPreOrderSettings = () => {
-  const { showToast } = useApp();
+  const { showToast, preOrderFormSettings, setPreOrderFormSettings } = useApp();
   const [copied, setCopied] = useState(false);
-  const [countries, setCountries] = useState({
+  const [countries, setCountries] = useState(() => preOrderFormSettings?.countries || {
     india: true,
     dubai: true,
     thailand: true
   });
-  const [requiredFields, setRequiredFields] = useState({
+  const [requiredFields, setRequiredFields] = useState(() => preOrderFormSettings?.requiredFields || {
     name: true,
     whatsapp: true,
     address: true,
@@ -25,10 +25,26 @@ export const AdminPreOrderSettings = () => {
   const publicUrl = "https://wrikmart.com/pre-order";
 
   const handleCopyUrl = () => {
-    navigator.clipboard?.writeText(publicUrl);
-    setCopied(true);
-    showToast("Public Pre-Order Form link copied to clipboard!", "success");
-    setTimeout(() => setCopied(false), 2000);
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(publicUrl)
+        .then(() => {
+          setCopied(true);
+          showToast("Public Pre-Order Form link copied to clipboard!", "success");
+          setTimeout(() => setCopied(false), 2000);
+        })
+        .catch(() => {
+          showToast("Could not access clipboard automatically", "warning");
+        });
+    } else {
+      showToast("Clipboard API not supported on this browser.", "warning");
+    }
+  };
+
+  const handleSaveSettings = () => {
+    if (setPreOrderFormSettings) {
+      setPreOrderFormSettings({ countries, requiredFields });
+    }
+    showToast("Pre-Order form settings saved successfully!", "success");
   };
 
   return (
@@ -110,7 +126,7 @@ export const AdminPreOrderSettings = () => {
         </div>
 
         <button
-          onClick={() => showToast("Pre-Order form settings saved successfully!", "success")}
+          onClick={handleSaveSettings}
           className="w-full bg-navy-900 hover:bg-navy-800 text-white font-bold py-3 rounded-xl text-xs transition-colors shadow"
         >
           Save Form Settings

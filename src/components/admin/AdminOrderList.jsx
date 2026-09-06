@@ -47,6 +47,16 @@ export const AdminOrderList = ({ onSelectOrder }) => {
     return true;
   });
 
+  const sanitizeCsvField = (val) => {
+    if (val === null || val === undefined) return '""';
+    let str = String(val);
+    // Neutralize formula injection triggers: =, +, -, @, tab, cr
+    if (/^[=+\-@\t\r]/.test(str)) {
+      str = "'" + str;
+    }
+    return `"${str.replace(/"/g, '""')}"`;
+  };
+
   const exportOrdersToCSV = () => {
     if (filteredOrders.length === 0) {
       showToast('No orders found to export', 'warning');
@@ -54,29 +64,31 @@ export const AdminOrderList = ({ onSelectOrder }) => {
     }
     const headers = ['Order Number', 'Order Type', 'Date', 'Customer Name', 'Phone', 'District', 'Country', 'Assigned Agent', 'Items Count', 'Estimated Total (BDT)', 'Advance Paid (BDT)', 'Status', 'Payment Status'];
     const rows = filteredOrders.map(o => [
-      o.orderNumber,
-      `"${o.orderType || 'Pre-Order'}"`,
-      `"${o.createdAt}"`,
-      `"${o.customer.name}"`,
-      `"${o.customer.phone}"`,
-      `"${o.customer.district || 'Dhaka'}"`,
-      o.country,
-      `"${o.assignedAgentName || 'Unassigned'}"`,
-      o.items.length,
-      o.financials.estimatedTotal,
-      o.financials.advancePaid,
-      o.status,
-      o.paymentStatus
+      sanitizeCsvField(o.orderNumber),
+      sanitizeCsvField(o.orderType || 'Pre-Order'),
+      sanitizeCsvField(o.createdAt),
+      sanitizeCsvField(o.customer?.name),
+      sanitizeCsvField(o.customer?.phone),
+      sanitizeCsvField(o.customer?.district || 'Dhaka'),
+      sanitizeCsvField(o.country),
+      sanitizeCsvField(o.assignedAgentName || 'Unassigned'),
+      Number(o.items?.length || 0),
+      Number(o.financials?.estimatedTotal || 0),
+      Number(o.financials?.advancePaid || 0),
+      sanitizeCsvField(o.status),
+      sanitizeCsvField(o.paymentStatus)
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\r\n');
+    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.href = url;
     link.setAttribute('download', `WrikMart_Orders_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     showToast(`Exported ${filteredOrders.length} orders to CSV!`, 'success');
   };
 

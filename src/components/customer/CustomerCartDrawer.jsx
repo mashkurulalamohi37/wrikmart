@@ -29,11 +29,16 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
     appliedCoupon,
     applyCoupon,
     removeCoupon,
-    setCustomerTab
+    setCustomerTab,
+    selectedDistrict,
+    setSelectedDistrict
   } = useApp();
 
   const [couponInput, setCouponInput] = useState('');
-  const [district, setDistrict] = useState('Dhaka'); // 'Dhaka' | 'Outside Dhaka'
+  const district = selectedDistrict === 'Outside Dhaka' ? 'Outside Dhaka' : 'Dhaka';
+  const setDistrict = (dist) => {
+    if (setSelectedDistrict) setSelectedDistrict(dist);
+  };
 
   if (!isCartOpen) return null;
 
@@ -115,6 +120,7 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
                 onClick={() => setIsCartOpen(false)}
                 className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
                 title="Close Cart"
+                aria-label="Close Cart"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -188,6 +194,7 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
                           onClick={() => removeFromCart(item.id)}
                           className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
                           title="Remove item"
+                          aria-label={`Remove ${item.name} from cart`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -196,6 +203,7 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
                           <button
                             onClick={() => updateCartQuantity(item.id, (item.quantity || 1) - 1)}
                             className="p-1 rounded text-slate-500 hover:bg-slate-100 transition-colors"
+                            aria-label={`Decrease quantity of ${item.name}`}
                           >
                             <Minus className="w-3 h-3" />
                           </button>
@@ -206,6 +214,7 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
                             onClick={() => updateCartQuantity(item.id, (item.quantity || 1) + 1)}
                             disabled={item.quantity >= (item.currentStock || 99)}
                             className="p-1 rounded text-slate-500 hover:bg-slate-100 disabled:opacity-30 transition-colors"
+                            aria-label={`Increase quantity of ${item.name}`}
                           >
                             <Plus className="w-3 h-3" />
                           </button>

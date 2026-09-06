@@ -34,11 +34,20 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
   const totalPurchaseInBDT = Math.round(totalPurchaseInForeign * targetRate);
   
   const grossSellingPrice = order.financials.finalSellingPrice || order.financials.estimatedTotal;
-  const estimatedProfit = grossSellingPrice - totalPurchaseInBDT - order.financials.deliveryCharge;
+  const isProcured = totalPurchaseInForeign > 0;
+  const sourcingCostBDT = isProcured 
+    ? totalPurchaseInBDT 
+    : (order.financials?.agentCostBDT || Math.round((grossSellingPrice - (order.financials?.deliveryCharge || 0)) * 0.75));
+  
+  const logisticsCostBDT = (order.financials?.shippingCostBDT ?? (order.orderType === 'Stock Product' ? 0 : 600)) + (order.financials?.localCourierCostBDT ?? 120);
+
+  const estimatedProfit = !isProcured && order.financials?.grossProfitBDT !== undefined
+    ? order.financials.grossProfitBDT
+    : Math.round(grossSellingPrice - sourcingCostBDT - logisticsCostBDT);
 
   return (
     <div className="fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl sm:rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 animate-scale-in">
+      <div className="bg-white rounded-2xl sm:rounded-3xl max-w-3xl w-full my-auto max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 animate-scale-in">
         {/* Top Sticky Bar */}
         <div className="sticky top-0 bg-white px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 z-10">
           <div className="min-w-0">
@@ -77,12 +86,14 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
               onClick={() => window.print()}
               className="p-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition-colors"
               title="Print Order Sheet"
+              aria-label="Print Order Sheet"
             >
               <Printer className="w-4 h-4" />
             </button>
             <button 
               onClick={onClose}
               className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              aria-label="Close Order Details Modal"
             >
               <X className="w-5 h-5" />
             </button>
@@ -237,14 +248,19 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
                 <span className="text-base font-bold text-amber-300">৳{order.financials.dueAmount.toLocaleString()}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px]">Sourcing Cost (BDT):</span>
-                <span className="text-base font-bold text-cyan-300">৳{totalPurchaseInBDT.toLocaleString()}</span>
+                <span className="text-slate-400 block text-[10px]">
+                  {isProcured ? 'Sourcing Cost (BDT):' : 'Est. Sourcing Cost:'}
+                </span>
+                <span className="text-base font-bold text-cyan-300">
+                  ৳{sourcingCostBDT.toLocaleString()}
+                  {!isProcured && <span className="text-[10px] text-amber-300 font-normal ml-1">(Est.)</span>}
+                </span>
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-1 text-sm font-bold">
               <span className="text-emerald-400 flex items-center gap-1.5">
-                <TrendingUp className="w-4 h-4" /> Estimated Gross Margin / Profit:
+                <TrendingUp className="w-4 h-4" /> {isProcured ? 'Gross Profit Margin:' : 'Est. Gross Margin (Pending Purchase):'}
               </span>
               <span className={`text-base font-extrabold ${estimatedProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                 ৳{estimatedProfit.toLocaleString()}

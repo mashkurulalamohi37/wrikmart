@@ -26,7 +26,7 @@ import { CountryFlag } from '../common/CountryFlag';
 const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
 
 export const PreOrderWizard = ({ onComplete, onCancel }) => {
-  const { createCustomerPreOrder, customerProfile, prefilledPreOrder, setPrefilledPreOrder } = useApp();
+  const { createCustomerPreOrder, customerProfile, prefilledPreOrder, setPrefilledPreOrder, showToast, preOrderFormSettings } = useApp();
 
   // Wizard Steps: 1 (Country & Link), 2 (Product Details), 3 (Cart), 4 (Customer Info), 5 (Review & Pay), 6 (Confirmed)
   const [step, setStep] = useState(1);
@@ -98,6 +98,22 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
     }
   }, [prefilledPreOrder, setPrefilledPreOrder]);
 
+  const allCountriesList = [
+    { name: 'India', key: 'india', subtitle: 'Amazon, Flipkart, Nike, Zara' },
+    { name: 'Dubai', key: 'dubai', subtitle: 'Dubai Mall, Apple, Noon, Sephora' },
+    { name: 'Thailand', key: 'thailand', subtitle: 'Shopee TH, CentralWorld, Siam' }
+  ];
+
+  const availableCountries = allCountriesList.filter(c => 
+    preOrderFormSettings?.countries ? preOrderFormSettings.countries[c.key] !== false : true
+  );
+
+  useEffect(() => {
+    if (availableCountries.length > 0 && !availableCountries.some(c => c.name === country)) {
+      setCountry(availableCountries[0].name);
+    }
+  }, [preOrderFormSettings, country]);
+
   // Items in Order Cart
   const [items, setItems] = useState([
     {
@@ -137,18 +153,28 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
 
   // Add Item to Cart
   const handleAddItemToCart = () => {
-    if (!currentItem.name) return;
+    if (!currentItem.name || !currentItem.name.trim()) {
+      showToast("Please enter a valid product name or title.", "warning");
+      return;
+    }
+    const priceNum = Number(currentItem.expectedPrice || 0);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      showToast("Please enter a valid estimated price greater than ৳0.", "warning");
+      return;
+    }
+    const qtyNum = Math.max(1, Math.floor(Number(currentItem.quantity || 1)));
+
     const newItem = {
       id: `it-${Date.now()}`,
-      name: currentItem.name,
+      name: currentItem.name.trim(),
       url: currentItem.url,
       image: currentItem.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80',
       specs: {
         size: currentItem.size || 'Standard',
         color: currentItem.color || 'Default',
-        unit: Number(currentItem.quantity || 1)
+        unit: qtyNum
       },
-      expectedPrice: Number(currentItem.expectedPrice || 0),
+      expectedPrice: priceNum,
       notes: currentItem.notes
     };
 
@@ -167,6 +193,22 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
     });
 
     setStep(3); // Go to Cart preview
+  };
+
+  const handleProceedToPayment = () => {
+    if (!customerInfo.name || !customerInfo.name.trim()) {
+      showToast("Please enter full recipient name.", "warning");
+      return;
+    }
+    if (!customerInfo.phone || !customerInfo.phone.trim()) {
+      showToast("Please enter a valid mobile / WhatsApp number.", "warning");
+      return;
+    }
+    if (!customerInfo.address || !customerInfo.address.trim()) {
+      showToast("Please enter complete delivery address in Bangladesh.", "warning");
+      return;
+    }
+    setStep(5);
   };
 
   const handleRemoveItem = (id) => {
@@ -263,11 +305,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                 <div>
                   <label className="block text-sm font-bold text-navy-900 mb-2">1. Select Sourcing Country *</label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {[
-                      { name: 'India', subtitle: 'Amazon, Flipkart, Nike, Zara' },
-                      { name: 'Dubai', subtitle: 'Dubai Mall, Apple, Noon, Sephora' },
-                      { name: 'Thailand', subtitle: 'Shopee TH, CentralWorld, Siam' }
-                    ].map((c) => (
+                    {availableCountries.map((c) => (
                       <button
                         key={c.name}
                         type="button"
@@ -301,7 +339,15 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                     />
                     <button
                       type="button"
-                      onClick={() => navigator.clipboard?.readText().then(text => setCurrentItem({ ...currentItem, url: text }))}
+                      onClick={() => {
+                        if (navigator.clipboard?.readText) {
+                          navigator.clipboard.readText()
+                            .then(text => {
+                              if (text) setCurrentItem(prev => ({ ...prev, url: text }));
+                            })
+                            .catch(() => showToast('Unable to read clipboard. Please paste manually.', 'info'));
+                        }
+                      }}
                       className="absolute right-2 top-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors"
                     >
                       Paste
@@ -412,8 +458,9 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                     <div className="flex items-center border border-slate-300 rounded-xl overflow-hidden">
                       <button
                         type="button"
-                        onClick={() => setCurrentItem({ ...currentItem, quantity: Math.max(1, currentItem.quantity - 1) })}
+                        onClick={() => setCurrentItem({ ...currentItem, quantity: Math.max(1, (currentItem.quantity || 1) - 1) })}
                         className="px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 text-sm font-bold"
+                        aria-label="Decrease quantity"
                       >
                         -
                       </button>
@@ -421,13 +468,18 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                         type="number"
                         min="1"
                         value={currentItem.quantity}
-                        onChange={(e) => setCurrentItem({ ...currentItem, quantity: Number(e.target.value) })}
+                        onChange={(e) => {
+                          const v = parseInt(e.target.value, 10);
+                          setCurrentItem({ ...currentItem, quantity: isNaN(v) || v < 1 ? 1 : v });
+                        }}
                         className="w-full text-center py-2.5 text-xs font-bold focus:outline-none"
+                        aria-label="Product quantity"
                       />
                       <button
                         type="button"
-                        onClick={() => setCurrentItem({ ...currentItem, quantity: currentItem.quantity + 1 })}
+                        onClick={() => setCurrentItem({ ...currentItem, quantity: (currentItem.quantity || 1) + 1 })}
                         className="px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 text-sm font-bold"
+                        aria-label="Increase quantity"
                       >
                         +
                       </button>
@@ -438,8 +490,12 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                     <label className="block text-xs font-bold text-navy-900 mb-1">Estimated Price (৳ BDT) *</label>
                     <input
                       type="number"
-                      value={currentItem.expectedPrice}
-                      onChange={(e) => setCurrentItem({ ...currentItem, expectedPrice: Number(e.target.value) })}
+                      min="1"
+                      value={currentItem.expectedPrice || ''}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setCurrentItem({ ...currentItem, expectedPrice: isNaN(val) ? 0 : Math.max(0, val) });
+                      }}
                       placeholder="e.g. 8000"
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-brand-700 focus:ring-2 focus:ring-brand-500"
                     />
@@ -599,7 +655,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
 
                 <button
                   type="button"
-                  onClick={() => setStep(5)}
+                  onClick={handleProceedToPayment}
                   className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 px-4 rounded-xl shadow transition-all flex items-center justify-center gap-2 text-xs"
                 >
                   <span>Proceed to Advance Payment</span>

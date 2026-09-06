@@ -27,7 +27,9 @@ export const AgentHubDeliveryModal = ({ order, onClose }) => {
             </div>
           </div>
           <button 
+            type="button"
             onClick={onClose}
+            aria-label="Close Hub Delivery Modal"
             className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />

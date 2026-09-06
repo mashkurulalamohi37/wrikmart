@@ -8,9 +8,14 @@ export const AgentProductLinkModal = ({ order, onClose }) => {
   if (!order) return null;
 
   const handleCopy = (url, index) => {
-    navigator.clipboard?.writeText(url);
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url)
+        .then(() => {
+          setCopiedIndex(index);
+          setTimeout(() => setCopiedIndex(null), 2000);
+        })
+        .catch(() => {});
+    }
   };
 
   return (
@@ -28,6 +33,7 @@ export const AgentProductLinkModal = ({ order, onClose }) => {
           <button 
             onClick={onClose}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            aria-label="Close Product Sourcing Links Modal"
           >
             <X className="w-5 h-5" />
           </button>

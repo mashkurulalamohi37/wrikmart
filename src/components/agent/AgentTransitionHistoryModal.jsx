@@ -18,7 +18,9 @@ export const AgentTransitionHistoryModal = ({ order, onClose }) => {
             <h3 className="font-bold text-navy-900 text-sm">Order Transition History</h3>
           </div>
           <button 
+            type="button"
             onClick={onClose}
+            aria-label="Close Transition History Modal"
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />

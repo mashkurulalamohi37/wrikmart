@@ -36,7 +36,9 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
     setCustomerTab,
     customerProfile,
     showToast,
-    clearCart
+    clearCart,
+    selectedDistrict,
+    setSelectedDistrict
   } = useApp();
 
   // Form State
@@ -44,7 +46,7 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
     name: customerProfile?.name || 'Rahim Chowdhury',
     phone: customerProfile?.phone || '+880 1712-345678',
     email: customerProfile?.email || 'rahim.c@example.com',
-    district: customerProfile?.district || 'Dhaka',
+    district: selectedDistrict === 'Outside Dhaka' ? 'Chittagong' : (customerProfile?.district || 'Dhaka'),
     address: customerProfile?.address || 'House 12, Road 5, Dhanmondi, Dhaka-1205',
     dateOfBirth: customerProfile?.dateOfBirth || '',
     note: 'Please call 30 minutes before arrival.'
@@ -68,20 +70,31 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
     }
   }, [isOpen]);
 
-  // Sync customer details from profile when opened
+  // Sync customer details from profile when opened, respecting selectedDistrict
   useEffect(() => {
-    if (isOpen && customerProfile) {
-      setCustomerInfo(prev => ({
-        name: customerProfile.name || prev.name || 'Rahim Chowdhury',
-        phone: customerProfile.phone || prev.phone || '+880 1712-345678',
-        email: customerProfile.email || prev.email || 'rahim.c@example.com',
-        district: customerProfile.district || prev.district || 'Dhaka',
-        address: customerProfile.address || prev.address || 'House 12, Road 5, Dhanmondi, Dhaka-1205',
-        dateOfBirth: customerProfile.dateOfBirth || prev.dateOfBirth || '',
-        note: prev.note || 'Please call 30 minutes before arrival.'
-      }));
+    if (isOpen) {
+      setCustomerInfo(prev => {
+        let initialDistrict = prev.district;
+        if (selectedDistrict === 'Outside Dhaka' && prev.district === 'Dhaka') {
+          initialDistrict = 'Chittagong';
+        } else if (selectedDistrict === 'Dhaka' && prev.district !== 'Dhaka') {
+          initialDistrict = 'Dhaka';
+        } else if (customerProfile?.district) {
+          initialDistrict = customerProfile.district;
+        }
+
+        return {
+          name: customerProfile?.name || prev.name || 'Rahim Chowdhury',
+          phone: customerProfile?.phone || prev.phone || '+880 1712-345678',
+          email: customerProfile?.email || prev.email || 'rahim.c@example.com',
+          district: initialDistrict,
+          address: customerProfile?.address || prev.address || 'House 12, Road 5, Dhanmondi, Dhaka-1205',
+          dateOfBirth: customerProfile?.dateOfBirth || prev.dateOfBirth || '',
+          note: prev.note || 'Please call 30 minutes before arrival.'
+        };
+      });
     }
-  }, [isOpen, customerProfile]);
+  }, [isOpen, customerProfile, selectedDistrict]);
 
   if (!isOpen) return null;
 
@@ -220,6 +233,7 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
             onClick={handleClose}
             className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
             title="Close"
+            aria-label="Close Checkout Modal"
           >
             <X className="w-4 h-4" />
           </button>
@@ -397,7 +411,13 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
                     <label className="block text-slate-700 font-bold mb-1">Delivery District *</label>
                     <select
                       value={customerInfo.district}
-                      onChange={(e) => setCustomerInfo({ ...customerInfo, district: e.target.value })}
+                      onChange={(e) => {
+                        const newDist = e.target.value;
+                        setCustomerInfo(prev => ({ ...prev, district: newDist }));
+                        if (setSelectedDistrict) {
+                          setSelectedDistrict(newDist === 'Dhaka' ? 'Dhaka' : 'Outside Dhaka');
+                        }
+                      }}
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none font-medium"
                     >
                       <option value="Dhaka">Dhaka (৳80 Courier Delivery)</option>

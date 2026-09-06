@@ -134,8 +134,13 @@ export const AdminCustomerManagement = () => {
       .replace('{discount}', discountText)
       .replace('{code}', code);
 
-    navigator.clipboard.writeText(message);
-    showToast('Birthday wish message & coupon code copied to clipboard!', 'success');
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(message)
+        .then(() => showToast('Birthday wish message & coupon code copied to clipboard!', 'success'))
+        .catch(() => showToast('Could not access clipboard automatically. Please copy manually.', 'warning'));
+    } else {
+      showToast('Clipboard API not supported on this browser.', 'warning');
+    }
   };
 
   // Save Settings

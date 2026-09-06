@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../../context/AppContext';
 import { 
   Package, 
@@ -534,14 +535,20 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
       )}
 
       {/* 5. Quick View / Product Detail Modal */}
-      {selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/70 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 relative max-h-[90vh] overflow-y-auto space-y-6">
+      {selectedProduct && createPortal(
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-navy-950/80 backdrop-blur-sm animate-fade-in overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedProduct(null);
+          }}
+        >
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-8 shadow-2xl border border-slate-200 relative my-auto max-h-[92vh] overflow-y-auto space-y-6">
             
             {/* Close Button */}
             <button
               onClick={() => setSelectedProduct(null)}
-              className="absolute top-5 right-5 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
+              aria-label="Close product details"
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors z-10"
             >
               <X className="w-4 h-4" />
             </button>
@@ -673,7 +680,8 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
