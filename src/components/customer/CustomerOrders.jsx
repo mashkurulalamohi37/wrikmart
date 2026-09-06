@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { CountryFlag } from '../common/CountryFlag';
 
+const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
+
 export const CustomerOrders = ({ onNewOrder }) => {
   const { orders } = useApp();
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -108,7 +110,15 @@ export const CustomerOrders = ({ onNewOrder }) => {
                 <div className="space-y-2 mb-4">
                   {order.items.map((item) => (
                     <div key={item.id} className="flex items-center gap-3 p-2 rounded-xl bg-slate-50/70 border border-slate-100">
-                      <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-lg border flex-shrink-0" />
+                      <img 
+                        src={item.image} 
+                        alt={item.name} 
+                        className="w-12 h-12 object-cover rounded-lg border flex-shrink-0" 
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                        }}
+                      />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-navy-900 truncate">{item.name}</p>
                         <p className="text-[10px] text-slate-400">Qty: {item.specs.unit} • Size: {item.specs.size}</p>

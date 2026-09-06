@@ -50,11 +50,18 @@ export const AppProvider = ({ children }) => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Merge with INITIAL_STOCK_INVENTORY so newly added items and fields are present
+        // Merge with INITIAL_STOCK_INVENTORY so newly added items, updated images and fields are present
         const existingIds = new Set(parsed.map(p => p.id));
         const enriched = parsed.map(item => {
           const initial = INITIAL_STOCK_INVENTORY.find(i => i.id === item.id);
-          return initial ? { ...initial, ...item, image: item.image || initial.image, description: item.description || initial.description, originalMrp: item.originalMrp || initial.originalMrp } : item;
+          // Prefer initial.image so updated/fixed product images always propagate over stale broken localStorage strings
+          return initial ? { 
+            ...initial, 
+            ...item, 
+            image: initial.image || item.image, 
+            description: item.description || initial.description, 
+            originalMrp: item.originalMrp || initial.originalMrp 
+          } : item;
         });
         INITIAL_STOCK_INVENTORY.forEach(initialItem => {
           if (!existingIds.has(initialItem.id)) {
@@ -71,7 +78,13 @@ export const AppProvider = ({ children }) => {
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem('wrikmart_cart');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
+      try { 
+        const parsed = JSON.parse(saved); 
+        return parsed.map(cItem => {
+          const invMatch = INITIAL_STOCK_INVENTORY.find(i => i.id === cItem.id);
+          return invMatch ? { ...cItem, image: invMatch.image || cItem.image } : cItem;
+        });
+      } catch (e) {}
     }
     return [];
   });
@@ -1133,7 +1146,7 @@ export const AppProvider = ({ children }) => {
             mrp: Number(match.mrp || it.mrp || 0),
             purchasedFrom: match.purchasedFrom || it.purchasedFrom || 'Official Store',
             purchaseDate: new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-            receiptImage: match.receiptImage || it.receiptImage || 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+            receiptImage: match.receiptImage || it.receiptImage || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
             notes: match.notes || it.notes
           };
         });
@@ -1283,7 +1296,7 @@ export const AppProvider = ({ children }) => {
       date: date || new Date().toISOString().split('T')[0],
       paymentMethod: 'Agent Cash/Card',
       status: 'Pending',
-      receiptImage: receiptImage || 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+      receiptImage: receiptImage || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
       notes
     };
 
@@ -1312,7 +1325,7 @@ export const AppProvider = ({ children }) => {
       billingFrequency: 'One-off Expense',
       vatTaxDeduction: 0,
       approvedBy: 'Super Administrator',
-      voucherScanUrl: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+      voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
       ...expenseData,
       amount: Number(expenseData.amount || 0)
     };
@@ -1340,7 +1353,7 @@ export const AppProvider = ({ children }) => {
       status: item.status || 'Paid',
       billingFrequency: 'Monthly Recurring',
       vatTaxDeduction: Math.round(Number(item.amount) * 0.05),
-      voucherScanUrl: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+      voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
       approvedBy: 'Super Administrator',
       notes: `Auto-generated standard recurring overhead for ${monthYear}`
     }));
@@ -1409,7 +1422,7 @@ export const AppProvider = ({ children }) => {
       govtDocument: {
         type: newAgentData.docType || newAgentData.govtDocument?.type || (newAgentData.country === 'India' ? 'Aadhaar Card' : newAgentData.country === 'Dubai' ? 'Emirates ID' : 'Thai National ID'),
         number: newAgentData.docNumber || newAgentData.govtDocument?.number || 'ID-VERIFIED-2026',
-        documentUrl: newAgentData.docUrl || newAgentData.govtDocument?.documentUrl || 'https://images.unsplash.com/photo-1633409381659-3b954d7e974e?w=500&auto=format&fit=crop&q=80',
+        documentUrl: newAgentData.docUrl || newAgentData.govtDocument?.documentUrl || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=500&auto=format&fit=crop&q=80',
         verified: true
       },
       balance: Number(newAgentData.initialBalance || 0),

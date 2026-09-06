@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { CountryFlag } from '../common/CountryFlag';
 
+const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
+
 export const AdminOrderDetailModal = ({ order, onClose }) => {
   const { exchangeRates } = useApp();
   const [showDamageModal, setShowDamageModal] = useState(false);
@@ -177,7 +179,15 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
                   {order.items.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50">
                       <td className="p-3 flex items-center gap-3">
-                        <img src={item.image} alt={item.name} className="w-10 h-10 object-cover rounded-lg border flex-shrink-0" />
+                        <img 
+                          src={item.image} 
+                          alt={item.name} 
+                          className="w-10 h-10 object-cover rounded-lg border flex-shrink-0" 
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                          }}
+                        />
                         <div>
                           <span className="font-bold text-navy-900 block">{item.name}</span>
                           <span className="text-[10px] text-slate-400">{item.brand || 'Original Brand'} • {item.category || 'General'}</span>

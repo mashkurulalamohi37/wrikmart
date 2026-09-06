@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { BKashLogo, NagadLogo, VisaLogo, MastercardLogo } from '../common/PaymentLogos';
 
+const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
+
 export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) => {
   const { 
     cart = [], 
@@ -337,7 +339,15 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
                   {cart.map(item => (
                     <div key={item.id} className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <img src={item.image} alt={item.name} className="w-9 h-9 rounded-lg object-cover flex-shrink-0 bg-white border border-slate-200" />
+                        <img 
+                          src={item.image} 
+                          alt={item.name} 
+                          className="w-9 h-9 rounded-lg object-cover flex-shrink-0 bg-white border border-slate-200" 
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                          }}
+                        />
                         <div className="min-w-0">
                           <span className="font-semibold text-navy-900 truncate block">{item.name}</span>
                           <span className="text-[10px] text-slate-400">Qty: {item.quantity || 1} • {item.brand}</span>

@@ -23,6 +23,8 @@ import {
 import { BKashLogo, NagadLogo, VisaLogo, MastercardLogo } from '../common/PaymentLogos';
 import { CountryFlag } from '../common/CountryFlag';
 
+const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
+
 export const PreOrderWizard = ({ onComplete, onCancel }) => {
   const { createCustomerPreOrder, customerProfile, prefilledPreOrder, setPrefilledPreOrder } = useApp();
 
@@ -312,7 +314,15 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                   <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-brand-500 transition-colors bg-slate-50">
                     {currentItem.image ? (
                       <div className="flex items-center justify-center gap-4">
-                        <img src={currentItem.image} alt="Preview" className="w-16 h-16 object-cover rounded-xl border shadow-sm" />
+                        <img 
+                          src={currentItem.image} 
+                          alt="Preview" 
+                          className="w-16 h-16 object-cover rounded-xl border shadow-sm" 
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                          }}
+                        />
                         <div className="text-left">
                           <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Product Image Attached
@@ -345,7 +355,15 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
             {step === 2 && (
               <div className="space-y-5">
                 <div className="bg-brand-50/60 p-4 rounded-2xl border border-brand-200 flex items-center gap-4">
-                  <img src={currentItem.image} alt="Preview" className="w-16 h-16 object-cover rounded-xl border" />
+                  <img 
+                    src={currentItem.image} 
+                    alt="Preview" 
+                    className="w-16 h-16 object-cover rounded-xl border" 
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                    }}
+                  />
                   <div className="flex-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-brand-700">{country} Pre-Order</span>
                     <h4 className="font-extrabold text-base text-navy-900">{currentItem.name || 'Custom Product'}</h4>

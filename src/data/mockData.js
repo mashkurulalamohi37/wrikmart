@@ -25,7 +25,7 @@ export const INITIAL_AGENTS = [
     govtDocument: {
       type: 'Aadhaar Card',
       number: '4892-3819-0192',
-      documentUrl: 'https://images.unsplash.com/photo-1633409381659-3b954d7e974e?w=500&auto=format&fit=crop&q=80',
+      documentUrl: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=500&auto=format&fit=crop&q=80',
       verified: true
     },
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
@@ -437,7 +437,7 @@ export const INITIAL_STOCK_INVENTORY = [
     velocity: 'Fast-Moving',
     status: 'In Stock',
     warehouse: 'Dhaka Main Hub',
-    image: 'https://images.unsplash.com/photo-1608248597359-25332f1ea30c?w=600&auto=format&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?w=600&auto=format&fit=crop&q=80',
     description: 'Cult Korean skincare favorite formulated with 96.3% Snail Secretion Filtrate to hydrate, soothe, and repair skin barrier without heaviness.',
     rating: 4.9,
     reviewsCount: 84,
@@ -710,7 +710,7 @@ export const INITIAL_ORDERS = [
         mrp: 8500,
         purchasedFrom: 'Nike India Official Store',
         purchaseDate: '2026-05-12 04:15 PM',
-        receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+        receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
         notes: 'Original box with seal intact.'
       },
       {
@@ -727,7 +727,7 @@ export const INITIAL_ORDERS = [
         mrp: 3000,
         purchasedFrom: 'Adidas Ambience Mall Delhi',
         purchaseDate: '2026-05-12 05:00 PM',
-        receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+        receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
         notes: 'Water resistant edition.'
       }
     ],
@@ -804,7 +804,7 @@ export const INITIAL_ORDERS = [
         mrp: 999,
         purchasedFrom: 'Apple Store Dubai Mall',
         purchaseDate: '2026-05-11 06:40 PM',
-        receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+        receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
         notes: 'Serial verified with 1-year Apple care.'
       }
     ],
@@ -881,7 +881,7 @@ export const INITIAL_ORDERS = [
         mrp: 3200,
         purchasedFrom: 'CentralWorld Bangkok',
         purchaseDate: '2026-05-10 01:20 PM',
-        receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+        receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
         notes: 'Manufacture date April 2026'
       }
     ],
@@ -958,7 +958,7 @@ export const INITIAL_ORDERS = [
         mrp: 1549,
         purchasedFrom: 'Sharaf DG Dubai',
         purchaseDate: '2026-05-02 11:30 AM',
-        receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+        receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
         notes: 'UAE Official Warranty'
       }
     ],
@@ -1045,7 +1045,7 @@ export const INITIAL_ORDERS = [
         mrp: 5200,
         purchasedFrom: 'Forest Essentials Select Citywalk',
         purchaseDate: '2026-05-09 03:00 PM',
-        receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+        receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
         notes: 'Cracked during air transit inspection.'
       }
     ],
@@ -1128,7 +1128,7 @@ export const INITIAL_ORDERS = [
         mrp: 6990,
         purchasedFrom: 'Zara Ambience Mall',
         purchaseDate: '2026-05-07 02:40 PM',
-        receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+        receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
         notes: 'Returned to store for replacement.'
       }
     ],
@@ -1200,7 +1200,7 @@ export const INITIAL_ORDERS = [
         mrp: 16500,
         purchasedFrom: 'Dhaka Warehouse Local Stock',
         purchaseDate: '2026-05-10 10:00 AM',
-        receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+        receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
         notes: 'Dispatched directly from local Dhaka inventory'
       }
     ],
@@ -1228,7 +1228,7 @@ export const INITIAL_EXPENSES = [
     date: '2026-05-12',
     paymentMethod: 'Agent Cash/Card',
     status: 'Approved',
-    receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+    receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
     notes: 'Metro & auto fare to Nike Flagship Connaught Place'
   },
   {
@@ -1243,7 +1243,7 @@ export const INITIAL_EXPENSES = [
     date: '2026-05-11',
     paymentMethod: 'Agent Cash',
     status: 'Approved',
-    receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+    receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
     notes: 'Export grade bubble wrap & sturdy cartons'
   },
   {
@@ -1258,7 +1258,7 @@ export const INITIAL_EXPENSES = [
     date: '2026-05-10',
     paymentMethod: 'Fuel Card',
     status: 'Pending',
-    receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+    receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
     notes: 'Enoc petrol station refill for delivery trips'
   }
 ];
@@ -1350,7 +1350,7 @@ export const INITIAL_HQ_EXPENSES = [
     status: 'Paid',
     billingFrequency: 'Monthly Recurring',
     vatTaxDeduction: 4250,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
     approvedBy: 'Managing Director',
     notes: 'Floor 4, House 42, Road 11, Banani, Dhaka-1213. Monthly commercial office lease.'
   },
@@ -1368,7 +1368,7 @@ export const INITIAL_HQ_EXPENSES = [
     status: 'Paid',
     billingFrequency: 'Monthly Recurring',
     vatTaxDeduction: 2250,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
     approvedBy: 'Operations Director',
     notes: 'Tejgaon I/A storage, packing floor and dispatch bay facility rent.'
   },
@@ -1386,7 +1386,7 @@ export const INITIAL_HQ_EXPENSES = [
     status: 'Paid',
     billingFrequency: 'Monthly Recurring',
     vatTaxDeduction: 0,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
     approvedBy: 'Managing Director',
     notes: 'Software developers, UI designer, accounts executive & operations lead.'
   },
@@ -1404,7 +1404,7 @@ export const INITIAL_HQ_EXPENSES = [
     status: 'Paid',
     billingFrequency: 'Monthly Recurring',
     vatTaxDeduction: 0,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
     approvedBy: 'HR & Accounts',
     notes: '24/7 pre-order tracking agents and package quality inspection crew.'
   },
@@ -1422,7 +1422,7 @@ export const INITIAL_HQ_EXPENSES = [
     status: 'Paid',
     billingFrequency: 'Monthly Recurring',
     vatTaxDeduction: 990,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
     approvedBy: 'Admin Executive',
     notes: 'Meter #20918239, 3-phase commercial billing for office air conditioning and warehouse lighting.'
   },
@@ -1440,7 +1440,7 @@ export const INITIAL_HQ_EXPENSES = [
     status: 'Paid',
     billingFrequency: 'Monthly Recurring',
     vatTaxDeduction: 425,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
     approvedBy: 'Admin Executive',
     notes: 'Primary 100Mbps dedicated duplex link with warehouse backup connection.'
   },
@@ -1458,7 +1458,7 @@ export const INITIAL_HQ_EXPENSES = [
     status: 'Paid',
     billingFrequency: 'Ad-hoc Batch',
     vatTaxDeduction: 1625,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
     approvedBy: 'Operations Director',
     notes: '3,000 WrikMart branded tamper-evident flyer bags, 10 rolls 100m bubble wrap, 500 corrugated boxes.'
   },
@@ -1476,7 +1476,7 @@ export const INITIAL_HQ_EXPENSES = [
     status: 'Paid',
     billingFrequency: 'Bi-Weekly Ad Spend',
     vatTaxDeduction: 9750,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
     approvedBy: 'Growth Lead',
     notes: 'Acquisition campaigns for Nike India sneakers and Dubai Apple pre-orders.'
   },
@@ -1494,7 +1494,7 @@ export const INITIAL_HQ_EXPENSES = [
     status: 'Paid',
     billingFrequency: 'Monthly Recurring',
     vatTaxDeduction: 2130,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
     approvedBy: 'Tech Lead',
     notes: 'EC2, RDS Postgres, S3 image storage & CDN acceleration.'
   },
@@ -1512,7 +1512,7 @@ export const INITIAL_HQ_EXPENSES = [
     status: 'Pending',
     billingFrequency: 'Monthly Recurring',
     vatTaxDeduction: 0,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
     approvedBy: 'Admin Officer',
     notes: '60 Litres Diesel for warehouse power backup and monthly water utility supply bill.'
   }

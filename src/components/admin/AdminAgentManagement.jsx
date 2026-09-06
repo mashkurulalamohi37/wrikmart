@@ -420,7 +420,7 @@ export const AdminAgentManagement = () => {
                     />
                     <button
                       type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, docUrl: 'https://images.unsplash.com/photo-1633409381659-3b954d7e974e?w=500&auto=format&fit=crop&q=80' }))}
+                      onClick={() => setFormData(prev => ({ ...prev, docUrl: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=500&auto=format&fit=crop&q=80' }))}
                       className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-[11px] flex items-center gap-1"
                     >
                       <Upload className="w-3.5 h-3.5" />

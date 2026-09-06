@@ -32,7 +32,7 @@ export const AdminHqExpenseModal = ({ onClose, initialData = null }) => {
     billingFrequency: initialData?.billingFrequency || 'Monthly Recurring',
     vatTaxDeduction: initialData?.vatTaxDeduction || '',
     approvedBy: initialData?.approvedBy || 'Super Administrator',
-    voucherScanUrl: initialData?.voucherScanUrl || 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+    voucherScanUrl: initialData?.voucherScanUrl || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
     notes: initialData?.notes || ''
   });
 

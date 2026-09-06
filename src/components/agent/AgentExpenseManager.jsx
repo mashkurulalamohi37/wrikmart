@@ -11,7 +11,7 @@ export const AgentExpenseManager = () => {
     amount: '',
     date: new Date().toISOString().split('T')[0],
     notes: '',
-    receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80'
+    receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80'
   });
 
   const agentExpenses = expenses.filter(e => e.agentId === activeAgent.id);
@@ -30,7 +30,7 @@ export const AgentExpenseManager = () => {
       amount: '',
       date: new Date().toISOString().split('T')[0],
       notes: '',
-      receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80'
+      receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80'
     });
     setShowAddForm(false);
   };

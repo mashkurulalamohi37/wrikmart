@@ -15,6 +15,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 
+const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
+
 export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
   const { 
     cart, 
@@ -154,6 +156,10 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
                           src={item.image}
                           alt={item.name}
                           className="w-full h-full object-cover object-center"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                          }}
                         />
                       </div>
 

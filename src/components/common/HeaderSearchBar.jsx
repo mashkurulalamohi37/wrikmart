@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { CountryFlag } from './CountryFlag';
 
+const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
+
 export const HeaderSearchBar = ({ isMobile = false }) => {
   const { 
     inventory = [], 
@@ -301,6 +303,10 @@ export const HeaderSearchBar = ({ isMobile = false }) => {
                               src={product.image}
                               alt={product.name}
                               className="w-11 h-11 rounded-lg object-cover bg-slate-800 border border-slate-700/60 flex-shrink-0 group-hover:scale-105 transition-transform"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                              }}
                             />
                             <div className="min-w-0">
                               <p className="text-xs font-bold text-white group-hover:text-brand-300 transition-colors truncate">
