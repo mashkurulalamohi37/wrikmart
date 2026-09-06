@@ -84,24 +84,24 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
         onClick={() => setIsCartOpen(false)}
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between">
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10 pointer-events-none">
+        <div className="w-full sm:w-[440px] max-w-full sm:max-w-md bg-white shadow-2xl flex flex-col justify-between overflow-hidden pointer-events-auto">
           
           {/* 1. Header */}
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold">
+          <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold flex-shrink-0">
                 <ShoppingBag className="w-4 h-4" />
               </div>
-              <div>
-                <h2 className="font-extrabold text-base text-navy-900">Your Cart</h2>
+              <div className="min-w-0">
+                <h2 className="font-extrabold text-base text-navy-900 truncate">Your Cart</h2>
                 <p className="text-[11px] text-slate-400">
                   {cart.length} item{cart.length !== 1 ? 's' : ''} in stock
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               {cart.length > 0 && (
                 <button
                   onClick={clearCart}
@@ -114,6 +114,7 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
               <button
                 onClick={() => setIsCartOpen(false)}
                 className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
+                title="Close Cart"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -121,7 +122,7 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
           </div>
 
           {/* 2. Body / Cart Items List */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 space-y-3.5 sm:space-y-4">
             {cart.length === 0 ? (
               <div className="py-16 text-center space-y-4">
                 <div className="w-16 h-16 rounded-3xl bg-slate-100 mx-auto flex items-center justify-center text-slate-300">
@@ -148,10 +149,10 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
                   return (
                     <div
                       key={item.id}
-                      className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex gap-3.5 items-center justify-between"
+                      className="p-3 sm:p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex gap-2.5 sm:gap-3.5 items-center justify-between"
                     >
                       {/* Product Thumbnail */}
-                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-white border border-slate-200 flex-shrink-0">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-white border border-slate-200 flex-shrink-0">
                         <img
                           src={item.image}
                           alt={item.name}
@@ -164,14 +165,14 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
                       </div>
 
                       {/* Product Info */}
-                      <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex-1 min-w-0 space-y-0.5 sm:space-y-1">
                         <span className="text-[10px] font-bold text-brand-600 uppercase block truncate">
                           {item.brand}
                         </span>
                         <h4 className="font-bold text-xs text-navy-900 truncate" title={item.name}>
                           {item.name}
                         </h4>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                           <span className="text-xs font-extrabold text-slate-800">
                             ৳{item.sellingPrice.toLocaleString()}
                           </span>
@@ -182,7 +183,7 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
                       </div>
 
                       {/* Quantity Adjuster & Remove */}
-                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      <div className="flex flex-col items-end gap-1.5 sm:gap-2 flex-shrink-0">
                         <button
                           onClick={() => removeFromCart(item.id)}
                           className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
@@ -198,7 +199,7 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
                           >
                             <Minus className="w-3 h-3" />
                           </button>
-                          <span className="px-2 text-xs font-extrabold text-slate-800 min-w-[20px] text-center">
+                          <span className="px-1.5 sm:px-2 text-xs font-extrabold text-slate-800 min-w-[18px] text-center">
                             {item.quantity}
                           </span>
                           <button
@@ -219,7 +220,7 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
             {/* Promo / Coupon Code Section */}
             {cart.length > 0 && (
               <div className="pt-3 border-t border-slate-100 space-y-2.5">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-1">
                   <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                     <Tag className="w-3.5 h-3.5 text-brand-600" />
                     Coupon Code / Promo Voucher
@@ -254,13 +255,13 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
                         type="text"
                         value={couponInput}
                         onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                        placeholder="Enter coupon code (e.g. WRIK10)..."
-                        className="flex-1 px-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-brand-500 font-bold"
+                        placeholder="Enter code (e.g. WRIK10)..."
+                        className="flex-1 min-w-0 px-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-brand-500 font-bold"
                       />
                       <button
                         onClick={() => handleApplyCoupon()}
                         disabled={!couponInput.trim()}
-                        className="px-4 py-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-40 text-white font-bold text-xs rounded-xl transition-all shadow-sm"
+                        className="px-3.5 sm:px-4 py-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-40 text-white font-bold text-xs rounded-xl transition-all shadow-sm flex-shrink-0"
                       >
                         Apply
                       </button>
@@ -290,15 +291,15 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
 
             {/* Delivery Destination Selector */}
             {cart.length > 0 && (
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+              <div className="pt-2.5 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
                 <span className="text-slate-600 font-semibold flex items-center gap-1.5">
                   <Truck className="w-3.5 h-3.5 text-slate-400" />
                   Delivery Destination:
                 </span>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto">
                   <button
                     onClick={() => setDistrict('Dhaka')}
-                    className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all ${
+                    className={`flex-1 sm:flex-initial px-2.5 py-1.5 rounded-lg font-bold text-[11px] transition-all text-center ${
                       district === 'Dhaka'
                         ? 'bg-brand-600 text-white shadow-2xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -308,7 +309,7 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
                   </button>
                   <button
                     onClick={() => setDistrict('Outside Dhaka')}
-                    className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all ${
+                    className={`flex-1 sm:flex-initial px-2.5 py-1.5 rounded-lg font-bold text-[11px] transition-all text-center ${
                       district === 'Outside Dhaka'
                         ? 'bg-brand-600 text-white shadow-2xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -323,22 +324,22 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
 
           {/* Footer & Checkout CTA */}
           {cart.length > 0 && (
-            <div className="p-5 border-t border-slate-100 bg-slate-50 space-y-4">
+            <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50 space-y-3 sm:space-y-4">
               {/* Summary Rows */}
               <div className="space-y-1.5 text-xs text-slate-600">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span>Subtotal:</span>
                   <span className="font-bold text-slate-800">৳{subtotal.toLocaleString()}</span>
                 </div>
 
                 {discountAmount > 0 && (
-                  <div className="flex justify-between text-emerald-600 font-bold">
+                  <div className="flex justify-between items-center text-emerald-600 font-bold">
                     <span>Coupon Savings ({appliedCoupon?.code}):</span>
                     <span>-৳{discountAmount.toLocaleString()}</span>
                   </div>
                 )}
 
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span>Delivery ({district}):</span>
                   <span className="font-bold text-slate-800">
                     {effectiveDeliveryFee === 0 ? (
@@ -349,10 +350,10 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
                   </span>
                 </div>
 
-                <div className="pt-2 border-t border-slate-200 flex justify-between items-baseline">
+                <div className="pt-2 border-t border-slate-200 flex justify-between items-baseline gap-2">
                   <span className="font-extrabold text-sm text-navy-900">Total Payable:</span>
                   <div className="text-right">
-                    <span className="font-extrabold text-xl text-brand-600">
+                    <span className="font-extrabold text-lg sm:text-xl text-brand-600">
                       ৳{grandTotal.toLocaleString()}
                     </span>
                     <span className="block text-[10px] text-slate-400">VAT & Delivery Included</span>
