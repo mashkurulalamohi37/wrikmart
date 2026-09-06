@@ -338,34 +338,40 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
               step: '01',
               title: 'Paste Link & Specs',
               desc: 'Select country (India, Dubai, or Thailand) and submit product link, size, color and quantity.',
-              icon: <ShoppingBag className="w-5 h-5 text-brand-600" />
+              icon: <ShoppingBag className="w-5 h-5 text-brand-600" />,
+              color: 'text-brand-600'
             },
             {
               step: '02',
               title: 'Pay 25% Advance',
               desc: 'Confirm your order by paying 25% advance safely through bKash, Nagad, or Debit/Credit Card.',
-              icon: <ShieldCheck className="w-5 h-5 text-emerald-600" />
+              icon: <ShieldCheck className="w-5 h-5 text-emerald-600" />,
+              color: 'text-emerald-600'
             },
             {
               step: '03',
               title: 'Agent Buys & Receipts',
               desc: 'Our local on-ground agent purchases the product, records the exact store MRP, and sends it to our cargo hub.',
-              icon: <Zap className="w-5 h-5 text-purple-600" />
+              icon: <Zap className="w-5 h-5 text-purple-600" />,
+              color: 'text-purple-600'
             },
             {
               step: '04',
               title: 'Doorstep Delivery',
               desc: 'Air shipped to Dhaka, cleared through customs, and delivered to your home with live tracking.',
-              icon: <Truck className="w-5 h-5 text-cyan-600" />
+              icon: <Truck className="w-5 h-5 text-cyan-600" />,
+              color: 'text-cyan-600'
             }
           ].map((st, i) => (
-            <div key={i} className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 relative space-y-2">
-              <span className="font-extrabold text-2xl text-slate-300 font-mono block">{st.step}</span>
-              <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center mb-2">
+            <div key={i} className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 relative space-y-2 hover:shadow-card hover:border-slate-300 transition-all">
+              <span className={`font-black text-2xl font-mono block tracking-tight ${st.color}`}>
+                {st.step}
+              </span>
+              <div className="w-10 h-10 rounded-xl bg-white shadow-xs border border-slate-200/60 flex items-center justify-center mb-2">
                 {st.icon}
               </div>
               <h3 className="font-bold text-sm text-navy-900">{st.title}</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">{st.desc}</p>
+              <p className="text-xs text-slate-600 leading-relaxed">{st.desc}</p>
             </div>
           ))}
         </div>
