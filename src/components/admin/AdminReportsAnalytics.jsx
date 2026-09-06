@@ -30,7 +30,7 @@ import {
 import { CountryFlag } from '../common/CountryFlag';
 
 export const AdminReportsAnalytics = () => {
-  const { orders, agents, hubs, inventory, expenses, balanceTransfers, showToast } = useApp();
+  const { orders, agents, hubs, inventory, expenses, hqExpenses = [], balanceTransfers, showToast } = useApp();
   
   // 10 Report Categories
   const [activeReportTab, setActiveReportTab] = useState('sales');
@@ -50,7 +50,10 @@ export const AdminReportsAnalytics = () => {
   const totalAgentPurchaseCost = orders.reduce((sum, o) => sum + (o.financials?.agentCostBDT || Math.round((o.financials?.estimatedSubtotal || 0) * 0.75)), 0);
   const totalShippingCost = orders.reduce((sum, o) => sum + (o.financials?.shippingCostBDT || 600), 0);
   const totalLocalCourierCost = orders.reduce((sum, o) => sum + (o.financials?.localCourierCostBDT || 120), 0);
-  const totalExpensesAmount = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  
+  const totalAgentExpensesAmount = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  const totalHqExpensesAmount = hqExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  const totalExpensesAmount = totalAgentExpensesAmount + totalHqExpensesAmount;
   const totalRefundsAmount = damagedOrders.reduce((sum, o) => sum + (o.damageDetails?.refundAmount || 0), 0);
 
   const grossProfit = grossRevenue - totalAgentPurchaseCost - totalShippingCost - totalLocalCourierCost;
@@ -406,7 +409,7 @@ export const AdminReportsAnalytics = () => {
             <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">
               Cross-Border Operational Cost Breakdown
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                 <span className="text-slate-400 text-[10px] font-bold uppercase block">Agent Sourcing Cost</span>
                 <span className="text-base font-bold text-navy-900 mt-1 block">৳{totalAgentPurchaseCost.toLocaleString()}</span>
@@ -420,8 +423,12 @@ export const AdminReportsAnalytics = () => {
                 <span className="text-base font-bold text-navy-900 mt-1 block">৳{totalLocalCourierCost.toLocaleString()}</span>
               </div>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <span className="text-slate-400 text-[10px] font-bold uppercase block">Agent Expenses & Overheads</span>
-                <span className="text-base font-bold text-amber-600 mt-1 block">৳{totalExpensesAmount.toLocaleString()}</span>
+                <span className="text-slate-400 text-[10px] font-bold uppercase block">Overseas Agent Claims</span>
+                <span className="text-base font-bold text-purple-700 mt-1 block">৳{totalAgentExpensesAmount.toLocaleString()}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-slate-400 text-[10px] font-bold uppercase block">HQ Bangladesh OPEX</span>
+                <span className="text-base font-bold text-amber-600 mt-1 block">৳{totalHqExpensesAmount.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -962,17 +969,29 @@ export const AdminReportsAnalytics = () => {
         <div className="space-y-5 animate-fade-in">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Approved Expenses</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total OPEX & Expenses</span>
               <p className="text-2xl font-extrabold text-navy-900 mt-1">৳{totalExpensesAmount.toLocaleString()}</p>
-              <span className="text-[11px] text-slate-400 block mt-1">Travel, packaging, petrol</span>
+              <span className="text-[11px] text-slate-500 block mt-1 font-medium">
+                HQ: ৳{totalHqExpensesAmount.toLocaleString()} | Agent: ৳{totalAgentExpensesAmount.toLocaleString()}
+              </span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">HQ Bangladesh OPEX</span>
+              <p className="text-2xl font-extrabold text-brand-600 mt-1">
+                ৳{totalHqExpensesAmount.toLocaleString()}
+              </p>
+              <span className="text-[11px] text-brand-600 font-bold block mt-1">
+                {hqExpenses.length} Dhaka Vouchers
+              </span>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">bKash / Nagad Collections</span>
-              <p className="text-2xl font-extrabold text-brand-600 mt-1">
+              <p className="text-2xl font-extrabold text-emerald-600 mt-1">
                 ৳{orders.reduce((sum, o) => sum + (o.financials?.advancePaid || 0), 0).toLocaleString()}
               </p>
-              <span className="text-[11px] text-emerald-600 font-bold block mt-1">100% Reconciled</span>
+              <span className="text-[11px] text-emerald-600 font-bold block mt-1">100% Reconciled Advance</span>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
@@ -980,20 +999,85 @@ export const AdminReportsAnalytics = () => {
               <p className="text-2xl font-extrabold text-rose-600 mt-1">৳{totalRefundsAmount.toLocaleString()}</p>
               <span className="text-[11px] text-rose-600 font-bold block mt-1">Damaged/Returned claims</span>
             </div>
+          </div>
 
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Gateway Surcharge</span>
-              <p className="text-2xl font-extrabold text-amber-600 mt-1">~1.5%</p>
-              <span className="text-[11px] text-slate-400 block mt-1">MFS merchant fees</span>
+          {/* HQ Bangladesh Office OPEX Log Table */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-soft overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-brand-600"></span>
+                  HQ Bangladesh Office Operating Expenses (OPEX)
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">Banani Head Office & Tejgaon Fulfillment Warehouse Monthly Outflows</p>
+              </div>
+              <span className="text-xs font-bold text-brand-600 bg-brand-50 px-2.5 py-1 rounded-full border border-brand-100">
+                Total: ৳{totalHqExpensesAmount.toLocaleString()}
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
+                  <tr>
+                    <th className="px-5 py-3">Voucher #</th>
+                    <th className="px-5 py-3">Expense Title & Category</th>
+                    <th className="px-5 py-3">Payee / Department</th>
+                    <th className="px-5 py-3">Payment Channel</th>
+                    <th className="px-5 py-3">Amount</th>
+                    <th className="px-5 py-3">Date</th>
+                    <th className="px-5 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {hqExpenses.map((exp) => (
+                    <tr key={exp.id} className="hover:bg-slate-50">
+                      <td className="px-5 py-3 font-mono font-bold text-brand-600">{exp.voucherNo || exp.id}</td>
+                      <td className="px-5 py-3">
+                        <p className="font-bold text-navy-900">{exp.title}</p>
+                        <p className="text-[10px] text-slate-400">{exp.category}</p>
+                      </td>
+                      <td className="px-5 py-3 font-medium text-slate-600">
+                        <p>{exp.payee}</p>
+                        <p className="text-[10px] text-slate-400">{exp.department}</p>
+                      </td>
+                      <td className="px-5 py-3 text-slate-600 font-medium">
+                        {exp.paymentMethod || 'Bank Transfer'}
+                      </td>
+                      <td className="px-5 py-3 font-bold text-slate-900">৳{Number(exp.amount || 0).toLocaleString()}</td>
+                      <td className="px-5 py-3 text-slate-500">{exp.date}</td>
+                      <td className="px-5 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          exp.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 
+                          exp.status === 'Approved' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {exp.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {hqExpenses.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="text-center py-6 text-slate-400 italic">No HQ expenses recorded yet.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {/* Expense Log Table */}
+          {/* Overseas Agent Expense Claims Table */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-soft overflow-hidden">
-            <div className="p-4 border-b border-slate-100">
-              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-600">
-                Agent Expense Vouchers & Receipts
-              </h3>
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  Overseas Agent Expense Claims (Field Purchases & Travel)
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">Purchasing agents in India, UAE, and Thailand</p>
+              </div>
+              <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100">
+                Total: ৳{totalAgentExpensesAmount.toLocaleString()}
+              </span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">

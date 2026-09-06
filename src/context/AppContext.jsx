@@ -5,6 +5,8 @@ import {
   INITIAL_HUBS,
   INITIAL_EXCHANGE_RATES,
   INITIAL_EXPENSES,
+  INITIAL_HQ_EXPENSES,
+  DEFAULT_RECURRING_HQ_TEMPLATES,
   INITIAL_BALANCE_TRANSFERS,
   INITIAL_CHAT_MESSAGES,
   INITIAL_STOCK_INVENTORY
@@ -55,6 +57,11 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : INITIAL_EXPENSES;
   });
 
+  const [hqExpenses, setHqExpenses] = useState(() => {
+    const saved = localStorage.getItem('wrikmart_hq_expenses');
+    return saved ? JSON.parse(saved) : INITIAL_HQ_EXPENSES;
+  });
+
   const [balanceTransfers, setBalanceTransfers] = useState(() => {
     const saved = localStorage.getItem('wrikmart_transfers');
     return saved ? JSON.parse(saved) : INITIAL_BALANCE_TRANSFERS;
@@ -95,6 +102,10 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('wrikmart_expenses', JSON.stringify(expenses));
   }, [expenses]);
+
+  useEffect(() => {
+    localStorage.setItem('wrikmart_hq_expenses', JSON.stringify(hqExpenses));
+  }, [hqExpenses]);
 
   useEffect(() => {
     localStorage.setItem('wrikmart_fx_rates', JSON.stringify(exchangeRates));
@@ -651,6 +662,80 @@ export const AppProvider = ({ children }) => {
     showToast(`Expense ${expenseId} set to ${status}.`, 'info');
   };
 
+  // ==========================================
+  // ACTIONS: HQ BANGLADESH OFFICE EXPENSE MANAGEMENT
+  // ==========================================
+
+  // Add Single HQ Operating Expense
+  const addHqExpense = (expenseData) => {
+    const year = new Date().getFullYear();
+    const newHqExpense = {
+      id: `HQ-VOUCH-${year}-${String(Date.now()).slice(-4)}`,
+      date: new Date().toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: 'Paid',
+      billingFrequency: 'One-off Expense',
+      vatTaxDeduction: 0,
+      approvedBy: 'Super Administrator',
+      voucherScanUrl: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+      ...expenseData,
+      amount: Number(expenseData.amount || 0)
+    };
+
+    setHqExpenses(prev => [newHqExpense, ...prev]);
+    showToast(`HQ Expense "${newHqExpense.title}" (৳${newHqExpense.amount.toLocaleString()}) recorded successfully!`, 'success');
+    return newHqExpense;
+  };
+
+  // 1-Click Monthly Batch Generator for HQ Recurring Bills
+  const generateMonthlyHqBatch = (monthYear, selectedItems) => {
+    const timestamp = Date.now();
+    const year = new Date().getFullYear();
+    const newBatch = selectedItems.map((item, idx) => ({
+      id: `HQ-VOUCH-${year}-${String(timestamp + idx).slice(-4)}`,
+      title: `${item.title} (${monthYear})`,
+      category: item.category,
+      department: item.department || 'Central Operations',
+      payeeName: item.payeeName,
+      amount: Number(item.amount),
+      date: new Date().toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      paymentMethod: item.paymentMethod || 'Bank Transfer (BRAC Bank)',
+      paymentReference: `BATCH-${monthYear.replace(/\s+/g, '-').toUpperCase()}-${idx + 1}`,
+      status: item.status || 'Paid',
+      billingFrequency: 'Monthly Recurring',
+      vatTaxDeduction: Math.round(Number(item.amount) * 0.05),
+      voucherScanUrl: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+      approvedBy: 'Super Administrator',
+      notes: `Auto-generated standard recurring overhead for ${monthYear}`
+    }));
+
+    setHqExpenses(prev => [...newBatch, ...prev]);
+    showToast(`Generated ${newBatch.length} recurring HQ operating expenses for ${monthYear}!`, 'success');
+    return newBatch;
+  };
+
+  // Update HQ Expense Status (e.g. mark Paid/Pending)
+  const updateHqExpenseStatus = (id, newStatus, paymentRef) => {
+    setHqExpenses(prev => prev.map(e => {
+      if (e.id === id) {
+        return {
+          ...e,
+          status: newStatus,
+          paymentReference: paymentRef || e.paymentReference
+        };
+      }
+      return e;
+    }));
+    showToast(`HQ Expense #${id} updated to ${newStatus}`, 'info');
+  };
+
+  // Delete / Void HQ Expense
+  const deleteHqExpense = (id) => {
+    setHqExpenses(prev => prev.filter(e => e.id !== id));
+    showToast(`HQ Expense #${id} removed`, 'info');
+  };
+
   // Update Exchange Rate
   const updateExchangeRate = (currencyCode, newRateFromBDT) => {
     setExchangeRates(prev => {
@@ -745,6 +830,8 @@ export const AppProvider = ({ children }) => {
       inventory,
       exchangeRates,
       expenses,
+      hqExpenses,
+      DEFAULT_RECURRING_HQ_TEMPLATES,
       balanceTransfers,
       chatMessages,
       toast,
@@ -762,6 +849,10 @@ export const AppProvider = ({ children }) => {
       assignAgentToOrder,
       addAgentExpense,
       reviewExpense,
+      addHqExpense,
+      generateMonthlyHqBatch,
+      updateHqExpenseStatus,
+      deleteHqExpense,
       updateExchangeRate,
       addAgent,
       addHub,
