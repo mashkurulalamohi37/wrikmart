@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ShieldCheck, UserCheck, User, Sparkles, ChevronRight, X } from 'lucide-react';
+import { CountryFlag } from './CountryFlag';
 
 export const PortalDock = () => {
   const { currentRole, setCurrentRole, activeAgent, agents, setActiveAgentId } = useApp();
@@ -51,7 +52,7 @@ export const PortalDock = () => {
               : 'text-slate-300 hover:text-white hover:bg-slate-800'
           }`}
         >
-          <span className="text-xs">{activeAgent.flag}</span>
+          <CountryFlag country={activeAgent.country || activeAgent.flag} className="w-4 h-3 rounded-[1px]" />
           <span>Agent</span>
         </button>
 

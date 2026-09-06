@@ -20,6 +20,7 @@ import {
   Wallet
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { CountryFlag } from '../common/CountryFlag';
 
 export const AgentApp = () => {
   const { 
@@ -95,7 +96,7 @@ export const AgentApp = () => {
             </div>
 
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <span className="text-base">{activeAgent.flag}</span>
+              <CountryFlag country={activeAgent.country || activeAgent.flag} className="w-5 h-3.5 rounded-[2px]" />
               <span className="font-bold text-navy-900">{activeAgent.country} Agent Station</span>
             </div>
           </div>

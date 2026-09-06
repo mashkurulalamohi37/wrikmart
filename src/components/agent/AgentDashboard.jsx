@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { CountryFlag } from '../common/CountryFlag';
 import { 
   Wallet, 
   ArrowDownRight, 
@@ -47,13 +48,17 @@ export const AgentDashboard = ({ onNavigate, onOpenPurchase, onOpenHub, onOpenOr
       {/* Top Welcome Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-soft">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-[#0D1B3D] border-2 border-brand-500 flex items-center justify-center text-2xl shadow-md">
-            {activeAgent.flag}
+          <div className="w-14 h-14 rounded-2xl bg-white border-2 border-brand-500 flex items-center justify-center shadow-md p-2 flex-shrink-0">
+            <CountryFlag country={activeAgent.country || activeAgent.flag} className="w-10 h-7 rounded-[2px] shadow-xs" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-extrabold text-navy-900">{activeAgent.name}</h2>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-extrabold text-navy-900 flex items-center gap-2">
+                <span>{activeAgent.name}</span>
+                <CountryFlag country={activeAgent.country || activeAgent.flag} className="w-5 h-3.5 rounded-[2px]" />
+              </h2>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Official {activeAgent.country} Agent Station
               </span>
             </div>

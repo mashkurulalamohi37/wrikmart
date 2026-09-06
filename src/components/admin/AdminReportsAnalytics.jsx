@@ -1008,7 +1008,10 @@ export const AdminReportsAnalytics = () => {
                         <img src={ag.avatar} alt={ag.name} className="w-8 h-8 rounded-full object-cover border" />
                         <div>
                           <span className="font-bold text-navy-900 block">{ag.name}</span>
-                          <span className="text-[10px] text-slate-400">{ag.flag} {ag.country} ({ag.currency})</span>
+                          <span className="text-[10px] text-slate-400 inline-flex items-center gap-1">
+                            <CountryFlag country={ag.country || ag.flag} className="w-3.5 h-2.5 rounded-[1px]" />
+                            <span>{ag.country} ({ag.currency})</span>
+                          </span>
                         </div>
                       </td>
                       <td className="px-5 py-3 text-right font-bold text-emerald-600">
