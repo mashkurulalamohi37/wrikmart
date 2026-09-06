@@ -77,75 +77,123 @@ export const CustomerOrders = ({ onNewOrder }) => {
             </button>
           </div>
         ) : (
-          filteredOrders.map((order) => (
-            <div
-              key={order.id}
-              onClick={() => setSelectedOrder(order)}
-              className="bg-white rounded-3xl border border-slate-200 p-5 shadow-soft hover:shadow-card hover:border-brand-400 transition-all cursor-pointer group flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3 mb-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-sm text-navy-900">{order.orderNumber}</span>
-                      <CountryFlag country={order.country || order.countryFlag} className="w-4 h-3 rounded-[2px]" />
+          filteredOrders.map((order) => {
+            const latestStep = [...(order.timeline || [])].reverse().find(s => s.done) || order.timeline?.[0];
+            const hasMultipleItems = order.items && order.items.length > 1;
+
+            return (
+              <div
+                key={order.id}
+                onClick={() => setSelectedOrder(order)}
+                className="bg-white rounded-3xl border border-slate-200 p-5 shadow-soft hover:shadow-card hover:border-brand-400 transition-all cursor-pointer group flex flex-col justify-between"
+              >
+                <div>
+                  {/* Order Header */}
+                  <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3 mb-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-sm text-navy-900">{order.orderNumber}</span>
+                        <CountryFlag country={order.country || order.countryFlag} className="w-4 h-3 rounded-[2px]" />
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5">{order.createdAt}</p>
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-0.5">{order.createdAt}</p>
+
+                    <div className="text-right">
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                        order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
+                        order.status === 'Purchased' ? 'bg-cyan-100 text-cyan-700' :
+                        order.status === 'At Delivery House' ? 'bg-purple-100 text-purple-700' :
+                        order.status === 'In Transit' ? 'bg-indigo-100 text-indigo-700' :
+                        'bg-amber-100 text-amber-700'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="text-right">
-                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                      order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
-                      order.status === 'Purchased' ? 'bg-cyan-100 text-cyan-700' :
-                      order.status === 'At Delivery House' ? 'bg-purple-100 text-purple-700' :
-                      order.status === 'In Transit' ? 'bg-indigo-100 text-indigo-700' :
-                      'bg-amber-100 text-amber-700'
-                    }`}>
-                      {order.status}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Items List preview */}
-                <div className="space-y-2 mb-4">
-                  {order.items.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3 p-2 rounded-xl bg-slate-50/70 border border-slate-100">
+                  {/* Primary Item Preview */}
+                  {order.items && order.items[0] && (
+                    <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-slate-50/70 border border-slate-100">
                       <img 
-                        src={item.image} 
-                        alt={item.name} 
-                        className="w-12 h-12 object-cover rounded-lg border flex-shrink-0" 
+                        src={order.items[0].image} 
+                        alt={order.items[0].name} 
+                        className="w-12 h-12 object-cover rounded-xl border flex-shrink-0" 
                         onError={(e) => {
                           e.currentTarget.onerror = null;
                           e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
                         }}
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-navy-900 truncate">{item.name}</p>
-                        <p className="text-[10px] text-slate-400">Qty: {item.specs.unit} • Size: {item.specs.size}</p>
+                        <p className="text-xs font-bold text-navy-900 truncate">{order.items[0].name}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          Qty: {order.items[0].specs?.unit || 1} • Size: {order.items[0].specs?.size || 'Standard'}
+                        </p>
                       </div>
                     </div>
-                  ))}
+                  )}
+
+                  {/* Extra items indicator if order has multiple items */}
+                  {hasMultipleItems && (
+                    <div className="mt-2 flex items-center justify-between px-3 py-1.5 rounded-xl bg-slate-100/70 text-[11px] font-semibold text-slate-600">
+                      <span className="truncate">
+                        + {order.items.length - 1} more item ({order.items[1]?.name})
+                      </span>
+                      <span className="text-brand-600 text-[10px] font-bold flex-shrink-0 ml-1">View all</span>
+                    </div>
+                  )}
+
+                  {/* Live Tracking Milestone Banner */}
+                  {latestStep && (
+                    <div className="mt-3 bg-slate-50/90 rounded-2xl p-3 border border-slate-100/90 text-xs">
+                      <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 mb-1.5">
+                        <span className="flex items-center gap-1.5 text-brand-600 uppercase tracking-wider">
+                          <Truck className="w-3.5 h-3.5" />
+                          Live Status
+                        </span>
+                        <span>{latestStep.time}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1 flex-shrink-0 animate-pulse" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-navy-900 text-xs truncate">
+                            {latestStep.step}
+                          </p>
+                          {latestStep.note && (
+                            <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                              {latestStep.note}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {order.assignedAgentName && (
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 mt-2 pt-2 border-t border-slate-200/60">
+                          <span>Agent: <strong className="text-slate-700 font-semibold">{order.assignedAgentName}</strong></span>
+                          <span>Courier: <strong className="text-slate-700 font-semibold">{order.courierName || 'Pending'}</strong></span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer action */}
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Advance Paid</span>
+                    <span className="text-emerald-600">৳{order.financials.advancePaid.toLocaleString()}</span>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-400 block">Total Value</span>
+                    <span className="text-navy-900">৳{order.financials.estimatedTotal.toLocaleString()}</span>
+                  </div>
+
+                  <span className="inline-flex items-center gap-1 text-brand-600 group-hover:translate-x-1 transition-transform ml-2">
+                    <ChevronRight className="w-4 h-4" />
+                  </span>
                 </div>
               </div>
-
-              {/* Footer action */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
-                <div>
-                  <span className="text-[10px] text-slate-400 block">Advance Paid</span>
-                  <span className="text-emerald-600">৳{order.financials.advancePaid.toLocaleString()}</span>
-                </div>
-
-                <div className="text-right">
-                  <span className="text-[10px] text-slate-400 block">Total Value</span>
-                  <span className="text-navy-900">৳{order.financials.estimatedTotal.toLocaleString()}</span>
-                </div>
-
-                <span className="inline-flex items-center gap-1 text-brand-600 group-hover:translate-x-1 transition-transform ml-2">
-                  <ChevronRight className="w-4 h-4" />
-                </span>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
