@@ -23,17 +23,44 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
     updateCartQuantity, 
     removeFromCart, 
     clearCart,
+    coupons = [],
+    appliedCoupon,
+    applyCoupon,
+    removeCoupon,
     setCustomerTab
   } = useApp();
 
+  const [couponInput, setCouponInput] = useState('');
   const [district, setDistrict] = useState('Dhaka'); // 'Dhaka' | 'Outside Dhaka'
 
   if (!isCartOpen) return null;
 
   // Financial Calculations
   const subtotal = cart.reduce((sum, item) => sum + ((item.sellingPrice || 0) * (item.quantity || 1)), 0);
-  const deliveryFee = district === 'Dhaka' ? 80 : 150;
-  const grandTotal = subtotal + deliveryFee;
+  const baseDeliveryFee = district === 'Dhaka' ? 80 : 150;
+  
+  // Calculate discount based on applied coupon
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.discountType === 'percentage') {
+      const calc = Math.round(subtotal * (appliedCoupon.discountValue / 100));
+      discountAmount = appliedCoupon.maxDiscountBDT ? Math.min(calc, appliedCoupon.maxDiscountBDT) : calc;
+    } else if (appliedCoupon.discountType === 'fixed') {
+      discountAmount = Math.min(appliedCoupon.discountValue, subtotal);
+    } else if (appliedCoupon.discountType === 'free_shipping') {
+      discountAmount = baseDeliveryFee;
+    }
+  }
+
+  const effectiveDeliveryFee = appliedCoupon?.discountType === 'free_shipping' ? 0 : baseDeliveryFee;
+  const grandTotal = Math.max(0, subtotal - discountAmount + effectiveDeliveryFee);
+
+  const handleApplyCoupon = (codeToApply) => {
+    const code = codeToApply || couponInput;
+    if (!code) return;
+    applyCoupon(code, subtotal, baseDeliveryFee, cart);
+    setCouponInput('');
+  };
 
   const handleCheckoutClick = () => {
     setIsCartOpen(false);
@@ -183,6 +210,74 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
               </div>
             )}
 
+            {/* Promo / Coupon Code Section */}
+            {cart.length > 0 && (
+              <div className="pt-3 border-t border-slate-100 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-brand-600" />
+                    Coupon Code / Promo Voucher
+                  </span>
+                  <span className="text-[10px] font-medium text-slate-400">Save extra on checkout</span>
+                </div>
+
+                {appliedCoupon ? (
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between animate-fade-in">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-extrabold text-emerald-900">
+                          Coupon <span className="underline font-mono">{appliedCoupon.code}</span> Applied!
+                        </p>
+                        <p className="text-[10px] text-emerald-700 font-medium">
+                          {appliedCoupon.discountType === 'free_shipping' ? '100% Free Shipping' : `Saved ৳${discountAmount.toLocaleString()}`}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={removeCoupon}
+                      className="text-xs font-bold text-rose-600 hover:underline px-2 py-1"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                        placeholder="Enter coupon code (e.g. WRIK10)..."
+                        className="flex-1 px-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 font-mono uppercase focus:outline-none focus:ring-2 focus:ring-brand-500 font-bold"
+                      />
+                      <button
+                        onClick={() => handleApplyCoupon()}
+                        disabled={!couponInput.trim()}
+                        className="px-4 py-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-40 text-white font-bold text-xs rounded-xl transition-all shadow-sm"
+                      >
+                        Apply
+                      </button>
+                    </div>
+
+                    {/* Quick Available Suggestions */}
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      <span className="text-[10px] text-slate-400 font-medium">Available:</span>
+                      {coupons.filter(c => c.status === 'Active').slice(0, 3).map(cp => (
+                        <button
+                          key={cp.id}
+                          onClick={() => handleApplyCoupon(cp.code)}
+                          className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-brand-50 hover:text-brand-700 border border-slate-200 text-[10px] font-bold text-slate-600 transition-colors"
+                        >
+                          🏷️ {cp.code}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Delivery Destination Selector */}
             {cart.length > 0 && (
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
@@ -226,9 +321,22 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
                   <span className="font-bold text-slate-800">৳{subtotal.toLocaleString()}</span>
                 </div>
 
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-600 font-bold">
+                    <span>Coupon Savings ({appliedCoupon?.code}):</span>
+                    <span>-৳{discountAmount.toLocaleString()}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between">
                   <span>Delivery ({district}):</span>
-                  <span className="font-bold text-slate-800">৳{deliveryFee}</span>
+                  <span className="font-bold text-slate-800">
+                    {effectiveDeliveryFee === 0 ? (
+                      <span className="text-emerald-600 font-extrabold uppercase text-[10px]">Free Shipping</span>
+                    ) : (
+                      `৳${effectiveDeliveryFee}`
+                    )}
+                  </span>
                 </div>
 
                 <div className="pt-2 border-t border-slate-200 flex justify-between items-baseline">

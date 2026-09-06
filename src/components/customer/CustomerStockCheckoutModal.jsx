@@ -22,6 +22,7 @@ import { BKashLogo, NagadLogo, VisaLogo, MastercardLogo } from '../common/Paymen
 export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) => {
   const { 
     cart, 
+    appliedCoupon,
     createCustomerStockOrder, 
     setCustomerTab 
   } = useApp();
@@ -47,12 +48,26 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
   // Financial Calculations
   const subtotal = cart.reduce((sum, item) => sum + ((item.sellingPrice || 0) * (item.quantity || 1)), 0);
   
-  let deliveryFee = customerInfo.district === 'Dhaka' ? 80 : 150;
+  let baseDeliveryFee = customerInfo.district === 'Dhaka' ? 80 : 150;
   if (deliveryMethod === 'Express Same-Day') {
-    deliveryFee = 150;
+    baseDeliveryFee = 150;
   }
 
-  const grandTotal = subtotal + deliveryFee;
+  // Calculate discount
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.discountType === 'percentage') {
+      const calc = Math.round(subtotal * (appliedCoupon.discountValue / 100));
+      discountAmount = appliedCoupon.maxDiscountBDT ? Math.min(calc, appliedCoupon.maxDiscountBDT) : calc;
+    } else if (appliedCoupon.discountType === 'fixed') {
+      discountAmount = Math.min(appliedCoupon.discountValue, subtotal);
+    } else if (appliedCoupon.discountType === 'free_shipping') {
+      discountAmount = baseDeliveryFee;
+    }
+  }
+
+  const effectiveDeliveryFee = appliedCoupon?.discountType === 'free_shipping' ? 0 : baseDeliveryFee;
+  const grandTotal = Math.max(0, subtotal - discountAmount + effectiveDeliveryFee);
 
   const handleSubmitOrder = (e) => {
     if (e) e.preventDefault();
@@ -69,11 +84,11 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
         customerInfo,
         items: cart,
         deliveryMethod,
-        deliveryFee: deliveryFee,
+        deliveryFee: effectiveDeliveryFee,
         paymentMethod,
         transactionId: genTrx,
         subtotal,
-        discountAmount: 0,
+        discountAmount,
         grandTotal,
         advancePaid: paymentMethod === 'COD' ? 0 : grandTotal,
         paymentStatus: paymentMethod === 'COD' ? 'Unpaid' : 'Fully Paid'
@@ -183,6 +198,13 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
                     <strong className="text-emerald-700">Within 24-48 Hours</strong>
                   </div>
                 </div>
+
+                {confirmedOrder.financials?.couponCode && (
+                  <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-xs">
+                    <span className="text-slate-500 font-medium">Applied Voucher ({confirmedOrder.financials.couponCode}):</span>
+                    <span className="font-bold text-emerald-600">-৳{confirmedOrder.financials.discountAmount?.toLocaleString()}</span>
+                  </div>
+                )}
 
                 <div className="pt-2 border-t border-slate-200 text-xs text-slate-600">
                   <span className="font-semibold text-slate-500 block text-[10px] uppercase">Delivery Address:</span>
@@ -453,9 +475,18 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
                   <span className="font-bold text-slate-800">৳{subtotal.toLocaleString()}</span>
                 </div>
 
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-600 font-bold">
+                    <span>Coupon Discount ({appliedCoupon?.code}):</span>
+                    <span>-৳{discountAmount.toLocaleString()}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between text-slate-600">
                   <span>Delivery Charge:</span>
-                  <span className="font-bold text-slate-800">৳{deliveryFee}</span>
+                  <span className="font-bold text-slate-800">
+                    {effectiveDeliveryFee === 0 ? '৳0 (Free Shipping)' : `৳${effectiveDeliveryFee}`}
+                  </span>
                 </div>
 
                 <div className="pt-2 border-t border-slate-200 flex justify-between items-baseline">
