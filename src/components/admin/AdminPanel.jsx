@@ -69,7 +69,7 @@ export const AdminPanel = () => {
     <div className="flex min-h-[calc(100vh-64px)] bg-[#F2F7FB]">
       
       {/* Mobile Sidebar Toggle Button */}
-      <div className="lg:hidden fixed bottom-5 right-5 z-50">
+      <div className="lg:hidden fixed bottom-5 right-5 z-50 print:hidden no-print">
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="p-3.5 bg-brand-500 hover:bg-brand-600 text-white rounded-full shadow-2xl flex items-center justify-center transition-all ring-4 ring-brand-400/20"
@@ -83,13 +83,13 @@ export const AdminPanel = () => {
       {sidebarOpen && (
         <div 
           onClick={() => setSidebarOpen(false)}
-          className="lg:hidden fixed inset-0 z-30 bg-navy-950/70 backdrop-blur-sm animate-fade-in"
+          className="lg:hidden fixed inset-0 z-30 bg-navy-950/70 backdrop-blur-sm animate-fade-in print:hidden no-print"
         />
       )}
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed lg:sticky top-0 lg:top-14 sm:lg:top-16 left-0 z-40 lg:z-30 h-screen lg:h-[calc(100vh-64px)] w-64 bg-[#0D1B3D] text-white flex flex-col justify-between border-r border-slate-800 transition-transform duration-300 shadow-xl flex-shrink-0 self-start ${
+        className={`fixed lg:sticky top-0 lg:top-14 sm:lg:top-16 left-0 z-40 lg:z-30 h-screen lg:h-[calc(100vh-64px)] w-64 bg-[#0D1B3D] text-white flex flex-col justify-between border-r border-slate-800 transition-transform duration-300 shadow-xl flex-shrink-0 self-start print:hidden no-print ${
           sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -191,7 +191,7 @@ export const AdminPanel = () => {
         )}
 
         {/* Dedicated Admin Workspace Footer */}
-        <footer className="mt-16 pt-6 border-t border-slate-200 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <footer className="mt-16 pt-6 border-t border-slate-200 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3 print:hidden no-print">
           <div className="flex items-center gap-2">
             <span className="font-extrabold text-navy-900 tracking-tight">WrikMart Enterprise</span>
             <span className="text-slate-300">|</span>

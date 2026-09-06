@@ -63,7 +63,7 @@ export const Header = () => {
   const pendingTransferCount = balanceTransfers.filter(t => t.status === 'Pending').length;
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0D1B3D] text-white border-b border-slate-800 shadow-lg select-none w-full max-w-full">
+    <header className="sticky top-0 z-50 bg-[#0D1B3D] text-white border-b border-slate-800 shadow-lg select-none w-full max-w-full print:hidden no-print">
 
       {/* 2. Main Navigation & Brand Header */}
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-4">

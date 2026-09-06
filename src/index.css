@@ -59,12 +59,52 @@
   animation: pulseGlow 2s infinite;
 }
 
-/* Print Styles for Invoices */
+/* Print Styles for Invoices & Executive Reports */
 @media print {
-  .no-print {
+  .no-print,
+  header,
+  aside,
+  footer,
+  button,
+  input,
+  select,
+  .print-hidden {
     display: none !important;
   }
   .print-only {
     display: block !important;
+  }
+  body, html, main {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+  .overflow-x-auto, 
+  .overflow-hidden, 
+  .overflow-y-auto {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  th, td {
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+  .shadow-soft, 
+  .shadow-md, 
+  .shadow-lg, 
+  .shadow-2xl {
+    box-shadow: none !important;
   }
 }

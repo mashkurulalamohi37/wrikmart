@@ -243,10 +243,35 @@ export const AdminReportsAnalytics = () => {
   return (
     <div className="space-y-6 animate-fade-in print:p-0 print:space-y-4">
       
+      {/* Official Print Header */}
+      <div className="hidden print:block pb-4 mb-4 border-b-2 border-slate-900">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xl font-black tracking-tight text-black font-sans">
+                WrikMart Enterprise
+              </span>
+              <span className="text-[10px] uppercase font-bold px-2 py-0.5 border border-black rounded">
+                Official Audit
+              </span>
+            </div>
+            <h1 className="text-base font-black text-slate-900 mt-1">
+              Report #{currentReportObj.num}: {currentReportObj.label}
+            </h1>
+            <p className="text-xs text-slate-600">Cross-Border Pre-Order & Ready Stock Commerce Intelligence</p>
+          </div>
+          <div className="text-right text-xs text-slate-700 space-y-0.5">
+            <p><strong>Audit Scope:</strong> {periodDateLabel}</p>
+            <p><strong>Generated:</strong> {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+            <p><strong>Report Channel:</strong> Admin Operations Console</p>
+          </div>
+        </div>
+      </div>
+
       {/* ========================================================= */}
       {/* 1. TOP HEADER & AUDIT CONTROLS */}
       {/* ========================================================= */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 print:border-none print:shadow-none print:p-0">
+      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 print:hidden no-print">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-50 text-brand-700 border border-brand-200 flex items-center gap-1">
@@ -358,55 +383,65 @@ export const AdminReportsAnalytics = () => {
       </div>
 
       {/* ========================================================= */}
-      {/* 3. CATEGORIZED 2-LEVEL REPORT NAVIGATION */}
+      {/* 3. DROPDOWN-TYPE REPORT NAVIGATION BAR */}
       {/* ========================================================= */}
-      <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-soft space-y-2.5 print:hidden">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 px-1 pb-2 border-b border-slate-100">
-          <span className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-            <Layers className="w-4 h-4 text-brand-600" />
-            Select Analytical Module (All 10 Reports Available):
-          </span>
-          <span className="text-xs font-extrabold text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-full border border-brand-200">
-            Active: #{currentReportObj.num} {currentReportObj.label}
-          </span>
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden no-print">
+        {/* Left: Dropdown Selector with Category Optgroups */}
+        <div className="flex flex-1 items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center flex-shrink-0">
+            <Layers className="w-4 h-4" />
+          </div>
+          <div className="flex-1 max-w-lg relative">
+            <label htmlFor="report-dropdown-nav" className="sr-only">Select Report Module</label>
+            <select
+              id="report-dropdown-nav"
+              value={activeReport}
+              onChange={(e) => setActiveReport(e.target.value)}
+              className="w-full appearance-none pl-3.5 pr-10 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-brand-400 rounded-xl text-xs sm:text-sm font-black text-navy-900 shadow-2xs transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+              {reportGroups.map((group) => (
+                <optgroup key={group.groupName} label={`📁 ${group.groupName}`}>
+                  {group.reports.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      Report #{r.num}: {r.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
         </div>
 
-        {/* 4 Category Pill Groups */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-          {reportGroups.map((group) => (
-            <div key={group.groupName} className="p-2 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1 px-1">
-                {group.icon}
-                {group.groupName}
-              </span>
-              <div className="flex flex-col gap-1">
-                {group.reports.map((r) => {
-                  const isActive = activeReport === r.id;
-                  return (
-                    <button
-                      key={r.id}
-                      onClick={() => setActiveReport(r.id)}
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all text-left ${
-                        isActive
-                          ? 'bg-navy-900 text-white shadow-sm'
-                          : 'text-slate-600 hover:bg-white hover:text-navy-900'
-                      }`}
-                    >
-                      <span className="flex items-center gap-1.5 truncate">
-                        <span className={`w-4 h-4 rounded text-[9px] font-mono font-black flex items-center justify-center ${
-                          isActive ? 'bg-brand-500 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}>
-                          {r.num}
-                        </span>
-                        <span className="truncate">{r.label}</span>
-                      </span>
-                      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0"></span>}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+        {/* Right: Step Navigation (Prev / Next) & Quick Indicator */}
+        <div className="flex items-center gap-1.5 self-end sm:self-auto">
+          <button
+            onClick={() => {
+              const currentIndex = allReportsFlat.findIndex(r => r.id === activeReport);
+              const prevIndex = (currentIndex - 1 + allReportsFlat.length) % allReportsFlat.length;
+              setActiveReport(allReportsFlat[prevIndex].id);
+            }}
+            className="px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 transition-all flex items-center gap-1 hover:border-slate-300 active:scale-98"
+            title="Previous Report"
+          >
+            <span>← Prev</span>
+          </button>
+
+          <span className="text-[11px] font-mono font-black text-slate-500 px-2 py-1 rounded-lg bg-slate-100 border border-slate-200/60">
+            {currentReportObj.num} / 10
+          </span>
+
+          <button
+            onClick={() => {
+              const currentIndex = allReportsFlat.findIndex(r => r.id === activeReport);
+              const nextIndex = (currentIndex + 1) % allReportsFlat.length;
+              setActiveReport(allReportsFlat[nextIndex].id);
+            }}
+            className="px-3.5 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 transition-all flex items-center gap-1 hover:border-slate-300 active:scale-98"
+            title="Next Report"
+          >
+            <span>Next →</span>
+          </button>
         </div>
       </div>
 
@@ -547,7 +582,7 @@ export const AdminReportsAnalytics = () => {
               </div>
 
               {/* Search Bar */}
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full sm:w-64 print:hidden no-print">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -665,7 +700,7 @@ export const AdminReportsAnalytics = () => {
                 <p className="text-[11px] text-slate-400">Order by order cost and gross profit calculation</p>
               </div>
 
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full sm:w-64 print:hidden no-print">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -849,7 +884,7 @@ export const AdminReportsAnalytics = () => {
                 <span className="text-[11px] text-slate-400">Aging Thresholds: 30 / 60 / 90 / 180+ Days</span>
               </div>
 
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full sm:w-64 print:hidden no-print">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -937,7 +972,7 @@ export const AdminReportsAnalytics = () => {
                 <p className="text-[11px] text-slate-400">Ground procurement velocity and wallet balances</p>
               </div>
 
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full sm:w-64 print:hidden no-print">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -1044,7 +1079,7 @@ export const AdminReportsAnalytics = () => {
                 <p className="text-[11px] text-slate-400">Regional warehouse facilities across country networks</p>
               </div>
 
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full sm:w-64 print:hidden no-print">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -1139,7 +1174,7 @@ export const AdminReportsAnalytics = () => {
                 <p className="text-[11px] text-slate-400">Buyers ranked by total order volume and spend</p>
               </div>
 
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full sm:w-64 print:hidden no-print">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -1232,7 +1267,7 @@ export const AdminReportsAnalytics = () => {
                 <p className="text-[11px] text-slate-400">Performance across domestic last-mile delivery partners</p>
               </div>
 
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full sm:w-64 print:hidden no-print">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -1333,7 +1368,7 @@ export const AdminReportsAnalytics = () => {
                 <p className="text-[11px] text-slate-400 mt-0.5">Banani Head Office & Tejgaon Fulfillment Warehouse Monthly Outflows</p>
               </div>
               
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full sm:w-64 print:hidden no-print">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -1413,7 +1448,7 @@ export const AdminReportsAnalytics = () => {
                 <p className="text-[11px] text-slate-400 mt-0.5">Purchasing agents in India, UAE, and Thailand</p>
               </div>
 
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full sm:w-64 print:hidden no-print">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
