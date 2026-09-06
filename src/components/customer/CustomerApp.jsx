@@ -180,14 +180,15 @@ export const CustomerApp = () => {
 
       {/* Main Full-Width Content Container */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-12">
-        {activeTab === 'home' && (
-          <CustomerHome 
-            onStartPreOrder={() => setActiveTab('preorder')}
-            onBrowseStock={() => setActiveTab('stock')}
-            onOpenChat={() => setActiveTab('chat')}
-            onOpenOrders={() => setActiveTab('orders')}
-          />
-        )}
+        <div key={activeTab} className="animate-fade-in-up">
+          {activeTab === 'home' && (
+            <CustomerHome 
+              onStartPreOrder={() => setActiveTab('preorder')}
+              onBrowseStock={() => setActiveTab('stock')}
+              onOpenChat={() => setActiveTab('chat')}
+              onOpenOrders={() => setActiveTab('orders')}
+            />
+          )}
 
         {activeTab === 'stock' && (
           <CustomerStockCatalog 
@@ -486,7 +487,8 @@ export const CustomerApp = () => {
               </span>
             </div>
           </div>
-        )}
+          )}
+        </div>
       </main>
 
       {/* Slide-Over Cart Drawer */}

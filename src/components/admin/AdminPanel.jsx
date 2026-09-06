@@ -197,59 +197,61 @@ export const AdminPanel = () => {
 
         {/* Main Content Viewport */}
         <main className="flex-1 p-3.5 sm:p-5 lg:p-6 xl:p-8 w-full min-w-0 flex flex-col justify-between">
-        {activeNav === 'dashboard' && (
-          <AdminDashboard 
-            onNavigateToOrder={(order) => setSelectedOrder360(order)}
-            onNavigateToTab={(tab) => setActiveNav(tab)}
-            onCreateOrder={() => setShowCreateOrderModal(true)}
-          />
-        )}
+        <div key={activeNav} className="animate-fade-in-up">
+          {activeNav === 'dashboard' && (
+            <AdminDashboard 
+              onNavigateToOrder={(order) => setSelectedOrder360(order)}
+              onNavigateToTab={(tab) => setActiveNav(tab)}
+              onCreateOrder={() => setShowCreateOrderModal(true)}
+            />
+          )}
 
-        {activeNav === 'orders' && (
-          <AdminOrderList 
-            onSelectOrder={(order) => setSelectedOrder360(order)}
-          />
-        )}
+          {activeNav === 'orders' && (
+            <AdminOrderList 
+              onSelectOrder={(order) => setSelectedOrder360(order)}
+            />
+          )}
 
-        {activeNav === 'customers' && (
-          <AdminCustomerManagement />
-        )}
+          {activeNav === 'customers' && (
+            <AdminCustomerManagement />
+          )}
 
-        {activeNav === 'preorder_settings' && (
-          <AdminPreOrderSettings />
-        )}
+          {activeNav === 'preorder_settings' && (
+            <AdminPreOrderSettings />
+          )}
 
-        {activeNav === 'agents' && (
-          <AdminAgentManagement />
-        )}
+          {activeNav === 'agents' && (
+            <AdminAgentManagement />
+          )}
 
-        {activeNav === 'balance' && (
-          <AdminBalanceAndApproval />
-        )}
+          {activeNav === 'balance' && (
+            <AdminBalanceAndApproval />
+          )}
 
-        {activeNav === 'expenses' && (
-          <AdminExpenseManagement />
-        )}
+          {activeNav === 'expenses' && (
+            <AdminExpenseManagement />
+          )}
 
-        {activeNav === 'hubs' && (
-          <AdminHubManagement />
-        )}
+          {activeNav === 'hubs' && (
+            <AdminHubManagement />
+          )}
 
-        {activeNav === 'delivery' && (
-          <AdminDeliveryManagement />
-        )}
+          {activeNav === 'delivery' && (
+            <AdminDeliveryManagement />
+          )}
 
-        {activeNav === 'history' && (
-          <AdminTransitionHistory />
-        )}
+          {activeNav === 'history' && (
+            <AdminTransitionHistory />
+          )}
 
-        {activeNav === 'reports' && (
-          <AdminReportsAnalytics />
-        )}
+          {activeNav === 'reports' && (
+            <AdminReportsAnalytics />
+          )}
 
-        {activeNav === 'settings' && (
-          <AdminSystemSettings />
-        )}
+          {activeNav === 'settings' && (
+            <AdminSystemSettings />
+          )}
+        </div>
 
         {/* Dedicated Admin Workspace Footer */}
         <footer className="mt-12 sm:mt-16 pt-6 border-t border-slate-200 text-xs text-slate-500 flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left print:hidden no-print">

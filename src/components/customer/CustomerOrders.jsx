@@ -118,6 +118,8 @@ export const CustomerOrders = ({ onNewOrder }) => {
                         src={order.items[0].image} 
                         alt={order.items[0].name} 
                         className="w-12 h-12 object-cover rounded-xl border flex-shrink-0" 
+                        loading="lazy"
+                        decoding="async"
                         onError={(e) => {
                           e.currentTarget.onerror = null;
                           e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;

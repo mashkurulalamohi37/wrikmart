@@ -105,32 +105,34 @@ export const AgentApp = () => {
 
       {/* Main Full-Width Content View */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-12">
-        {activeTab === 'dashboard' && (
-          <AgentDashboard 
-            onNavigate={(tab) => {
-              if (tab === 'history') setShowHistoryModal(true);
-              else setActiveTab(tab);
-            }}
-          />
-        )}
+        <div key={activeTab} className="animate-fade-in-up">
+          {activeTab === 'dashboard' && (
+            <AgentDashboard 
+              onNavigate={(tab) => {
+                if (tab === 'history') setShowHistoryModal(true);
+                else setActiveTab(tab);
+              }}
+            />
+          )}
 
-        {activeTab === 'orders' && (
-          <AgentOrderList 
-            onSelectOrderForLink={(order) => setSelectedOrderForLink(order)}
-            onSelectOrderForPurchase={(order) => setSelectedOrderForPurchase(order)}
-            onSelectOrderForHub={(order) => setSelectedOrderForHub(order)}
-          />
-        )}
+          {activeTab === 'orders' && (
+            <AgentOrderList 
+              onSelectOrderForLink={(order) => setSelectedOrderForLink(order)}
+              onSelectOrderForPurchase={(order) => setSelectedOrderForPurchase(order)}
+              onSelectOrderForHub={(order) => setSelectedOrderForHub(order)}
+            />
+          )}
 
-        {activeTab === 'expense' && (
-          <AgentExpenseManager />
-        )}
+          {activeTab === 'expense' && (
+            <AgentExpenseManager />
+          )}
 
-        {activeTab === 'chat' && (
-          <div className="max-w-4xl mx-auto">
-            <AgentChat />
-          </div>
-        )}
+          {activeTab === 'chat' && (
+            <div className="max-w-4xl mx-auto">
+              <AgentChat />
+            </div>
+          )}
+        </div>
 
         {/* Dedicated Agent Station Footer */}
         <footer className="mt-16 pt-6 border-t border-slate-200 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3">

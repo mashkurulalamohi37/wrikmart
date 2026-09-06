@@ -383,6 +383,7 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
                     alt={product.name}
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
+                    decoding="async"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
