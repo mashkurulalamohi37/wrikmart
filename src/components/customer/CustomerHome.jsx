@@ -34,11 +34,15 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
     birthdaySettings,
     generateBirthdayCoupon,
     setAppliedCoupon,
-    showToast
+    showToast,
+    setPrefilledPreOrder
   } = useApp();
   const [quickUrl, setQuickUrl] = useState('');
 
   const handleQuickPaste = () => {
+    if (quickUrl.trim() && setPrefilledPreOrder) {
+      setPrefilledPreOrder({ url: quickUrl.trim() });
+    }
     onStartPreOrder();
   };
 
@@ -125,6 +129,9 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
                   type="url"
                   value={quickUrl}
                   onChange={(e) => setQuickUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleQuickPaste();
+                  }}
                   placeholder="Paste product link (Nike, Amazon, Zara)..."
                   className="w-full pl-4 pr-3 py-3 rounded-xl bg-white text-navy-900 text-xs font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
                 />

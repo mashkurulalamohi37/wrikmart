@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import confetti from 'canvas-confetti';
 import { 
@@ -24,7 +24,7 @@ import { BKashLogo, NagadLogo, VisaLogo, MastercardLogo } from '../common/Paymen
 import { CountryFlag } from '../common/CountryFlag';
 
 export const PreOrderWizard = ({ onComplete, onCancel }) => {
-  const { createCustomerPreOrder, customerProfile } = useApp();
+  const { createCustomerPreOrder, customerProfile, prefilledPreOrder, setPrefilledPreOrder } = useApp();
 
   // Wizard Steps: 1 (Country & Link), 2 (Product Details), 3 (Cart), 4 (Customer Info), 5 (Review & Pay), 6 (Confirmed)
   const [step, setStep] = useState(1);
@@ -41,6 +41,60 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
     expectedPrice: 8000,
     notes: 'Please check original tags and box condition.'
   });
+
+  // Handle pre-filled Pre-Order data from Header Search or Home Hero
+  useEffect(() => {
+    if (prefilledPreOrder) {
+      if (prefilledPreOrder.url) {
+        const rawUrl = prefilledPreOrder.url;
+        const lower = rawUrl.toLowerCase();
+        let detectedCountry = 'India';
+        if (lower.includes('.ae') || lower.includes('dubai') || lower.includes('noon.com') || lower.includes('apple.com/ae') || lower.includes('amazon.ae')) {
+          detectedCountry = 'Dubai';
+        } else if (lower.includes('.th') || lower.includes('thailand') || lower.includes('shopee.co.th') || lower.includes('central.co.th') || lower.includes('lazada.co.th')) {
+          detectedCountry = 'Thailand';
+        } else if (lower.includes('.in') || lower.includes('india') || lower.includes('flipkart') || lower.includes('amazon.in') || lower.includes('myntra')) {
+          detectedCountry = 'India';
+        }
+        setCountry(detectedCountry);
+
+        // Try extracting readable product title from slug
+        let extractedName = '';
+        try {
+          const parsed = new URL(rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`);
+          const parts = parsed.pathname.split('/').filter(Boolean);
+          if (parts.length > 0) {
+            let slug = parts[parts.length - 1];
+            if (slug.length < 3 && parts.length > 1) slug = parts[parts.length - 2];
+            slug = slug.replace(/\.[a-zA-Z0-9]+$/, '').replace(/[-_+]/g, ' ');
+            const words = slug.split(' ').filter(w => w.length > 1 && !/^\d+$/.test(w) && w.length < 25);
+            if (words.length > 0) {
+              extractedName = words.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            }
+          }
+        } catch (e) {}
+
+        setCurrentItem(prev => ({
+          ...prev,
+          url: rawUrl,
+          name: extractedName || (rawUrl.includes('apple') ? 'Apple Device Import' : rawUrl.includes('nike') ? 'Nike Product Import' : prev.name || 'Imported Product')
+        }));
+      } else if (prefilledPreOrder.name) {
+        setCurrentItem(prev => ({
+          ...prev,
+          name: prefilledPreOrder.name,
+          url: ''
+        }));
+      }
+
+      if (prefilledPreOrder.country) {
+        setCountry(prefilledPreOrder.country);
+      }
+
+      setStep(1);
+      setPrefilledPreOrder(null);
+    }
+  }, [prefilledPreOrder, setPrefilledPreOrder]);
 
   // Items in Order Cart
   const [items, setItems] = useState([

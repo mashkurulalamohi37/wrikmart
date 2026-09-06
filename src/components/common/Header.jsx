@@ -19,6 +19,7 @@ import {
   Layers
 } from 'lucide-react';
 import { CountryFlag } from './CountryFlag';
+import { HeaderSearchBar } from './HeaderSearchBar';
 
 export const Header = () => {
   const { 
@@ -63,7 +64,7 @@ export const Header = () => {
   const pendingTransferCount = balanceTransfers.filter(t => t.status === 'Pending').length;
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0D1B3D] text-white border-b border-slate-800 shadow-lg select-none w-full max-w-full print:hidden no-print">
+    <header className="sticky top-0 z-50 bg-[#0D1B3D] text-white border-b border-slate-800 shadow-lg w-full max-w-full print:hidden no-print">
 
       {/* 2. Main Navigation & Brand Header */}
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-4">
@@ -91,15 +92,9 @@ export const Header = () => {
           </div>
         </div>
 
-        {/* Desktop Quick Action (Customer Pre-Order Search / Link Trigger) */}
-        <div 
-          onClick={handleSearchClick}
-          className="hidden md:flex items-center gap-2 bg-[#14234B]/80 hover:bg-[#14234B] px-4 py-2 rounded-2xl border border-slate-700/60 max-w-md w-full cursor-pointer transition-colors group"
-        >
-          <Search className="w-4 h-4 text-slate-400 group-hover:text-brand-400 transition-colors flex-shrink-0" />
-          <span className="text-xs text-slate-300 truncate select-none">
-            Paste any link: Nike India, Apple Dubai, Zara, Amazon...
-          </span>
+        {/* Desktop Quick Search & Global Link Paste Bar */}
+        <div className="hidden md:flex flex-1 max-w-md lg:max-w-lg mx-2 lg:mx-4">
+          <HeaderSearchBar isMobile={false} />
         </div>
 
         {/* Right Section: New Pre-Order CTA + Workspace / Role Switcher Menu */}
@@ -281,17 +276,9 @@ export const Header = () => {
 
       </div>
 
-      {/* 3. Mobile Quick Search / Link Paste Bar */}
+      {/* 3. Mobile Quick Search & Global Link Paste Bar */}
       <div className="md:hidden px-3 sm:px-6 pb-2.5 pt-0.5 max-w-7xl mx-auto">
-        <div 
-          onClick={handleSearchClick}
-          className="flex items-center gap-2 bg-[#14234B]/90 hover:bg-[#14234B] active:bg-[#1A2E63] px-3.5 py-2 rounded-xl border border-slate-700/80 shadow-inner cursor-pointer transition-all group"
-        >
-          <Search className="w-3.5 h-3.5 text-brand-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
-          <span className="text-[11px] text-slate-300 truncate select-none">
-            Paste any link: Nike India, Apple Dubai, Zara, Amazon...
-          </span>
-        </div>
+        <HeaderSearchBar isMobile={true} />
       </div>
     </header>
   );

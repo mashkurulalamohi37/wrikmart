@@ -77,6 +77,10 @@ export const AppProvider = ({ children }) => {
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
 
+  // Ready Stock Search & Pre-Order Prefill States
+  const [stockSearchQuery, setStockSearchQuery] = useState('');
+  const [prefilledPreOrder, setPrefilledPreOrder] = useState(null); // { url?: string, name?: string, country?: string }
+
   // Discount & Coupon State
   const [coupons, setCoupons] = useState(() => {
     const saved = localStorage.getItem('wrikmart_coupons');
@@ -1513,7 +1517,12 @@ export const AppProvider = ({ children }) => {
       updateCustomerDOB,
       getBirthdayStatus,
       generateBirthdayCoupon,
-      sendBirthdayWish
+      sendBirthdayWish,
+      // Global Header Search & Pre-Order Prefill
+      stockSearchQuery,
+      setStockSearchQuery,
+      prefilledPreOrder,
+      setPrefilledPreOrder
     }}>
       {children}
     </AppContext.Provider>

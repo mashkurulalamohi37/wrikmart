@@ -36,10 +36,19 @@ const CATEGORIES = [
 ];
 
 export const CustomerStockCatalog = ({ onOpenCheckout }) => {
-  const { inventory = [], addToCart, setIsCartOpen } = useApp();
+  const { 
+    inventory = [], 
+    addToCart, 
+    setIsCartOpen,
+    stockSearchQuery = '',
+    setStockSearchQuery
+  } = useApp();
 
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const searchQuery = stockSearchQuery;
+  const setSearchQuery = (val) => {
+    if (setStockSearchQuery) setStockSearchQuery(val);
+  };
   const [sortBy, setSortBy] = useState('featured'); // 'featured' | 'price-asc' | 'price-desc' | 'discount' | 'bestseller'
   const [inStockOnly, setInStockOnly] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null); // For Quick View modal
@@ -72,6 +81,23 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [inventory]);
+
+  // When search query is active, reset category to All if current category has 0 matches
+  useEffect(() => {
+    if (stockSearchQuery && selectedCategory !== 'All') {
+      const q = stockSearchQuery.toLowerCase();
+      const matchesInSelectedCat = inventory.some(item => 
+        item.category === selectedCategory && (
+          item.name.toLowerCase().includes(q) ||
+          item.brand.toLowerCase().includes(q) ||
+          item.sku?.toLowerCase().includes(q)
+        )
+      );
+      if (!matchesInSelectedCat) {
+        setSelectedCategory('All');
+      }
+    }
+  }, [stockSearchQuery, inventory, selectedCategory]);
 
   // Handle local quantity stepper
   const handleQuantityChange = (productId, delta, maxStock) => {
