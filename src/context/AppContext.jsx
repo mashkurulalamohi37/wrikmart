@@ -17,11 +17,160 @@ import {
 
 const AppContext = createContext();
 
+const VALID_ROLES = ['admin', 'agent', 'customer'];
+const VALID_CUSTOMER_TABS = ['home', 'stock', 'preorder', 'orders', 'chat', 'profile'];
+const VALID_ADMIN_NAVS = [
+  'dashboard', 'orders', 'customers', 'preorder_settings', 
+  'agents', 'balance', 'expenses', 'hubs', 'delivery', 
+  'history', 'reports', 'settings'
+];
+const VALID_AGENT_TABS = [
+  'dashboard', 'orders', 'purchase', 'expense', 'hub', 'history', 'chat'
+];
+
+export const parseInitialRoute = () => {
+  // 1. Try URL hash first
+  try {
+    const rawHash = typeof window !== 'undefined' ? window.location.hash : '';
+    const hash = rawHash.replace(/^#\/?/, '').trim();
+    if (hash) {
+      const parts = hash.split('/').map(p => decodeURIComponent(p).trim()).filter(Boolean);
+      if (parts.length > 0) {
+        const first = parts[0].toLowerCase();
+        
+        if (first === 'customer') {
+          const tab = parts[1]?.toLowerCase();
+          return {
+            role: 'customer',
+            customerTab: VALID_CUSTOMER_TABS.includes(tab) ? tab : 'home'
+          };
+        }
+        
+        if (first === 'admin') {
+          const nav = parts[1]?.toLowerCase();
+          return {
+            role: 'admin',
+            adminNav: VALID_ADMIN_NAVS.includes(nav) ? nav : 'dashboard'
+          };
+        }
+        
+        if (first === 'agent') {
+          let agentId = null;
+          let agentTab = 'dashboard';
+          if (parts[1]?.toLowerCase().startsWith('agent-')) {
+            agentId = parts[1];
+            if (parts[2]) agentTab = parts[2].toLowerCase();
+          } else if (parts[1]) {
+            agentTab = parts[1].toLowerCase();
+          }
+          return {
+            role: 'agent',
+            agentId: agentId || localStorage.getItem('wrikmart_active_agent_id') || 'agent-1',
+            agentTab: VALID_AGENT_TABS.includes(agentTab) ? agentTab : 'dashboard'
+          };
+        }
+
+        // Direct shortcuts in hash (e.g. #/stock, #/orders, #/customers, #/reports)
+        if (VALID_CUSTOMER_TABS.includes(first)) {
+          return { role: 'customer', customerTab: first };
+        }
+        if (VALID_ADMIN_NAVS.includes(first)) {
+          return { role: 'admin', adminNav: first };
+        }
+        if (VALID_AGENT_TABS.includes(first)) {
+          return { role: 'agent', agentTab: first };
+        }
+      }
+    }
+  } catch (e) {}
+
+  // 2. Fall back to localStorage
+  try {
+    const savedRole = localStorage.getItem('wrikmart_current_role');
+    const savedCustomerTab = localStorage.getItem('wrikmart_customer_tab');
+    const savedAdminNav = localStorage.getItem('wrikmart_admin_nav');
+    const savedAgentTab = localStorage.getItem('wrikmart_agent_tab');
+    const savedAgentId = localStorage.getItem('wrikmart_active_agent_id');
+
+    if (savedRole && VALID_ROLES.includes(savedRole)) {
+      return {
+        role: savedRole,
+        customerTab: VALID_CUSTOMER_TABS.includes(savedCustomerTab) ? savedCustomerTab : 'home',
+        adminNav: VALID_ADMIN_NAVS.includes(savedAdminNav) ? savedAdminNav : 'dashboard',
+        agentTab: VALID_AGENT_TABS.includes(savedAgentTab) ? savedAgentTab : 'dashboard',
+        agentId: savedAgentId || 'agent-1'
+      };
+    }
+  } catch (e) {}
+
+  // 3. Default fallback if fresh user
+  return {
+    role: 'customer',
+    customerTab: 'home',
+    adminNav: 'dashboard',
+    agentTab: 'dashboard',
+    agentId: 'agent-1'
+  };
+};
+
 export const AppProvider = ({ children }) => {
-  // Navigation & Role State
-  const [currentRole, setCurrentRole] = useState('admin'); // 'admin' | 'agent' | 'customer'
-  const [activeAgentId, setActiveAgentId] = useState('agent-1'); // Currently simulated agent
-  const [customerTab, setCustomerTab] = useState('home'); // 'home' | 'stock' | 'preorder' | 'orders' | 'chat' | 'profile'
+  const initialRoute = parseInitialRoute();
+
+  // Navigation & Role State with persistence
+  const [currentRole, setCurrentRole] = useState(() => initialRoute.role || 'customer');
+  const [activeAgentId, setActiveAgentId] = useState(() => initialRoute.agentId || 'agent-1');
+  const [customerTab, setCustomerTab] = useState(() => initialRoute.customerTab || 'home');
+  const [adminNav, setAdminNav] = useState(() => initialRoute.adminNav || 'dashboard');
+  const [agentTab, setAgentTab] = useState(() => initialRoute.agentTab || 'dashboard');
+
+  // Synchronize routing state to localStorage and URL hash
+  useEffect(() => {
+    try {
+      localStorage.setItem('wrikmart_current_role', currentRole);
+      localStorage.setItem('wrikmart_customer_tab', customerTab);
+      localStorage.setItem('wrikmart_admin_nav', adminNav);
+      localStorage.setItem('wrikmart_agent_tab', agentTab);
+      localStorage.setItem('wrikmart_active_agent_id', activeAgentId);
+
+      let targetHash = '';
+      if (currentRole === 'customer') {
+        targetHash = `#/customer/${customerTab}`;
+      } else if (currentRole === 'admin') {
+        targetHash = `#/admin/${adminNav}`;
+      } else if (currentRole === 'agent') {
+        targetHash = `#/agent/${activeAgentId}/${agentTab}`;
+      }
+
+      if (window.location.hash !== targetHash) {
+        window.history.replaceState(null, '', targetHash);
+      }
+    } catch (e) {}
+  }, [currentRole, customerTab, adminNav, agentTab, activeAgentId]);
+
+  // Handle browser back / forward navigation via hashchange
+  useEffect(() => {
+    const handleHashChange = () => {
+      const route = parseInitialRoute();
+      if (route.role && route.role !== currentRole) {
+        setCurrentRole(route.role);
+      }
+      if (route.customerTab && route.customerTab !== customerTab) {
+        setCustomerTab(route.customerTab);
+      }
+      if (route.adminNav && route.adminNav !== adminNav) {
+        setAdminNav(route.adminNav);
+      }
+      if (route.agentTab && route.agentTab !== agentTab) {
+        setAgentTab(route.agentTab);
+      }
+      if (route.agentId && route.agentId !== activeAgentId) {
+        setActiveAgentId(route.agentId);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [currentRole, customerTab, adminNav, agentTab, activeAgentId]);
 
   // Data States with automatic migration for fresh schema
   const [orders, setOrders] = useState(() => {
@@ -1469,6 +1618,10 @@ export const AppProvider = ({ children }) => {
       setCurrentRole,
       customerTab,
       setCustomerTab,
+      adminNav,
+      setAdminNav,
+      agentTab,
+      setAgentTab,
       activeAgentId,
       setActiveAgentId,
       activeAgent,

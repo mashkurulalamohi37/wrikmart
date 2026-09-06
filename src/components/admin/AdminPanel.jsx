@@ -40,12 +40,21 @@ import {
 import { CountryFlag } from '../common/CountryFlag';
 
 export const AdminPanel = () => {
-  const [activeNav, setActiveNav] = useState('dashboard');
+  const { 
+    balanceTransfers, 
+    customers = [], 
+    getBirthdayStatus,
+    adminNav,
+    setAdminNav
+  } = useApp();
+
+  const activeNav = adminNav || 'dashboard';
+  const setActiveNav = setAdminNav;
+
   const [selectedOrder360, setSelectedOrder360] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
 
-  const { balanceTransfers, customers = [], getBirthdayStatus } = useApp();
   const pendingTransferCount = balanceTransfers.filter(t => t.status === 'Pending').length;
   const todayBirthdaysCount = customers.filter(c => getBirthdayStatus?.(c.dateOfBirth)?.isToday).length;
 

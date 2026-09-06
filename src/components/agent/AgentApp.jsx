@@ -22,9 +22,15 @@ import {
 import { useApp } from '../../context/AppContext';
 
 export const AgentApp = () => {
-  const { activeAgent, balanceTransfers } = useApp();
-  // Navigation tabs: 'dashboard' | 'orders' | 'purchase' | 'expense' | 'hub' | 'history' | 'chat'
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const { 
+    activeAgent, 
+    balanceTransfers,
+    agentTab,
+    setAgentTab
+  } = useApp();
+
+  const activeTab = agentTab || 'dashboard';
+  const setActiveTab = setAgentTab;
   
   // Active Modal States
   const [selectedOrderForLink, setSelectedOrderForLink] = useState(null);

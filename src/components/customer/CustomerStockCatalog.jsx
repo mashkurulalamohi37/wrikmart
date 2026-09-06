@@ -46,7 +46,20 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
     setStockSearchQuery
   } = useApp();
 
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    try {
+      return localStorage.getItem('wrikmart_stock_category') || 'All';
+    } catch (e) {
+      return 'All';
+    }
+  });
+
+  const handleSelectCategory = (catId) => {
+    setSelectedCategory(catId);
+    try {
+      localStorage.setItem('wrikmart_stock_category', catId);
+    } catch (e) {}
+  };
   const searchQuery = stockSearchQuery;
   const setSearchQuery = (val) => {
     if (setStockSearchQuery) setStockSearchQuery(val);
@@ -237,7 +250,7 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
             return (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={() => handleSelectCategory(cat.id)}
                 className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all transform active:scale-95 cursor-pointer ${
                   isSelected
                     ? 'bg-brand-600 text-white shadow-md shadow-brand-600/25 ring-2 ring-brand-500/20'
@@ -338,7 +351,7 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
           </div>
           <button
             onClick={() => {
-              setSelectedCategory('All');
+              handleSelectCategory('All');
               setSearchQuery('');
               setInStockOnly(false);
             }}
