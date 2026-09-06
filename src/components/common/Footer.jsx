@@ -14,6 +14,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { BKashLogo, NagadLogo, VisaLogo, MastercardLogo } from './PaymentLogos';
+import { CountryFlag } from './CountryFlag';
 
 export const Footer = () => {
   return (
@@ -88,9 +89,18 @@ export const Footer = () => {
             <div className="pt-1">
               <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-2">Verified Sourcing Hubs</span>
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span className="px-2.5 py-1 rounded-lg bg-[#0D1B3D] border border-slate-700 text-slate-300 font-semibold">🇮🇳 India (Delhi / Mumbai)</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#0D1B3D] border border-slate-700 text-slate-300 font-semibold">🇦🇪 Dubai (Al Quoz)</span>
-                <span className="px-2.5 py-1 rounded-lg bg-[#0D1B3D] border border-slate-700 text-slate-300 font-semibold">🇹🇭 Thailand (Bangkok)</span>
+                <span className="px-2.5 py-1.5 rounded-xl bg-[#0D1B3D] border border-slate-700 text-slate-200 font-semibold flex items-center gap-2 shadow-xs">
+                  <CountryFlag country="India" className="w-5 h-3.5 rounded-[2px]" />
+                  <span>India (Delhi / Mumbai)</span>
+                </span>
+                <span className="px-2.5 py-1.5 rounded-xl bg-[#0D1B3D] border border-slate-700 text-slate-200 font-semibold flex items-center gap-2 shadow-xs">
+                  <CountryFlag country="Dubai" className="w-5 h-3.5 rounded-[2px]" />
+                  <span>Dubai (Al Quoz)</span>
+                </span>
+                <span className="px-2.5 py-1.5 rounded-xl bg-[#0D1B3D] border border-slate-700 text-slate-200 font-semibold flex items-center gap-2 shadow-xs">
+                  <CountryFlag country="Thailand" className="w-5 h-3.5 rounded-[2px]" />
+                  <span>Thailand (Bangkok)</span>
+                </span>
               </div>
             </div>
           </div>

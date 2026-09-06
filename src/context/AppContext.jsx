@@ -6,7 +6,8 @@ import {
   INITIAL_EXCHANGE_RATES,
   INITIAL_EXPENSES,
   INITIAL_BALANCE_TRANSFERS,
-  INITIAL_CHAT_MESSAGES
+  INITIAL_CHAT_MESSAGES,
+  INITIAL_STOCK_INVENTORY
 } from '../data/mockData';
 
 const AppContext = createContext();
@@ -16,20 +17,32 @@ export const AppProvider = ({ children }) => {
   const [currentRole, setCurrentRole] = useState('admin'); // 'admin' | 'agent' | 'customer'
   const [activeAgentId, setActiveAgentId] = useState('agent-1'); // Currently simulated agent
   const [customerTab, setCustomerTab] = useState('home'); // 'home' | 'preorder' | 'orders' | 'chat' | 'profile'
-  // Data States
+
+  // Data States with automatic migration for fresh schema
   const [orders, setOrders] = useState(() => {
-    const saved = localStorage.getItem('wrikmart_orders');
-    return saved ? JSON.parse(saved) : INITIAL_ORDERS;
+    const saved = localStorage.getItem('wrikmart_orders_v2');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return INITIAL_ORDERS;
   });
 
   const [agents, setAgents] = useState(() => {
-    const saved = localStorage.getItem('wrikmart_agents');
-    return saved ? JSON.parse(saved) : INITIAL_AGENTS;
+    const saved = localStorage.getItem('wrikmart_agents_v2');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return INITIAL_AGENTS;
   });
 
   const [hubs, setHubs] = useState(() => {
     const saved = localStorage.getItem('wrikmart_hubs');
     return saved ? JSON.parse(saved) : INITIAL_HUBS;
+  });
+
+  const [inventory, setInventory] = useState(() => {
+    const saved = localStorage.getItem('wrikmart_inventory');
+    return saved ? JSON.parse(saved) : INITIAL_STOCK_INVENTORY;
   });
 
   const [exchangeRates, setExchangeRates] = useState(() => {
@@ -64,12 +77,16 @@ export const AppProvider = ({ children }) => {
 
   // Sync to local storage
   useEffect(() => {
-    localStorage.setItem('wrikmart_orders', JSON.stringify(orders));
+    localStorage.setItem('wrikmart_orders_v2', JSON.stringify(orders));
   }, [orders]);
 
   useEffect(() => {
-    localStorage.setItem('wrikmart_agents', JSON.stringify(agents));
+    localStorage.setItem('wrikmart_agents_v2', JSON.stringify(agents));
   }, [agents]);
+
+  useEffect(() => {
+    localStorage.setItem('wrikmart_inventory', JSON.stringify(inventory));
+  }, [inventory]);
 
   useEffect(() => {
     localStorage.setItem('wrikmart_transfers', JSON.stringify(balanceTransfers));
@@ -137,7 +154,7 @@ export const AppProvider = ({ children }) => {
       return a;
     }));
 
-    showToast(`Transferred ৳${amountBDT.toLocaleString()} (${targetAgent.symbol}${amountTarget.toLocaleString()}) to ${targetAgent.name}. Status: Pending Agent Acceptance`, 'info');
+    showToast(`Transferred ৳${Number(amountBDT).toLocaleString()} (${targetAgent.symbol}${amountTarget.toLocaleString()}) to ${targetAgent.name}. Status: Pending Agent Acceptance`, 'info');
     return true;
   };
 
@@ -192,22 +209,20 @@ export const AppProvider = ({ children }) => {
   // ACTIONS: CUSTOMER PRE-ORDER WORKFLOW
   // ==========================================
 
-  // Customer creates a new Pre-Order with Advance Payment
   const createCustomerPreOrder = ({ country, items, customerInfo, paymentMethod, transactionId, advancePaid }) => {
     const orderNumber = `PO-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
     
-    // Auto calculate subtotal
     const estimatedSubtotal = items.reduce((sum, item) => sum + (Number(item.expectedPrice || 0) * (item.specs?.unit || 1)), 0);
     const deliveryCharge = 200;
     const estimatedTotal = estimatedSubtotal + deliveryCharge;
     const advanceRequired = advancePaid || Math.round(estimatedTotal * 0.25);
 
-    // Auto assign agent based on country
     const matchedAgent = agents.find(a => a.country.toLowerCase() === country.toLowerCase()) || agents[0];
 
     const newOrder = {
       id: orderNumber,
       orderNumber,
+      orderType: 'Pre-Order',
       country,
       countryFlag: country === 'India' ? '🇮🇳' : country === 'Dubai' ? '🇦🇪' : '🇹🇭',
       status: 'Processing',
@@ -218,6 +233,7 @@ export const AppProvider = ({ children }) => {
       assignedAgentName: matchedAgent.name,
       hubId: 'hub-1',
       hubName: 'Dhaka Main Hub',
+      courierName: 'Steadfast Courier',
       customer: {
         id: `cust-${Date.now()}`,
         name: customerInfo.name,
@@ -225,7 +241,8 @@ export const AppProvider = ({ children }) => {
         email: customerInfo.email || '',
         address: customerInfo.address,
         district: customerInfo.district || 'Dhaka',
-        note: customerInfo.note || ''
+        note: customerInfo.note || '',
+        isReturning: false
       },
       financials: {
         currency: 'BDT',
@@ -236,11 +253,17 @@ export const AppProvider = ({ children }) => {
         advanceRequired,
         advancePaid,
         finalSellingPrice: estimatedTotal,
-        dueAmount: estimatedTotal - advancePaid
+        dueAmount: estimatedTotal - advancePaid,
+        agentCostBDT: Math.round(estimatedSubtotal * 0.75),
+        shippingCostBDT: 600,
+        localCourierCostBDT: 120,
+        grossProfitBDT: Math.round(estimatedTotal - (estimatedSubtotal * 0.75) - 720)
       },
       items: items.map((item, idx) => ({
         id: `item-${Date.now()}-${idx}`,
         name: item.name,
+        category: item.category || 'General',
+        brand: item.brand || 'Retail Store',
         url: item.url || '',
         image: item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80',
         specs: item.specs || { size: 'Standard', color: 'Default', unit: 1 },
@@ -272,6 +295,175 @@ export const AppProvider = ({ children }) => {
   };
 
   // ==========================================
+  // ACTIONS: ADMIN MANUAL ORDER CREATION
+  // ==========================================
+
+  const createAdminOrder = ({
+    orderType = 'Pre-Order',
+    country = 'India',
+    customerInfo,
+    items,
+    financials,
+    paymentMethod = 'bKash',
+    paymentStatus = 'Advance Paid',
+    assignedAgentId = null,
+    purchaseDeadline,
+    note
+  }) => {
+    const orderPrefix = orderType === 'Stock Product' ? 'ORD-STK' : 'PO';
+    const orderNumber = `${orderPrefix}-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
+    
+    const matchedAgent = assignedAgentId 
+      ? agents.find(a => a.id === assignedAgentId)
+      : agents.find(a => a.country.toLowerCase() === country.toLowerCase()) || agents[0];
+
+    const estimatedSubtotal = items.reduce((sum, item) => sum + (Number(item.expectedPrice || 0) * (item.specs?.unit || 1)), 0);
+    const deliveryCharge = Number(financials?.deliveryCharge ?? 200);
+    const estimatedTotal = estimatedSubtotal + deliveryCharge;
+    const advancePaid = Number(financials?.advancePaid ?? (paymentStatus === 'Fully Paid' ? estimatedTotal : Math.round(estimatedTotal * 0.25)));
+    const dueAmount = Math.max(0, estimatedTotal - advancePaid);
+
+    const initialStatus = orderType === 'Stock Product'
+      ? (paymentStatus === 'Fully Paid' ? 'Ready for Delivery' : 'Processing')
+      : 'Processing';
+
+    const newOrder = {
+      id: orderNumber,
+      orderNumber,
+      orderType,
+      country: orderType === 'Stock Product' ? 'Bangladesh' : country,
+      countryFlag: orderType === 'Stock Product' ? '🇧🇩' : (country === 'India' ? '🇮🇳' : country === 'Dubai' ? '🇦🇪' : '🇹🇭'),
+      status: initialStatus,
+      paymentStatus,
+      createdAt: new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      purchaseDeadline: purchaseDeadline || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      assignedAgentId: orderType === 'Stock Product' ? null : matchedAgent?.id,
+      assignedAgentName: orderType === 'Stock Product' ? 'Dhaka Hub Fulfillment' : matchedAgent?.name,
+      hubId: 'hub-1',
+      hubName: 'Dhaka Main Hub',
+      courierName: 'Steadfast Courier',
+      customer: {
+        id: `cust-${Date.now()}`,
+        name: customerInfo.name,
+        phone: customerInfo.phone,
+        email: customerInfo.email || '',
+        address: customerInfo.address,
+        district: customerInfo.district || 'Dhaka',
+        note: note || customerInfo.note || '',
+        isReturning: false
+      },
+      financials: {
+        currency: 'BDT',
+        symbol: '৳',
+        estimatedSubtotal,
+        deliveryCharge,
+        estimatedTotal,
+        advanceRequired: advancePaid,
+        advancePaid,
+        finalSellingPrice: estimatedTotal,
+        dueAmount,
+        agentCostBDT: Math.round(estimatedSubtotal * 0.75),
+        shippingCostBDT: orderType === 'Stock Product' ? 0 : 500,
+        localCourierCostBDT: 120,
+        grossProfitBDT: Math.round(estimatedTotal - (estimatedSubtotal * 0.75) - 120)
+      },
+      items: items.map((item, idx) => ({
+        id: `item-${Date.now()}-${idx}`,
+        name: item.name,
+        category: item.category || 'General',
+        brand: item.brand || 'Original Brand',
+        url: item.url || '',
+        image: item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80',
+        specs: item.specs || { size: 'Standard', color: 'Default', unit: 1 },
+        expectedPrice: Number(item.expectedPrice || 0),
+        actualPurchasePrice: orderType === 'Stock Product' ? Number(item.costPrice || item.expectedPrice * 0.75) : null,
+        actualPurchaseCurrency: orderType === 'Stock Product' ? 'BDT' : matchedAgent?.currency || 'INR',
+        mrp: Number(item.mrp || item.expectedPrice * 1.1),
+        purchasedFrom: orderType === 'Stock Product' ? 'Dhaka Warehouse Local Stock' : '',
+        purchaseDate: orderType === 'Stock Product' ? new Date().toLocaleString() : null,
+        receiptImage: null,
+        notes: item.notes || ''
+      })),
+      timeline: [
+        { step: 'Order Placed', time: new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), actor: 'Admin HQ', note: `Manual ${orderType} created by Admin`, done: true },
+        { step: 'Payment Confirmed', time: new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), actor: `${paymentMethod} Gateway`, note: `Payment: ${paymentStatus} (৳${advancePaid.toLocaleString()})`, done: paymentStatus !== 'Unpaid' },
+        { step: 'Agent Assigned', time: new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), actor: 'Admin Dispatch', note: orderType === 'Stock Product' ? 'Assigned to Dhaka Warehouse' : `Assigned to ${matchedAgent?.name}`, done: true },
+        { step: 'Purchase Updated', time: 'Pending', actor: matchedAgent?.name || 'Agent', note: '', done: orderType === 'Stock Product' },
+        { step: 'Arrived at Hub', time: 'Pending', actor: 'Hub Logistics', note: '', done: false },
+        { step: 'Shipped to Bangladesh', time: 'Pending', actor: 'Air Cargo', note: '', done: false },
+        { step: 'Bangladesh Received', time: 'Pending', actor: 'Dhaka Hub', note: '', done: orderType === 'Stock Product' },
+        { step: 'Ready for Delivery', time: 'Pending', actor: 'Courier Rider', note: '', done: false },
+        { step: 'Delivered', time: 'Pending', actor: 'Customer', note: '', done: false }
+      ]
+    };
+
+    setOrders(prev => [newOrder, ...prev]);
+    showToast(`Created ${orderType} #${orderNumber} successfully!`, 'success');
+    return newOrder;
+  };
+
+  // ==========================================
+  // ACTIONS: DAMAGE OR RETURN HANDLING
+  // ==========================================
+
+  const reportDamageOrReturn = (orderId, damageData) => {
+    setOrders(prev => prev.map(order => {
+      if (order.id === orderId) {
+        const newStatus = damageData.status || 'Damaged';
+        const newTimeline = [
+          ...order.timeline,
+          {
+            step: newStatus === 'Damaged' ? 'Damage Reported' : 'Return Initiated',
+            time: new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            actor: damageData.reportedBy || 'Logistics Inspector',
+            note: `${damageData.incidentType}: ${damageData.description}`,
+            done: true
+          }
+        ];
+
+        return {
+          ...order,
+          status: newStatus,
+          damageDetails: {
+            incidentType: damageData.incidentType || 'Damaged in Transit',
+            description: damageData.description || '',
+            proofUrl: damageData.proofUrl || 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?w=500&auto=format&fit=crop&q=80',
+            reportedDate: new Date().toISOString().split('T')[0],
+            reportedBy: damageData.reportedBy || 'Admin',
+            disposition: damageData.disposition || 'Customer Refund Required',
+            refundAmount: Number(damageData.refundAmount || order.financials.advancePaid || 0),
+            resolutionStatus: damageData.resolutionStatus || 'Pending Investigation',
+            resolutionNote: damageData.resolutionNote || ''
+          },
+          timeline: newTimeline
+        };
+      }
+      return order;
+    }));
+
+    showToast(`Order #${orderId} marked as ${damageData.status || 'Damaged'}!`, 'warning');
+  };
+
+  const resolveDamageOrReturn = (orderId, { resolutionStatus, resolutionNote, refundAmount }) => {
+    setOrders(prev => prev.map(order => {
+      if (order.id === orderId && order.damageDetails) {
+        return {
+          ...order,
+          damageDetails: {
+            ...order.damageDetails,
+            resolutionStatus,
+            resolutionNote: resolutionNote || order.damageDetails.resolutionNote,
+            refundAmount: refundAmount !== undefined ? Number(refundAmount) : order.damageDetails.refundAmount
+          }
+        };
+      }
+      return order;
+    }));
+
+    showToast(`Resolution for #${orderId} updated to "${resolutionStatus}"`, 'info');
+  };
+
+  // ==========================================
   // ACTIONS: AGENT ACTIONS
   // ==========================================
 
@@ -300,7 +492,6 @@ export const AppProvider = ({ children }) => {
           };
         });
 
-        // Update Timeline
         const newTimeline = order.timeline.map(t => {
           if (t.step === 'Purchase Updated') {
             return {
@@ -477,7 +668,7 @@ export const AppProvider = ({ children }) => {
     showToast(`Updated BDT to ${currencyCode} conversion rate to ${newRateFromBDT}`, 'success');
   };
 
-  // Add Agent
+  // Add Agent with Full 8 KYC Fields
   const addAgent = (newAgentData) => {
     const newAgent = {
       id: `agent-${Date.now()}`,
@@ -485,19 +676,32 @@ export const AppProvider = ({ children }) => {
       country: newAgentData.country,
       flag: newAgentData.country === 'India' ? '🇮🇳' : newAgentData.country === 'Dubai' ? '🇦🇪' : '🇹🇭',
       currency: newAgentData.currency || (newAgentData.country === 'India' ? 'INR' : newAgentData.country === 'Dubai' ? 'AED' : 'THB'),
-      symbol: newAgentData.country === 'India' ? '₹' : newAgentData.country === 'Dubai' ? 'AED ' : '฿',
+      symbol: newAgentData.country === 'India' ? '₹' : newAgentData.country === 'Dubai' ? 'د.إ' : '฿',
       phone: newAgentData.phone,
-      email: newAgentData.email,
+      whatsapp: newAgentData.whatsapp || newAgentData.phone,
+      email: newAgentData.email || '',
+      address: newAgentData.address || '',
+      referencePerson: {
+        name: newAgentData.refName || newAgentData.referencePerson?.name || 'Verified Contact',
+        phone: newAgentData.refPhone || newAgentData.referencePerson?.phone || '',
+        address: newAgentData.refAddress || newAgentData.referencePerson?.address || ''
+      },
+      govtDocument: {
+        type: newAgentData.docType || newAgentData.govtDocument?.type || (newAgentData.country === 'India' ? 'Aadhaar Card' : newAgentData.country === 'Dubai' ? 'Emirates ID' : 'Thai National ID'),
+        number: newAgentData.docNumber || newAgentData.govtDocument?.number || 'ID-VERIFIED-2026',
+        documentUrl: newAgentData.docUrl || newAgentData.govtDocument?.documentUrl || 'https://images.unsplash.com/photo-1633409381659-3b954d7e974e?w=500&auto=format&fit=crop&q=80',
+        verified: true
+      },
       balance: Number(newAgentData.initialBalance || 0),
       pendingBalance: 0,
       totalSpent: 0,
       activeOrders: 0,
       completedOrders: 0,
       status: 'Active',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+      avatar: newAgentData.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
     };
     setAgents(prev => [...prev, newAgent]);
-    showToast(`Agent ${newAgent.name} registered for ${newAgent.country}!`, 'success');
+    showToast(`Agent ${newAgent.name} successfully registered with KYC documents!`, 'success');
   };
 
   // Add Delivery Hub
@@ -538,6 +742,7 @@ export const AppProvider = ({ children }) => {
       orders,
       agents,
       hubs,
+      inventory,
       exchangeRates,
       expenses,
       balanceTransfers,
@@ -548,6 +753,9 @@ export const AppProvider = ({ children }) => {
       acceptBalanceTransfer,
       rejectBalanceTransfer,
       createCustomerPreOrder,
+      createAdminOrder,
+      reportDamageOrReturn,
+      resolveDamageOrReturn,
       updateOrderPurchase,
       markOrderAtHub,
       updateOrderStatus,

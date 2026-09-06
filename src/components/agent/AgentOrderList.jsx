@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { AdminDamageReturnModal } from '../admin/AdminDamageReturnModal';
 import { 
   Search, 
   Filter, 
@@ -12,13 +13,17 @@ import {
   AlertCircle,
   ShieldCheck,
   ChevronRight,
-  Package
+  Package,
+  AlertTriangle,
+  RotateCcw
 } from 'lucide-react';
+import { CountryFlag } from '../common/CountryFlag';
 
 export const AgentOrderList = ({ onSelectOrderForPurchase, onSelectOrderForHub, onSelectOrderForLink }) => {
   const { activeAgent, orders } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('All'); // 'All' | 'Processing' | 'In Transit' | 'Delivered' | 'Cancel'
+  const [activeTab, setActiveTab] = useState('All'); // 'All' | 'Processing' | 'In Transit' | 'Delivered' | 'Damaged' | 'Cancel'
+  const [selectedOrderForDamage, setSelectedOrderForDamage] = useState(null);
 
   // Filter orders for active agent's country
   const agentOrders = orders.filter(o => {
@@ -35,6 +40,7 @@ export const AgentOrderList = ({ onSelectOrderForPurchase, onSelectOrderForHub, 
     if (activeTab === 'Processing') return o.status === 'Processing';
     if (activeTab === 'In Transit') return o.status === 'Purchased' || o.status === 'At Delivery House' || o.status === 'In Transit';
     if (activeTab === 'Delivered') return o.status === 'Delivered';
+    if (activeTab === 'Damaged') return o.status === 'Damaged' || o.status === 'Returned' || Boolean(o.damageDetails);
     if (activeTab === 'Cancel') return o.status === 'Cancelled';
     return true;
   });
@@ -57,17 +63,17 @@ export const AgentOrderList = ({ onSelectOrderForPurchase, onSelectOrderForHub, 
 
       {/* Tabs Filter */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-        {['All', 'Processing', 'In Transit', 'Delivered', 'Cancel'].map((tab) => (
+        {['All', 'Processing', 'In Transit', 'Delivered', 'Damaged', 'Cancel'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
               activeTab === tab
-                ? 'bg-navy-900 text-white shadow-sm'
+                ? (tab === 'Damaged' ? 'bg-rose-600 text-white shadow-sm' : 'bg-navy-900 text-white shadow-sm')
                 : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
             }`}
           >
-            {tab}
+            {tab === 'Damaged' ? '⚠️ Damage / Returns' : tab}
           </button>
         ))}
       </div>
@@ -96,13 +102,16 @@ export const AgentOrderList = ({ onSelectOrderForPurchase, onSelectOrderForHub, 
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
                 <div className="flex items-center gap-2">
                   <span className="font-mono font-bold text-sm text-navy-900">{order.orderNumber}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold">
-                    {order.countryFlag} {order.country}
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold inline-flex items-center gap-1.5">
+                    <CountryFlag country={order.country || order.countryFlag} className="w-4 h-3 rounded-[2px]" />
+                    <span>{order.country}</span>
                   </span>
                 </div>
 
                 <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                   order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
+                  order.status === 'Damaged' ? 'bg-rose-100 text-rose-700 border border-rose-200' :
+                  order.status === 'Returned' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
                   order.status === 'Purchased' ? 'bg-cyan-100 text-cyan-700' :
                   order.status === 'At Delivery House' ? 'bg-purple-100 text-purple-700' :
                   order.status === 'In Transit' ? 'bg-indigo-100 text-indigo-700' :
@@ -114,7 +123,7 @@ export const AgentOrderList = ({ onSelectOrderForPurchase, onSelectOrderForHub, 
 
               {/* Order Items for Agent */}
               <div className="space-y-3 mb-4">
-                {order.items.map((item, idx) => (
+                {order.items.map((item) => (
                   <div key={item.id} className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-50/70 border border-slate-200/80">
                     <img src={item.image} alt={item.name} className="w-14 h-14 object-cover rounded-lg border flex-shrink-0" />
                     <div className="flex-1 min-w-0">
@@ -170,11 +179,28 @@ export const AgentOrderList = ({ onSelectOrderForPurchase, onSelectOrderForHub, 
                   <Building2 className="w-3.5 h-3.5" />
                   <span>Hub Delivery</span>
                 </button>
+
+                <button
+                  onClick={() => setSelectedOrderForDamage(order)}
+                  className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors flex items-center gap-1 text-xs font-bold"
+                  title="Report Damaged or Return Item"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                  <span className="hidden sm:inline">Defect / Return</span>
+                </button>
               </div>
             </div>
           ))
         )}
       </div>
+
+      {/* Damage / Return Modal */}
+      {selectedOrderForDamage && (
+        <AdminDamageReturnModal
+          order={selectedOrderForDamage}
+          onClose={() => setSelectedOrderForDamage(null)}
+        />
+      )}
     </div>
   );
 };

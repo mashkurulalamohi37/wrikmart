@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Settings, Copy, Check, Link, Globe, CheckSquare } from 'lucide-react';
+import { CountryFlag } from '../common/CountryFlag';
 
 export const AdminPreOrderSettings = () => {
   const { showToast } = useApp();
@@ -71,9 +72,9 @@ export const AdminPreOrderSettings = () => {
         <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">Enabled Sourcing Countries</h3>
         <div className="grid grid-cols-3 gap-3 text-xs">
           {[
-            { id: 'india', name: 'India 🇮🇳', key: 'india' },
-            { id: 'dubai', name: 'Dubai 🇦🇪', key: 'dubai' },
-            { id: 'thailand', name: 'Thailand 🇹🇭', key: 'thailand' }
+            { id: 'india', name: 'India', key: 'india' },
+            { id: 'dubai', name: 'Dubai', key: 'dubai' },
+            { id: 'thailand', name: 'Thailand', key: 'thailand' }
           ].map(c => (
             <label key={c.id} className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50">
               <input
@@ -82,7 +83,10 @@ export const AdminPreOrderSettings = () => {
                 onChange={(e) => setCountries({ ...countries, [c.key]: e.target.checked })}
                 className="rounded text-brand-600 focus:ring-brand-500"
               />
-              <span className="font-bold text-navy-900">{c.name}</span>
+              <span className="font-bold text-navy-900 inline-flex items-center gap-1.5">
+                <CountryFlag country={c.name} className="w-4 h-3 rounded-xs" />
+                <span>{c.name}</span>
+              </span>
             </label>
           ))}
         </div>

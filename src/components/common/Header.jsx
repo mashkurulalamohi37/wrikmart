@@ -5,8 +5,6 @@ import {
   ShieldCheck, 
   UserCheck, 
   User, 
-  Globe, 
-  ArrowRightLeft, 
   Bell, 
   ChevronDown, 
   Check, 
@@ -14,13 +12,13 @@ import {
   Sparkles, 
   Search, 
   Plus, 
-  PhoneCall, 
   HelpCircle,
   Truck,
   ExternalLink,
   Lock,
   Layers
 } from 'lucide-react';
+import { CountryFlag } from './CountryFlag';
 
 export const Header = () => {
   const { 
@@ -37,8 +35,6 @@ export const Header = () => {
   } = useApp();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [showFxModal, setShowFxModal] = useState(false);
-  const [calculatorBdt, setCalculatorBdt] = useState('10000');
   const dropdownRef = useRef(null);
 
   const handleStartPreOrder = () => {
@@ -66,57 +62,6 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-[#0D1B3D] text-white border-b border-slate-800 shadow-lg select-none w-full max-w-full">
-      
-      {/* 1. Top Mini Utility & Live FX Bar */}
-      <div className="bg-[#08132B] px-3 sm:px-6 lg:px-8 h-8 text-[11px] text-slate-300 border-b border-slate-800/80 flex items-center justify-between gap-2 sm:gap-4 w-full max-w-full overflow-hidden">
-        
-        {/* Left: Live Multi-Currency Conversion Ticker with Modal Trigger */}
-        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto scrollbar-none py-0.5 max-w-full flex-1">
-          <button
-            onClick={() => setShowFxModal(true)}
-            className="inline-flex items-center gap-1.5 font-extrabold text-brand-400 bg-brand-500/15 hover:bg-brand-500/25 px-2.5 py-0.5 rounded-full text-[10px] transition-colors border border-brand-500/30 flex-shrink-0"
-            title="Open Live Currency Calculator"
-          >
-            <ArrowRightLeft className="w-3 h-3 text-brand-400" />
-            <span>Live FX</span>
-          </button>
-
-          <div className="flex items-center gap-2 sm:gap-2.5 font-mono text-[10px] sm:text-[11px] whitespace-nowrap">
-            <span className="text-slate-400 hidden sm:inline">1 BDT =</span>
-            <span className="font-bold text-emerald-400">0.70 INR 🇮🇳</span>
-            <span className="text-slate-600">|</span>
-            <span className="font-bold text-cyan-400">0.0308 AED 🇦🇪</span>
-            <span className="text-slate-600">|</span>
-            <span className="font-bold text-amber-400">0.282 THB 🇹🇭</span>
-          </div>
-        </div>
-
-        {/* Right: Hub Status & Support Hotline */}
-        <div className="hidden md:flex items-center gap-4 text-slate-400 flex-shrink-0">
-          <div className="flex items-center gap-1.5">
-            <Globe className="w-3.5 h-3.5 text-brand-400" />
-            <span>Hubs: <strong>Dhaka • Delhi • Dubai • Bangkok</strong></span>
-          </div>
-
-          <span className="text-slate-600">|</span>
-
-          <a 
-            href="https://wa.me/8801700000000" 
-            target="_blank" 
-            rel="noreferrer"
-            className="flex items-center gap-1 text-slate-300 hover:text-emerald-400 font-medium transition-colors"
-          >
-            <PhoneCall className="w-3 h-3 text-emerald-400" />
-            <span>WhatsApp: +880 1700-000000</span>
-          </a>
-
-          <span className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-mono text-[10px] font-bold flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            System Live
-          </span>
-        </div>
-
-      </div>
 
       {/* 2. Main Navigation & Brand Header */}
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-4">
@@ -176,7 +121,7 @@ export const Header = () => {
             >
               <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl bg-gradient-to-tr from-brand-500 to-cyan-500 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-sm">
                 {currentRole === 'admin' && <ShieldCheck className="w-3.5 h-3.5" />}
-                {currentRole === 'agent' && <span className="text-xs">{activeAgent.flag}</span>}
+                {currentRole === 'agent' && <CountryFlag country={activeAgent.country || activeAgent.flag} className="w-3.5 h-2.5 rounded-[1px]" />}
                 {currentRole === 'customer' && <User className="w-3.5 h-3.5" />}
               </div>
 
@@ -268,7 +213,7 @@ export const Header = () => {
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <span className="text-2xl">{ag.flag}</span>
+                        <CountryFlag country={ag.country || ag.flag} className="w-6 h-4 rounded-xs shadow-xs" />
                         <div className="min-w-0">
                           <span className="font-bold text-xs text-white block truncate">{ag.name}</span>
                           <span className="text-[10px] text-slate-400">{ag.country} Agent • Wallet: {ag.symbol}{ag.balance.toLocaleString()}</span>
@@ -328,62 +273,6 @@ export const Header = () => {
           </span>
         </div>
       </div>
-
-      {/* Live FX Calculator Modal */}
-      {showFxModal && (
-        <div className="fixed inset-0 z-50 bg-navy-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0D1B3D] text-white rounded-3xl max-w-md w-full p-6 border border-slate-700 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <ArrowRightLeft className="w-5 h-5 text-brand-400" />
-                <h3 className="font-bold text-sm">Live Cross-Border Currency Calculator</h3>
-              </div>
-              <button onClick={() => setShowFxModal(false)} className="text-slate-400 hover:text-white">✕</button>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">Enter Amount in Bangladeshi Taka (৳ BDT):</label>
-              <input
-                type="number"
-                value={calculatorBdt}
-                onChange={(e) => setCalculatorBdt(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#14234B] border border-slate-700 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-brand-400"
-              />
-            </div>
-
-            <div className="space-y-2 pt-1 text-xs">
-              <div className="p-3 bg-[#14234B] rounded-xl border border-slate-700 flex items-center justify-between">
-                <span className="flex items-center gap-2"><span>🇮🇳</span> India (INR):</span>
-                <span className="font-bold text-emerald-400 text-sm">
-                  ₹{(Number(calculatorBdt || 0) * (exchangeRates.INR.rateFromBDT)).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </span>
-              </div>
-
-              <div className="p-3 bg-[#14234B] rounded-xl border border-slate-700 flex items-center justify-between">
-                <span className="flex items-center gap-2"><span>🇦🇪</span> Dubai (AED):</span>
-                <span className="font-bold text-cyan-400 text-sm">
-                  {(Number(calculatorBdt || 0) * (exchangeRates.AED.rateFromBDT)).toLocaleString(undefined, { maximumFractionDigits: 2 })} AED
-                </span>
-              </div>
-
-              <div className="p-3 bg-[#14234B] rounded-xl border border-slate-700 flex items-center justify-between">
-                <span className="flex items-center gap-2"><span>🇹🇭</span> Thailand (THB):</span>
-                <span className="font-bold text-amber-400 text-sm">
-                  ฿{(Number(calculatorBdt || 0) * (exchangeRates.THB.rateFromBDT)).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowFxModal(false)}
-              className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-2.5 rounded-xl text-xs transition-colors shadow"
-            >
-              Close Calculator
-            </button>
-          </div>
-        </div>
-      )}
-
     </header>
   );
 };

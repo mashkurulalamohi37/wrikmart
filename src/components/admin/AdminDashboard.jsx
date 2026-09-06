@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Sparkles
 } from 'lucide-react';
+import { CountryFlag } from '../common/CountryFlag';
 
 export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab }) => {
   const { orders, agents, exchangeRates } = useApp();
@@ -224,7 +225,10 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab }) => {
                     <span className="text-[11px] text-slate-400">{order.customer.phone}</span>
                   </td>
                   <td className="px-5 py-3.5 font-semibold">
-                    {order.countryFlag} {order.country}
+                    <span className="inline-flex items-center gap-1.5">
+                      <CountryFlag country={order.country || order.countryFlag} className="w-4 h-3 rounded-[2px]" />
+                      <span>{order.country}</span>
+                    </span>
                   </td>
                   <td className="px-5 py-3.5 font-semibold text-brand-700">
                     {order.assignedAgentName}

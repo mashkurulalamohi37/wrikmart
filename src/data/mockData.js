@@ -14,14 +14,27 @@ export const INITIAL_AGENTS = [
     currency: 'INR',
     symbol: '₹',
     phone: '+91 98765 43210',
+    whatsapp: '+91 98765 43210',
     email: 'arafat.india@wrikmart.com',
+    address: 'Flat 402, Lotus Heights, Saket, New Delhi 110017, India',
+    referencePerson: {
+      name: 'Mohit Agrawal',
+      phone: '+91 98111 55667',
+      address: 'B-14 Malviya Nagar, New Delhi'
+    },
+    govtDocument: {
+      type: 'Aadhaar Card',
+      number: '4892-3819-0192',
+      documentUrl: 'https://images.unsplash.com/photo-1633409381659-3b954d7e974e?w=500&auto=format&fit=crop&q=80',
+      verified: true
+    },
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     balance: 24350.00,
     totalSpent: 185400.00,
     activeOrders: 6,
     completedOrders: 845,
     status: 'Active',
-    pendingBalance: 10000.00, // Pending balance request waiting for acceptance
+    pendingBalance: 10000.00,
     pendingBalanceBDT: 14285.71,
     pendingTransferId: 'TRF-2026-089'
   },
@@ -33,7 +46,20 @@ export const INITIAL_AGENTS = [
     currency: 'AED',
     symbol: 'د.إ',
     phone: '+971 50 123 4567',
+    whatsapp: '+971 50 123 4567',
     email: 'sabbir.dubai@wrikmart.com',
+    address: 'Building 14, Al Karama, Dubai, United Arab Emirates',
+    referencePerson: {
+      name: 'Kazi Farhan',
+      phone: '+971 52 987 6543',
+      address: 'Al Barsha 1, Dubai, UAE'
+    },
+    govtDocument: {
+      type: 'Emirates ID',
+      number: '784-1990-1234567-1',
+      documentUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=500&auto=format&fit=crop&q=80',
+      verified: true
+    },
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
     balance: 8420.00,
     totalSpent: 420500.00,
@@ -52,7 +78,20 @@ export const INITIAL_AGENTS = [
     currency: 'THB',
     symbol: '฿',
     phone: '+66 81 234 5678',
+    whatsapp: '+66 81 234 5678',
     email: 'mehedi.thai@wrikmart.com',
+    address: '88 Sukhumvit Soi 21, Asoke, Bangkok 10110, Thailand',
+    referencePerson: {
+      name: 'Anan Chokchai',
+      phone: '+66 89 555 4321',
+      address: 'Sathorn Road, Yannawa, Bangkok'
+    },
+    govtDocument: {
+      type: 'Passport / Work Permit',
+      number: 'BD-A09823145',
+      documentUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=500&auto=format&fit=crop&q=80',
+      verified: true
+    },
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
     balance: 35800.00,
     totalSpent: 310200.00,
@@ -123,13 +162,119 @@ export const INITIAL_HUBS = [
   }
 ];
 
+export const INITIAL_STOCK_INVENTORY = [
+  {
+    id: 'STK-001',
+    sku: 'WM-ELEC-APL-01',
+    name: 'Apple AirPods Pro (2nd Gen, USB-C)',
+    category: 'Electronics',
+    brand: 'Apple',
+    costPrice: 24500,
+    sellingPrice: 28900,
+    currentStock: 18,
+    reorderLevel: 5,
+    agingDays: 24,
+    purchasedQty: 50,
+    soldQty: 32,
+    velocity: 'Fast-Moving',
+    status: 'In Stock',
+    warehouse: 'Dhaka Main Hub'
+  },
+  {
+    id: 'STK-002',
+    sku: 'WM-WATCH-CAS-02',
+    name: 'Casio G-Shock GA-2100 "CasiOak" All Black',
+    category: 'Watches',
+    brand: 'Casio',
+    costPrice: 11200,
+    sellingPrice: 14500,
+    currentStock: 24,
+    reorderLevel: 8,
+    agingDays: 45,
+    purchasedQty: 60,
+    soldQty: 36,
+    velocity: 'Fast-Moving',
+    status: 'In Stock',
+    warehouse: 'Dhaka Main Hub'
+  },
+  {
+    id: 'STK-003',
+    sku: 'WM-FASH-ZAR-03',
+    name: 'Zara Linen Blend Overshirt (Sand)',
+    category: 'Fashion',
+    brand: 'Zara',
+    costPrice: 4200,
+    sellingPrice: 5800,
+    currentStock: 4,
+    reorderLevel: 10,
+    agingDays: 110,
+    purchasedQty: 40,
+    soldQty: 36,
+    velocity: 'Slow-Moving',
+    status: 'Low Stock',
+    warehouse: 'Dhaka Main Hub'
+  },
+  {
+    id: 'STK-004',
+    sku: 'WM-BEAUTY-LRO-04',
+    name: 'La Roche-Posay Anthelios SPF 50+ Sunscreen',
+    category: 'Beauty & Skincare',
+    brand: 'La Roche-Posay',
+    costPrice: 2300,
+    sellingPrice: 3400,
+    currentStock: 42,
+    reorderLevel: 15,
+    agingDays: 18,
+    purchasedQty: 100,
+    soldQty: 58,
+    velocity: 'Fast-Moving',
+    status: 'In Stock',
+    warehouse: 'Dhaka Main Hub'
+  },
+  {
+    id: 'STK-005',
+    sku: 'WM-PERF-DIO-05',
+    name: 'Dior Sauvage Eau de Parfum (100ml)',
+    category: 'Fragrance',
+    brand: 'Dior',
+    costPrice: 14800,
+    sellingPrice: 18500,
+    currentStock: 0,
+    reorderLevel: 6,
+    agingDays: 210,
+    purchasedQty: 30,
+    soldQty: 30,
+    velocity: 'Fast-Moving',
+    status: 'Out of Stock',
+    warehouse: 'Dhaka Main Hub'
+  },
+  {
+    id: 'STK-006',
+    sku: 'WM-FOOT-NIK-06',
+    name: 'Nike Dunk Low Retro "Panda"',
+    category: 'Footwear',
+    brand: 'Nike',
+    costPrice: 12500,
+    sellingPrice: 16800,
+    currentStock: 12,
+    reorderLevel: 5,
+    agingDays: 75,
+    purchasedQty: 35,
+    soldQty: 23,
+    velocity: 'Slow-Moving',
+    status: 'In Stock',
+    warehouse: 'Chittagong Hub'
+  }
+];
+
 export const INITIAL_ORDERS = [
   {
     id: 'PO-2026-000125',
     orderNumber: 'PO-2026-000125',
+    orderType: 'Pre-Order',
     country: 'India',
     countryFlag: '🇮🇳',
-    status: 'Processing', // 'Processing', 'Purchased', 'At Delivery House', 'Shipped', 'BD Received', 'Delivered'
+    status: 'Processing',
     paymentStatus: 'Advance Paid',
     createdAt: '2026-05-12 10:30 AM',
     purchaseDeadline: '2026-05-15',
@@ -137,8 +282,10 @@ export const INITIAL_ORDERS = [
     assignedAgentName: 'Arafat Khan',
     hubId: 'hub-1',
     hubName: 'Dhaka Main Hub',
+    courierName: 'Steadfast Courier',
+    intlTransitDays: 3,
+    localDeliveryDays: 2,
     
-    // Customer Info (ONLY VISIBLE TO ADMIN & CUSTOMER, STRICTLY HIDDEN FROM AGENT)
     customer: {
       id: 'cust-101',
       name: 'Rahim Chowdhury',
@@ -146,10 +293,10 @@ export const INITIAL_ORDERS = [
       email: 'rahim.c@example.com',
       address: 'House 12, Road 5, Dhanmondi, Dhaka-1205',
       district: 'Dhaka',
+      isReturning: true,
       note: 'Please pack in double bubble wrap for fragile shoe box.'
     },
 
-    // Financials (Customer View)
     financials: {
       currency: 'BDT',
       symbol: '৳',
@@ -159,19 +306,23 @@ export const INITIAL_ORDERS = [
       advanceRequired: 3050,
       advancePaid: 3050,
       finalSellingPrice: 13200,
-      dueAmount: 10150
+      dueAmount: 10150,
+      agentCostBDT: 11583,
+      shippingCostBDT: 650,
+      localCourierCostBDT: 120,
+      grossProfitBDT: 847
     },
 
-    // Items
     items: [
       {
         id: 'item-1',
         name: 'Nike Air Max 270',
+        category: 'Footwear',
+        brand: 'Nike',
         url: 'https://www.nike.com/in/t/air-max-270-mens-shoes-K2NzSd',
         image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format&fit=crop&q=80',
         specs: { size: '42', color: 'Black/Red', unit: 1 },
         expectedPrice: 8000,
-        // Agent Purchase Tracking (Mandatory to enter)
         actualPurchasePrice: 6000,
         actualPurchaseCurrency: 'INR',
         mrp: 8500,
@@ -183,6 +334,8 @@ export const INITIAL_ORDERS = [
       {
         id: 'item-2',
         name: 'Adidas Classic Backpack',
+        category: 'Fashion',
+        brand: 'Adidas',
         url: 'https://www.adidas.co.in/classic-badge-of-sport-backpack/HG0348.html',
         image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&auto=format&fit=crop&q=80',
         specs: { size: 'Free Size', color: 'Matte Black', unit: 1 },
@@ -197,22 +350,22 @@ export const INITIAL_ORDERS = [
       }
     ],
 
-    // Transition History
     timeline: [
       { step: 'Order Placed', time: '12 May 2026, 10:30 AM', actor: 'Customer', note: 'Pre-order submitted with 2 items', done: true },
       { step: 'Payment Confirmed', time: '12 May 2026, 10:32 AM', actor: 'bKash Gateway', note: 'Advance payment of ৳3,050 verified (TrxID: 9X29A1K)', done: true },
       { step: 'Agent Assigned', time: '12 May 2026, 11:00 AM', actor: 'Admin', note: 'Assigned to Agent Arafat Khan (India)', done: true },
       { step: 'Purchase Updated', time: '12 May 2026, 05:10 PM', actor: 'Arafat Khan (Agent)', note: 'Purchase price (₹8,100 total) & MRP recorded', done: true },
-      { step: 'Arrived at Hub', time: '13 May 2026, 09:40 AM', actor: 'Delhi Gateway Hub', note: 'Received at Hub and prepared for air consignment', done: false },
-      { step: 'Shipped to Bangladesh', time: 'Pending', actor: 'Air Cargo', note: 'Flight transit to Dhaka DAC', done: false },
-      { step: 'Bangladesh Received', time: 'Pending', actor: 'Dhaka Main Hub', note: 'Customs cleared and stored in Mirpur warehouse', done: false },
-      { step: 'Ready for Delivery', time: 'Pending', actor: 'Steadfast Courier', note: 'Assigned to last-mile rider', done: false },
-      { step: 'Delivered', time: 'Pending', actor: 'Customer', note: 'Due collection & delivery completed', done: false }
+      { step: 'Arrived at Hub', time: 'Pending', actor: 'Delhi Gateway Hub', note: '', done: false },
+      { step: 'Shipped to Bangladesh', time: 'Pending', actor: 'Air Cargo', note: '', done: false },
+      { step: 'Bangladesh Received', time: 'Pending', actor: 'Dhaka Main Hub', note: '', done: false },
+      { step: 'Ready for Delivery', time: 'Pending', actor: 'Steadfast Courier', note: '', done: false },
+      { step: 'Delivered', time: 'Pending', actor: 'Customer', note: '', done: false }
     ]
   },
   {
     id: 'PO-2026-000124',
     orderNumber: 'PO-2026-000124',
+    orderType: 'Pre-Order',
     country: 'Dubai',
     countryFlag: '🇦🇪',
     status: 'Purchased',
@@ -223,6 +376,10 @@ export const INITIAL_ORDERS = [
     assignedAgentName: 'Sabbir Hossain',
     hubId: 'hub-3',
     hubName: 'Dubai Central Hub',
+    courierName: 'Pathao Courier',
+    intlTransitDays: 4,
+    localDeliveryDays: 2,
+
     customer: {
       id: 'cust-102',
       name: 'Nusrat Jahan',
@@ -230,8 +387,10 @@ export const INITIAL_ORDERS = [
       email: 'nusrat.j@example.com',
       address: 'Flat 4B, Green Road, Dhaka',
       district: 'Dhaka',
+      isReturning: false,
       note: 'Call before delivery.'
     },
+
     financials: {
       currency: 'BDT',
       symbol: '৳',
@@ -241,12 +400,19 @@ export const INITIAL_ORDERS = [
       advanceRequired: 7000,
       advancePaid: 7000,
       finalSellingPrice: 28300,
-      dueAmount: 21300
+      dueAmount: 21300,
+      agentCostBDT: 27625,
+      shippingCostBDT: 1200,
+      localCourierCostBDT: 150,
+      grossProfitBDT: 1325
     },
+
     items: [
       {
         id: 'item-3',
         name: 'Apple AirPods Max (Sky Blue)',
+        category: 'Electronics',
+        brand: 'Apple',
         url: 'https://www.apple.com/ae/shop/buy-airpods/airpods-max',
         image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=500&auto=format&fit=crop&q=80',
         specs: { size: 'Standard', color: 'Sky Blue', unit: 1 },
@@ -260,12 +426,13 @@ export const INITIAL_ORDERS = [
         notes: 'Serial verified with 1-year Apple care.'
       }
     ],
+
     timeline: [
       { step: 'Order Placed', time: '11 May 2026, 03:20 PM', actor: 'Customer', note: 'Pre-order submitted', done: true },
       { step: 'Payment Confirmed', time: '11 May 2026, 03:25 PM', actor: 'Nagad Gateway', note: 'Advance paid ৳7,000', done: true },
       { step: 'Agent Assigned', time: '11 May 2026, 04:00 PM', actor: 'Admin', note: 'Assigned to Sabbir Hossain (Dubai)', done: true },
       { step: 'Purchase Updated', time: '11 May 2026, 06:45 PM', actor: 'Sabbir Hossain (Agent)', note: 'Purchased from Dubai Mall for 850 AED', done: true },
-      { step: 'Arrived at Hub', time: 'Pending', actor: 'Dubai Central Hub', note: 'Drop-off scheduled', done: false },
+      { step: 'Arrived at Hub', time: 'Pending', actor: 'Dubai Central Hub', note: '', done: false },
       { step: 'Shipped to Bangladesh', time: 'Pending', actor: 'Cargo Emirates', note: '', done: false },
       { step: 'Bangladesh Received', time: 'Pending', actor: 'Dhaka Hub', note: '', done: false },
       { step: 'Ready for Delivery', time: 'Pending', actor: 'Rider', note: '', done: false },
@@ -275,9 +442,10 @@ export const INITIAL_ORDERS = [
   {
     id: 'PO-2026-000123',
     orderNumber: 'PO-2026-000123',
+    orderType: 'Pre-Order',
     country: 'Thailand',
     countryFlag: '🇹🇭',
-    status: 'In Transit',
+    status: 'Shipped',
     paymentStatus: 'Advance Paid',
     createdAt: '2026-05-09 11:15 AM',
     purchaseDeadline: '2026-05-12',
@@ -285,6 +453,10 @@ export const INITIAL_ORDERS = [
     assignedAgentName: 'Mehedi Hasan',
     hubId: 'hub-5',
     hubName: 'Bangkok Logistics Hub',
+    courierName: 'RedX Logistics',
+    intlTransitDays: 3,
+    localDeliveryDays: 2,
+
     customer: {
       id: 'cust-103',
       name: 'Tanvir Ahmed',
@@ -292,8 +464,10 @@ export const INITIAL_ORDERS = [
       email: 'tanvir.a@example.com',
       address: 'GEC Circle, Chittagong',
       district: 'Chittagong',
+      isReturning: true,
       note: 'Fragile cosmetic packaging.'
     },
+
     financials: {
       currency: 'BDT',
       symbol: '৳',
@@ -303,12 +477,19 @@ export const INITIAL_ORDERS = [
       advanceRequired: 2500,
       advancePaid: 2500,
       finalSellingPrice: 9750,
-      dueAmount: 7250
+      dueAmount: 7250,
+      agentCostBDT: 8520,
+      shippingCostBDT: 450,
+      localCourierCostBDT: 150,
+      grossProfitBDT: 630
     },
+
     items: [
       {
         id: 'item-4',
         name: 'Snailwhite Premium Skincare Set',
+        category: 'Beauty & Skincare',
+        brand: 'Snailwhite',
         url: 'https://shopee.co.th/snailwhite-official',
         image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&auto=format&fit=crop&q=80',
         specs: { size: 'Pack of 3', color: 'Gold/White', unit: 2 },
@@ -322,6 +503,7 @@ export const INITIAL_ORDERS = [
         notes: 'Manufacture date April 2026'
       }
     ],
+
     timeline: [
       { step: 'Order Placed', time: '09 May 2026, 11:15 AM', actor: 'Customer', note: 'Pre-order created', done: true },
       { step: 'Payment Confirmed', time: '09 May 2026, 11:20 AM', actor: 'bKash', note: 'Advance received ৳2,500', done: true },
@@ -337,6 +519,7 @@ export const INITIAL_ORDERS = [
   {
     id: 'PO-2026-000122',
     orderNumber: 'PO-2026-000122',
+    orderType: 'Pre-Order',
     country: 'Dubai',
     countryFlag: '🇦🇪',
     status: 'Delivered',
@@ -347,6 +530,10 @@ export const INITIAL_ORDERS = [
     assignedAgentName: 'Sabbir Hossain',
     hubId: 'hub-1',
     hubName: 'Dhaka Main Hub',
+    courierName: 'Steadfast Courier',
+    intlTransitDays: 3,
+    localDeliveryDays: 1,
+
     customer: {
       id: 'cust-104',
       name: 'Ashrafuzzaman',
@@ -354,8 +541,10 @@ export const INITIAL_ORDERS = [
       email: 'ashraf@example.com',
       address: 'Uttara Sector 7, Dhaka',
       district: 'Dhaka',
+      isReturning: true,
       note: 'Office delivery before 5 PM'
     },
+
     financials: {
       currency: 'BDT',
       symbol: '৳',
@@ -365,17 +554,24 @@ export const INITIAL_ORDERS = [
       advanceRequired: 10000,
       advancePaid: 10000,
       finalSellingPrice: 45200,
-      dueAmount: 0
+      dueAmount: 0,
+      agentCostBDT: 40500,
+      shippingCostBDT: 1500,
+      localCourierCostBDT: 120,
+      grossProfitBDT: 3080
     },
+
     items: [
       {
         id: 'item-5',
         name: 'Sony PlayStation 5 Slim Digital',
+        category: 'Electronics',
+        brand: 'Sony',
         url: 'https://www.amazon.ae/playstation-5',
         image: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=500&auto=format&fit=crop&q=80',
         specs: { size: '1TB Digital', color: 'White', unit: 1 },
         expectedPrice: 45000,
-        actualPurchasePrice: 1350,
+        actualPurchasePrice: 1250,
         actualPurchaseCurrency: 'AED',
         mrp: 1549,
         purchasedFrom: 'Sharaf DG Dubai',
@@ -384,16 +580,255 @@ export const INITIAL_ORDERS = [
         notes: 'UAE Official Warranty'
       }
     ],
+
     timeline: [
       { step: 'Order Placed', time: '01 May 2026', actor: 'Customer', note: 'Pre-order created', done: true },
       { step: 'Payment Confirmed', time: '01 May 2026', actor: 'Card Gateway', note: 'Advance paid ৳10,000', done: true },
       { step: 'Agent Assigned', time: '01 May 2026', actor: 'Admin', note: 'Assigned to Sabbir', done: true },
-      { step: 'Purchase Updated', time: '02 May 2026', actor: 'Sabbir Hossain', note: 'Purchased for 1,350 AED', done: true },
+      { step: 'Purchase Updated', time: '02 May 2026', actor: 'Sabbir Hossain', note: 'Purchased for 1,250 AED', done: true },
       { step: 'Arrived at Hub', time: '02 May 2026', actor: 'Dubai Hub', note: 'Received at Hub', done: true },
       { step: 'Shipped to Bangladesh', time: '04 May 2026', actor: 'Air Emirates', note: 'Arrived Dhaka DAC', done: true },
       { step: 'Bangladesh Received', time: '06 May 2026', actor: 'Dhaka Main Hub', note: 'Cleared customs', done: true },
       { step: 'Ready for Delivery', time: '07 May 2026', actor: 'Steadfast Rider', note: 'Out for delivery', done: true },
-      { step: 'Delivered', time: '08 May 2026, 03:40 PM', actor: 'Customer', note: 'Cash due ৳35,200 collected & delivered', done: true }
+      { step: 'Delivered', time: '07 May 2026, 04:30 PM', actor: 'Customer', note: 'Due collection ৳35,200 verified', done: true }
+    ]
+  },
+  {
+    id: 'PO-2026-000120',
+    orderNumber: 'PO-2026-000120',
+    orderType: 'Pre-Order',
+    country: 'India',
+    countryFlag: '🇮🇳',
+    status: 'Damaged',
+    paymentStatus: 'Advance Paid',
+    createdAt: '2026-05-08 02:15 PM',
+    purchaseDeadline: '2026-05-11',
+    assignedAgentId: 'agent-1',
+    assignedAgentName: 'Arafat Khan',
+    hubId: 'hub-4',
+    hubName: 'Delhi Gateway Hub',
+    courierName: 'Steadfast Courier',
+
+    customer: {
+      id: 'cust-105',
+      name: 'Farhana Haque',
+      phone: '+880 1622-334455',
+      email: 'farhana.h@example.com',
+      address: 'Bashundhara R/A, Block C, Dhaka',
+      district: 'Dhaka',
+      isReturning: false,
+      note: 'Fragile ceramics.'
+    },
+
+    financials: {
+      currency: 'BDT',
+      symbol: '৳',
+      estimatedSubtotal: 8500,
+      deliveryCharge: 200,
+      estimatedTotal: 8700,
+      advanceRequired: 2175,
+      advancePaid: 2175,
+      finalSellingPrice: 8700,
+      dueAmount: 6525,
+      agentCostBDT: 6500,
+      shippingCostBDT: 400,
+      localCourierCostBDT: 120,
+      grossProfitBDT: -375
+    },
+
+    damageDetails: {
+      incidentType: 'Damaged in Transit',
+      description: 'Outer carton crushed during air freight handling; ceramic bottle cracked and leaking',
+      proofUrl: 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?w=500&auto=format&fit=crop&q=80',
+      reportedDate: '2026-05-11',
+      reportedBy: 'Delhi Gateway Hub Inspector',
+      disposition: 'Customer Refund Required',
+      refundAmount: 2175,
+      resolutionStatus: 'Approved & Refunded',
+      resolutionNote: 'Advance of ৳2,175 refunded via bKash. Cargo insurance claim filed.'
+    },
+
+    items: [
+      {
+        id: 'item-6',
+        name: 'Forest Essentials Luxury Ayurvedic Gift Box',
+        category: 'Beauty & Skincare',
+        brand: 'Forest Essentials',
+        url: 'https://www.forestessentialsindia.com/gift-boxes',
+        image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500&auto=format&fit=crop&q=80',
+        specs: { size: 'Deluxe', color: 'Royal Gold', unit: 1 },
+        expectedPrice: 8500,
+        actualPurchasePrice: 4545,
+        actualPurchaseCurrency: 'INR',
+        mrp: 5200,
+        purchasedFrom: 'Forest Essentials Select Citywalk',
+        purchaseDate: '2026-05-09 03:00 PM',
+        receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+        notes: 'Cracked during air transit inspection.'
+      }
+    ],
+
+    timeline: [
+      { step: 'Order Placed', time: '08 May 2026', actor: 'Customer', note: 'Pre-order created', done: true },
+      { step: 'Payment Confirmed', time: '08 May 2026', actor: 'bKash Gateway', note: 'Advance paid ৳2,175', done: true },
+      { step: 'Agent Assigned', time: '08 May 2026', actor: 'Admin', note: 'Assigned to Arafat', done: true },
+      { step: 'Purchase Updated', time: '09 May 2026', actor: 'Arafat Khan', note: 'Purchased for ₹4,545', done: true },
+      { step: 'Arrived at Hub', time: '10 May 2026', actor: 'Delhi Gateway Hub', note: 'Arrived at Hub', done: true },
+      { step: 'Shipped to Bangladesh', time: '11 May 2026', actor: 'Cargo Handler', note: 'CRITICAL: Damaged detected during pallet loading', done: true }
+    ]
+  },
+  {
+    id: 'PO-2026-000119',
+    orderNumber: 'PO-2026-000119',
+    orderType: 'Pre-Order',
+    country: 'India',
+    countryFlag: '🇮🇳',
+    status: 'Returned',
+    paymentStatus: 'Advance Paid',
+    createdAt: '2026-05-06 10:00 AM',
+    purchaseDeadline: '2026-05-09',
+    assignedAgentId: 'agent-1',
+    assignedAgentName: 'Arafat Khan',
+    hubId: 'hub-4',
+    hubName: 'Delhi Gateway Hub',
+
+    customer: {
+      id: 'cust-106',
+      name: 'Shahidul Alam',
+      phone: '+880 1715-443322',
+      email: 'shahidul@example.com',
+      address: 'Nasirabad Housing, Chittagong',
+      district: 'Chittagong',
+      isReturning: true,
+      note: 'Size accuracy is strictly required.'
+    },
+
+    financials: {
+      currency: 'BDT',
+      symbol: '৳',
+      estimatedSubtotal: 11000,
+      deliveryCharge: 200,
+      estimatedTotal: 11200,
+      advanceRequired: 2800,
+      advancePaid: 2800,
+      finalSellingPrice: 11200,
+      dueAmount: 8400,
+      agentCostBDT: 8500,
+      shippingCostBDT: 0,
+      localCourierCostBDT: 0,
+      grossProfitBDT: 0
+    },
+
+    damageDetails: {
+      incidentType: 'Wrong Item Shipped',
+      description: 'Store sent wrong size UK 6 instead of UK 9, and wrong colorway (Navy instead of Black)',
+      proofUrl: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=500&auto=format&fit=crop&q=80',
+      reportedDate: '2026-05-08',
+      reportedBy: 'Arafat Khan (Agent)',
+      disposition: 'Vendor Replacement',
+      refundAmount: 0,
+      resolutionStatus: 'Replacement Dispatched',
+      resolutionNote: 'Agent returned parcel to Zara store for exchange. Correct size dispatched to hub.'
+    },
+
+    items: [
+      {
+        id: 'item-7',
+        name: 'Zara Men Leather Chelsea Boots',
+        category: 'Footwear',
+        brand: 'Zara',
+        url: 'https://www.zara.com/in/boots',
+        image: 'https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=500&auto=format&fit=crop&q=80',
+        specs: { size: 'UK 9', color: 'Black Leather', unit: 1 },
+        expectedPrice: 11000,
+        actualPurchasePrice: 5990,
+        actualPurchaseCurrency: 'INR',
+        mrp: 6990,
+        purchasedFrom: 'Zara Ambience Mall',
+        purchaseDate: '2026-05-07 02:40 PM',
+        receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+        notes: 'Returned to store for replacement.'
+      }
+    ],
+
+    timeline: [
+      { step: 'Order Placed', time: '06 May 2026', actor: 'Customer', note: 'Pre-order created', done: true },
+      { step: 'Payment Confirmed', time: '06 May 2026', actor: 'Nagad Gateway', note: 'Advance verified', done: true },
+      { step: 'Agent Assigned', time: '06 May 2026', actor: 'Admin', note: 'Assigned to Arafat', done: true },
+      { step: 'Purchase Updated', time: '07 May 2026', actor: 'Arafat Khan', note: 'Purchased from Zara', done: true }
+    ]
+  },
+  {
+    id: 'ORD-STK-2026-001',
+    orderNumber: 'ORD-STK-2026-001',
+    orderType: 'Stock Product',
+    country: 'Bangladesh',
+    countryFlag: '🇧🇩',
+    status: 'Delivered',
+    paymentStatus: 'Fully Paid',
+    createdAt: '2026-05-10 09:30 AM',
+    purchaseDeadline: '2026-05-10',
+    assignedAgentId: null,
+    assignedAgentName: 'Local Fulfillment Team',
+    hubId: 'hub-1',
+    hubName: 'Dhaka Main Hub',
+    courierName: 'Paperfly Courier',
+    intlTransitDays: 0,
+    localDeliveryDays: 1,
+
+    customer: {
+      id: 'cust-107',
+      name: 'Mahbubur Rahman',
+      phone: '+880 1823-112233',
+      email: 'mahbub@example.com',
+      address: 'House 45, Road 11, Banani, Dhaka',
+      district: 'Dhaka',
+      isReturning: true,
+      note: 'Deliver to 3rd floor reception'
+    },
+
+    financials: {
+      currency: 'BDT',
+      symbol: '৳',
+      estimatedSubtotal: 14500,
+      deliveryCharge: 100,
+      estimatedTotal: 14600,
+      advanceRequired: 14600,
+      advancePaid: 14600,
+      finalSellingPrice: 14600,
+      dueAmount: 0,
+      agentCostBDT: 11200,
+      shippingCostBDT: 0,
+      localCourierCostBDT: 80,
+      grossProfitBDT: 3320
+    },
+
+    items: [
+      {
+        id: 'item-8',
+        name: 'Casio G-Shock GA-2100 "CasiOak" All Black',
+        category: 'Watches',
+        brand: 'Casio',
+        url: 'https://wrikmart.com/stock/casio-ga2100',
+        image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=500&auto=format&fit=crop&q=80',
+        specs: { size: 'All Black', color: 'Matte Black', unit: 1 },
+        expectedPrice: 14500,
+        actualPurchasePrice: 11200,
+        actualPurchaseCurrency: 'BDT',
+        mrp: 16500,
+        purchasedFrom: 'Dhaka Warehouse Local Stock',
+        purchaseDate: '2026-05-10 10:00 AM',
+        receiptImage: 'https://images.unsplash.com/photo-1554415707-9e49016a3e5c?w=500&auto=format&fit=crop&q=80',
+        notes: 'Dispatched directly from local Dhaka inventory'
+      }
+    ],
+
+    timeline: [
+      { step: 'Order Placed', time: '10 May 2026', actor: 'Customer', note: 'Immediate stock product order placed', done: true },
+      { step: 'Payment Confirmed', time: '10 May 2026', actor: 'Card Payment', note: 'Full payment ৳14,600 received', done: true },
+      { step: 'Bangladesh Received', time: '10 May 2026', actor: 'Dhaka Main Hub', note: 'Picked & Packed in Mirpur', done: true },
+      { step: 'Ready for Delivery', time: '10 May 2026', actor: 'Paperfly Courier', note: 'Handed to rider', done: true },
+      { step: 'Delivered', time: '11 May 2026, 11:45 AM', actor: 'Customer', note: 'Delivered to recipient', done: true }
     ]
   }
 ];
@@ -458,7 +893,7 @@ export const INITIAL_BALANCE_TRANSFERS = [
     targetCurrency: 'INR',
     symbol: '₹',
     date: '12 May 2026, 10:20 AM',
-    status: 'Pending', // Pending Acceptance by Agent
+    status: 'Pending',
     adminNote: 'Top-up for Nike order batch #125'
   },
   {

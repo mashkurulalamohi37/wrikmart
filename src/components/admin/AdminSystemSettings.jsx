@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Settings, ArrowRightLeft, ShieldCheck, CreditCard, Lock, Save } from 'lucide-react';
+import { CountryFlag } from '../common/CountryFlag';
 
 export const AdminSystemSettings = () => {
   const { exchangeRates, updateExchangeRate, showToast } = useApp();
@@ -36,7 +37,7 @@ export const AdminSystemSettings = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
           <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xl">🇮🇳</span>
+              <CountryFlag country="India" className="w-5 h-3.5 rounded-[2px]" />
               <label className="font-bold text-navy-900">1 BDT = Indian Rupee (INR)</label>
             </div>
             <input
@@ -51,7 +52,7 @@ export const AdminSystemSettings = () => {
 
           <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xl">🇦🇪</span>
+              <CountryFlag country="Dubai" className="w-5 h-3.5 rounded-[2px]" />
               <label className="font-bold text-navy-900">1 BDT = UAE Dirham (AED)</label>
             </div>
             <input
@@ -66,7 +67,7 @@ export const AdminSystemSettings = () => {
 
           <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xl">🇹🇭</span>
+              <CountryFlag country="Thailand" className="w-5 h-3.5 rounded-[2px]" />
               <label className="font-bold text-navy-900">1 BDT = Thai Baht (THB)</label>
             </div>
             <input

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Building2, Plus, MapPin, Phone, User, Package, CheckCircle } from 'lucide-react';
+import { CountryFlag } from '../common/CountryFlag';
 
 export const AdminHubManagement = () => {
   const { hubs, addHub } = useApp();
@@ -51,7 +52,10 @@ export const AdminHubManagement = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-navy-900">{hub.name}</h3>
-                  <span className="text-[11px] text-slate-500 font-semibold">{hub.country}</span>
+                  <span className="text-[11px] text-slate-500 font-semibold inline-flex items-center gap-1 mt-0.5">
+                    <CountryFlag country={hub.country} className="w-3.5 h-2.5 rounded-xs" />
+                    <span>{hub.country}</span>
+                  </span>
                 </div>
               </div>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">

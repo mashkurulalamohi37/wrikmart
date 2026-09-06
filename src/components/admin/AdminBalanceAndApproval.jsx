@@ -14,6 +14,7 @@ import {
   Building,
   RefreshCw
 } from 'lucide-react';
+import { CountryFlag } from '../common/CountryFlag';
 
 export const AdminBalanceAndApproval = () => {
   const { 
@@ -103,7 +104,19 @@ export const AdminBalanceAndApproval = () => {
             <span className="text-3xl font-extrabold text-navy-900">{agents.length}</span>
             <span className="text-xs font-bold text-brand-600">Active</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">India 🇮🇳 • Dubai 🇦🇪 • Thailand 🇹🇭</p>
+          <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-1">
+            <span className="inline-flex items-center gap-1">
+              <CountryFlag country="India" className="w-3.5 h-2.5 rounded-xs" /> India
+            </span>
+            <span>•</span>
+            <span className="inline-flex items-center gap-1">
+              <CountryFlag country="Dubai" className="w-3.5 h-2.5 rounded-xs" /> Dubai
+            </span>
+            <span>•</span>
+            <span className="inline-flex items-center gap-1">
+              <CountryFlag country="Thailand" className="w-3.5 h-2.5 rounded-xs" /> Thailand
+            </span>
+          </div>
         </div>
       </div>
 
@@ -136,7 +149,10 @@ export const AdminBalanceAndApproval = () => {
                     <span className="text-[11px] text-slate-400">{ag.phone}</span>
                   </td>
                   <td className="px-5 py-3.5 font-semibold">
-                    {ag.flag} {ag.country} ({ag.currency})
+                    <span className="inline-flex items-center gap-1.5">
+                      <CountryFlag country={ag.country || ag.flag} className="w-4 h-3 rounded-[2px]" />
+                      <span>{ag.country} ({ag.currency})</span>
+                    </span>
                   </td>
                   <td className="px-5 py-3.5 font-bold text-base text-navy-900">
                     {ag.symbol}{ag.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}

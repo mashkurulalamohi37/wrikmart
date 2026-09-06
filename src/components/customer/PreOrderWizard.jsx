@@ -20,6 +20,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { BKashLogo, NagadLogo, VisaLogo, MastercardLogo } from '../common/PaymentLogos';
+import { CountryFlag } from '../common/CountryFlag';
 
 export const PreOrderWizard = ({ onComplete, onCancel }) => {
   const { createCustomerPreOrder } = useApp();
@@ -203,9 +204,9 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                   <label className="block text-sm font-bold text-navy-900 mb-2">1. Select Sourcing Country *</label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {[
-                      { name: 'India', flag: '🇮🇳', subtitle: 'Amazon, Flipkart, Nike, Zara' },
-                      { name: 'Dubai', flag: '🇦🇪', subtitle: 'Dubai Mall, Apple, Noon, Sephora' },
-                      { name: 'Thailand', flag: '🇹🇭', subtitle: 'Shopee TH, CentralWorld, Siam' }
+                      { name: 'India', subtitle: 'Amazon, Flipkart, Nike, Zara' },
+                      { name: 'Dubai', subtitle: 'Dubai Mall, Apple, Noon, Sephora' },
+                      { name: 'Thailand', subtitle: 'Shopee TH, CentralWorld, Siam' }
                     ].map((c) => (
                       <button
                         key={c.name}
@@ -217,7 +218,9 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                             : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-slate-50/50'
                         }`}
                       >
-                        <span className="text-3xl block mb-2">{c.flag}</span>
+                        <div className="mb-2">
+                          <CountryFlag country={c.name} className="w-10 h-7 rounded shadow-xs" />
+                        </div>
                         <span className="font-extrabold text-sm block text-navy-900">{c.name}</span>
                         <span className="text-[11px] text-slate-500 block leading-tight mt-0.5">{c.subtitle}</span>
                       </button>
@@ -665,7 +668,10 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
             <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-left text-xs space-y-2.5">
               <div className="flex justify-between">
                 <span className="text-slate-500">Destination:</span>
-                <span className="font-bold text-slate-800">{confirmedOrder.country} {confirmedOrder.countryFlag}</span>
+                <span className="font-bold text-slate-800 inline-flex items-center gap-1.5">
+                  <span>{confirmedOrder.country}</span>
+                  <CountryFlag country={confirmedOrder.country} className="w-4 h-3 rounded-xs" />
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Assigned Agent:</span>

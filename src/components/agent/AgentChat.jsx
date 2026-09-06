@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Send, MessageSquare, PhoneCall, ShieldAlert } from 'lucide-react';
+import { CountryFlag } from '../common/CountryFlag';
 
 export const AgentChat = () => {
   const { chatMessages, sendChatMessage, activeAgent } = useApp();
@@ -18,8 +19,8 @@ export const AgentChat = () => {
       {/* Top Chat Header */}
       <div className="bg-navy-900 text-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center font-bold">
-            {activeAgent.country === 'India' ? '🇮🇳' : activeAgent.country === 'Dubai' ? '🇦🇪' : '🇹🇭'}
+          <div className="w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+            <CountryFlag country={activeAgent.country} className="w-5 h-3.5 rounded-xs" />
           </div>
           <div>
             <h3 className="font-bold text-sm">WrikMart HQ & Customer Inquiries</h3>

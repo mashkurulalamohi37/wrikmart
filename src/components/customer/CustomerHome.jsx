@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { CountryFlag } from '../common/CountryFlag';
+import { StoreBrandBadge } from '../common/BrandLogo';
 import { 
   ShoppingBag, 
   Package, 
@@ -80,19 +82,22 @@ export const CustomerHome = ({ onStartPreOrder, onOpenChat, onOpenOrders }) => {
           <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
             {[
               {
-                country: 'India 🇮🇳',
+                country: 'India',
+                code: 'India',
                 hubs: 'Delhi & Mumbai Hubs',
                 stores: 'Nike, Amazon IN, Flipkart, Zara, Myntra',
                 time: '5-7 Days Air Freight'
               },
               {
-                country: 'Dubai 🇦🇪',
+                country: 'Dubai (UAE)',
+                code: 'Dubai',
                 hubs: 'Dubai Central Warehouse',
                 stores: 'Apple Store, Dubai Mall, Noon, Sephora',
                 time: '4-6 Days Air Express'
               },
               {
-                country: 'Thailand 🇹🇭',
+                country: 'Thailand',
+                code: 'Thailand',
                 hubs: 'Bangkok Logistics Hub',
                 stores: 'CentralWorld, Siam Paragon, Shopee TH',
                 time: '6-8 Days Air Freight'
@@ -100,10 +105,13 @@ export const CustomerHome = ({ onStartPreOrder, onOpenChat, onOpenOrders }) => {
             ].map((c, i) => (
               <div key={i} className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-all">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-extrabold text-sm text-white">{c.country}</h3>
-                  <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full text-cyan-200">{c.time}</span>
+                  <div className="flex items-center gap-2">
+                    <CountryFlag country={c.code} className="w-6 h-4 shadow-sm rounded-[3px]" />
+                    <h3 className="font-extrabold text-sm text-white">{c.country}</h3>
+                  </div>
+                  <span className="text-[10px] font-bold bg-white/20 px-2.5 py-0.5 rounded-full text-cyan-200">{c.time}</span>
                 </div>
-                <p className="text-xs text-amber-200 mt-1 font-semibold">{c.hubs}</p>
+                <p className="text-xs text-amber-200 mt-1.5 font-semibold">{c.hubs}</p>
                 <p className="text-[11px] text-cyan-100/80 mt-0.5">{c.stores}</p>
               </div>
             ))}
@@ -130,19 +138,21 @@ export const CustomerHome = ({ onStartPreOrder, onOpenChat, onOpenOrders }) => {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { name: 'Nike India', flag: '🇮🇳', cat: 'Sneakers & Apparel', color: 'from-orange-500/10 to-transparent' },
-            { name: 'Apple Dubai', flag: '🇦🇪', cat: 'iPhone, AirPods, Mac', color: 'from-blue-500/10 to-transparent' },
-            { name: 'Zara Global', flag: '🇮🇳', cat: 'Designer Fashion', color: 'from-slate-500/10 to-transparent' },
-            { name: 'Amazon India', flag: '🇮🇳', cat: 'Electronics & Books', color: 'from-amber-500/10 to-transparent' },
-            { name: 'Noon Dubai', flag: '🇦🇪', cat: 'Perfumes & Watches', color: 'from-yellow-500/10 to-transparent' },
-            { name: 'Shopee Thailand', flag: '🇹🇭', cat: 'Skincare & Cosmetics', color: 'from-emerald-500/10 to-transparent' }
+            { name: 'Nike India', country: 'India', cat: 'Sneakers & Apparel' },
+            { name: 'Apple Dubai', country: 'Dubai', cat: 'iPhone, AirPods, Mac' },
+            { name: 'Zara Global', country: 'India', cat: 'Designer Fashion' },
+            { name: 'Amazon India', country: 'India', cat: 'Electronics & Books' },
+            { name: 'Noon Dubai', country: 'Dubai', cat: 'Perfumes & Watches' },
+            { name: 'Shopee Thailand', country: 'Thailand', cat: 'Skincare & Cosmetics' }
           ].map((store, i) => (
             <button
               key={i}
               onClick={onStartPreOrder}
               className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-soft hover:shadow-card hover:border-brand-500 text-left transition-all group"
             >
-              <span className="text-2xl block mb-1.5">{store.flag}</span>
+              <div className="mb-3">
+                <StoreBrandBadge storeName={store.name} />
+              </div>
               <h3 className="font-bold text-xs text-navy-900 group-hover:text-brand-600 transition-colors">{store.name}</h3>
               <p className="text-[10px] text-slate-400 mt-0.5">{store.cat}</p>
             </button>

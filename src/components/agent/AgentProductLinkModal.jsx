@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Copy, Check, ExternalLink, ShieldCheck } from 'lucide-react';
+import { CountryFlag } from '../common/CountryFlag';
 
 export const AgentProductLinkModal = ({ order, onClose }) => {
   const [copiedIndex, setCopiedIndex] = useState(null);
@@ -19,7 +20,10 @@ export const AgentProductLinkModal = ({ order, onClose }) => {
         <div className="sticky top-0 bg-white px-5 py-4 border-b border-slate-200 flex items-center justify-between z-10">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600">Product Sourcing Links</span>
-            <h3 className="font-bold text-navy-900 text-sm">{order.orderNumber} ({order.country} {order.countryFlag})</h3>
+            <h3 className="font-bold text-navy-900 text-sm flex items-center gap-1.5 mt-0.5">
+              <span>{order.orderNumber} ({order.country})</span>
+              <CountryFlag country={order.country || order.countryFlag} className="w-4 h-3 rounded-[2px]" />
+            </h3>
           </div>
           <button 
             onClick={onClose}

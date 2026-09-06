@@ -13,6 +13,7 @@ import {
   Truck,
   Plus
 } from 'lucide-react';
+import { CountryFlag } from '../common/CountryFlag';
 
 export const CustomerOrders = ({ onNewOrder }) => {
   const { orders } = useApp();
@@ -85,7 +86,7 @@ export const CustomerOrders = ({ onNewOrder }) => {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono font-bold text-sm text-navy-900">{order.orderNumber}</span>
-                      <span className="text-xs">{order.countryFlag}</span>
+                      <CountryFlag country={order.country || order.countryFlag} className="w-4 h-3 rounded-[2px]" />
                     </div>
                     <p className="text-[11px] text-slate-400 mt-0.5">{order.createdAt}</p>
                   </div>
@@ -162,7 +163,10 @@ export const CustomerOrders = ({ onNewOrder }) => {
                 <div>
                   <span className="text-[10px] font-bold text-brand-700 uppercase">Current Logistics Status</span>
                   <h4 className="font-extrabold text-navy-900 text-lg">{selectedOrder.status}</h4>
-                  <p className="text-xs text-slate-600 mt-0.5">Sourcing country: {selectedOrder.country} {selectedOrder.countryFlag}</p>
+                  <p className="text-xs text-slate-600 mt-0.5 inline-flex items-center gap-1.5">
+                    <span>Sourcing country: {selectedOrder.country}</span>
+                    <CountryFlag country={selectedOrder.country || selectedOrder.countryFlag} className="w-4 h-3 rounded-[2px]" />
+                  </p>
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] text-slate-500 block">Assigned Sourcing Agent</span>

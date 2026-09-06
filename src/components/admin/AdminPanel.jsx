@@ -33,6 +33,7 @@ import {
   ChevronRight,
   Sparkles
 } from 'lucide-react';
+import { CountryFlag } from '../common/CountryFlag';
 
 export const AdminPanel = () => {
   const [activeNav, setActiveNav] = useState('dashboard');
@@ -195,7 +196,24 @@ export const AdminPanel = () => {
           <div className="flex items-center gap-4 text-[11px] text-slate-400">
             <span>Admin Console v2.6</span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>All Hubs Connected (BD 🇧🇩 • IN 🇮🇳 • AE 🇦🇪 • TH 🇹🇭)</span>
+            <span className="inline-flex items-center gap-1.5 flex-wrap">
+              <span>All Hubs Connected:</span>
+              <span className="inline-flex items-center gap-1">
+                <CountryFlag country="BD" className="w-3.5 h-2.5 rounded-xs" /> BD
+              </span>
+              <span>•</span>
+              <span className="inline-flex items-center gap-1">
+                <CountryFlag country="India" className="w-3.5 h-2.5 rounded-xs" /> IN
+              </span>
+              <span>•</span>
+              <span className="inline-flex items-center gap-1">
+                <CountryFlag country="Dubai" className="w-3.5 h-2.5 rounded-xs" /> AE
+              </span>
+              <span>•</span>
+              <span className="inline-flex items-center gap-1">
+                <CountryFlag country="Thailand" className="w-3.5 h-2.5 rounded-xs" /> TH
+              </span>
+            </span>
           </div>
         </footer>
       </main>
