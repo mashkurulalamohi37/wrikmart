@@ -11,15 +11,39 @@ import {
   Clock, 
   CheckCircle, 
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Plus
 } from 'lucide-react';
 import { CountryFlag } from '../common/CountryFlag';
 
-export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab }) => {
+export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrder }) => {
   const { orders, agents, exchangeRates } = useApp();
 
   return (
     <div className="space-y-6">
+      {/* Dashboard Header with Manual Order Action */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-extrabold text-navy-900">Admin Operations Dashboard</h2>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-bold text-[10px] border border-emerald-200">
+              Live Systems
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">Real-time international sourcing, Dhaka hub dispatch & warehouse stock</p>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={onCreateOrder || (() => onNavigateToTab('orders'))}
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs font-bold rounded-xl shadow transition-all whitespace-nowrap w-full sm:w-auto cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>+ Create Order (Manual)</span>
+          </button>
+        </div>
+      </div>
+
       {/* 4 Metric Top Stat Cards matching Visual Board 1 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Orders */}

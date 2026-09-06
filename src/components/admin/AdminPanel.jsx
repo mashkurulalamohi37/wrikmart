@@ -12,6 +12,7 @@ import { AdminExpenseManagement } from './AdminExpenseManagement';
 import { AdminPreOrderSettings } from './AdminPreOrderSettings';
 import { AdminReportsAnalytics } from './AdminReportsAnalytics';
 import { AdminSystemSettings } from './AdminSystemSettings';
+import { AdminCreateOrderModal } from './AdminCreateOrderModal';
 import { 
   LayoutDashboard, 
   ShoppingBag, 
@@ -21,6 +22,7 @@ import {
   Wallet, 
   Receipt, 
   PlusCircle, 
+  Plus,
   Building2, 
   Truck, 
   History, 
@@ -39,6 +41,7 @@ export const AdminPanel = () => {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [selectedOrder360, setSelectedOrder360] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
 
   const { balanceTransfers } = useApp();
   const pendingTransferCount = balanceTransfers.filter(t => t.status === 'Pending').length;
@@ -91,7 +94,19 @@ export const AdminPanel = () => {
         }`}
       >
         <div className="p-4 overflow-y-auto flex-1 space-y-1 scrollbar-thin">
-          <div className="px-3 py-2 text-[10px] uppercase font-bold tracking-wider text-slate-400">
+          {/* Quick Manual Order Action Button */}
+          <button
+            onClick={() => {
+              setShowCreateOrderModal(true);
+              setSidebarOpen(false);
+            }}
+            className="w-full mb-3.5 flex items-center justify-center gap-2 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 active:scale-95 text-white font-bold text-xs py-2.5 px-3 rounded-xl shadow-md shadow-brand-500/20 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>+ Create Order</span>
+          </button>
+
+          <div className="px-3 py-1.5 text-[10px] uppercase font-bold tracking-wider text-slate-400">
             Navigation Menu
           </div>
 
@@ -141,6 +156,7 @@ export const AdminPanel = () => {
           <AdminDashboard 
             onNavigateToOrder={(order) => setSelectedOrder360(order)}
             onNavigateToTab={(tab) => setActiveNav(tab)}
+            onCreateOrder={() => setShowCreateOrderModal(true)}
           />
         )}
 
@@ -224,6 +240,11 @@ export const AdminPanel = () => {
           order={selectedOrder360} 
           onClose={() => setSelectedOrder360(null)} 
         />
+      )}
+
+      {/* Manual Order Creation Modal */}
+      {showCreateOrderModal && (
+        <AdminCreateOrderModal onClose={() => setShowCreateOrderModal(false)} />
       )}
     </div>
   );
