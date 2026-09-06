@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   Package, 
@@ -20,7 +20,9 @@ import {
   SlidersHorizontal,
   Flame,
   Tag,
-  ArrowRight
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -42,6 +44,34 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
   const [inStockOnly, setInStockOnly] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null); // For Quick View modal
   const [quantities, setQuantities] = useState({}); // local quantity selections by product id
+
+  // Category pills smooth scroll state & ref
+  const categoryScrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = () => {
+    if (categoryScrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = categoryScrollRef.current;
+      setCanScrollLeft(scrollLeft > 8);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 8);
+    }
+  };
+
+  const handleScroll = (direction) => {
+    if (categoryScrollRef.current) {
+      const amount = direction === 'left' ? -280 : 280;
+      categoryScrollRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+      setTimeout(checkScroll, 300);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const handleResize = () => checkScroll();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [inventory]);
 
   // Handle local quantity stepper
   const handleQuantityChange = (productId, delta, maxStock) => {
@@ -144,9 +174,31 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
         <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-teal-500/20 rounded-full blur-3xl pointer-events-none" />
       </div>
 
-      {/* 2. Category Filter Pills */}
-      <div className="overflow-x-auto pb-2 scrollbar-none">
-        <div className="flex items-center gap-2 min-w-max">
+      {/* 2. Enhanced Category Filter Bar with Smooth Navigation & Zero Ugly Scrollbar */}
+      <div className="relative">
+        {/* Left Scroll Arrow Button */}
+        {canScrollLeft && (
+          <button
+            type="button"
+            onClick={() => handleScroll('left')}
+            className="absolute -left-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white shadow-md border border-slate-200 text-slate-700 hover:text-brand-600 hover:bg-slate-50 flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
+            title="Scroll categories left"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        )}
+
+        {/* Left Edge Fade Gradient Mask */}
+        {canScrollLeft && (
+          <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#F4F7FB] via-[#F4F7FB]/70 to-transparent z-10 pointer-events-none rounded-l-2xl" />
+        )}
+
+        {/* Scrollable Category Track */}
+        <div 
+          ref={categoryScrollRef}
+          onScroll={checkScroll}
+          className="overflow-x-auto pb-1 scrollbar-none scroll-smooth flex items-center gap-2.5 px-0.5"
+        >
           {CATEGORIES.map(cat => {
             const count = cat.id === 'All' 
               ? inventory.length 
@@ -158,16 +210,16 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all ${
+                className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all transform active:scale-95 cursor-pointer ${
                   isSelected
-                    ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30 scale-102'
-                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 shadow-soft'
+                    ? 'bg-brand-600 text-white shadow-md shadow-brand-600/25 ring-2 ring-brand-500/20'
+                    : 'bg-white text-slate-700 hover:text-navy-950 hover:bg-slate-50/90 border border-slate-200/90 shadow-2xs hover:border-slate-300'
                 }`}
               >
-                <span>{cat.icon}</span>
-                <span>{cat.label}</span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                  isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                <span className="text-sm">{cat.icon}</span>
+                <span className="whitespace-nowrap">{cat.label}</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold transition-colors ${
+                  isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
                 }`}>
                   {count}
                 </span>
@@ -175,6 +227,23 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
             );
           })}
         </div>
+
+        {/* Right Edge Fade Gradient Mask */}
+        {canScrollRight && (
+          <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#F4F7FB] via-[#F4F7FB]/70 to-transparent z-10 pointer-events-none rounded-r-2xl" />
+        )}
+
+        {/* Right Scroll Arrow Button */}
+        {canScrollRight && (
+          <button
+            type="button"
+            onClick={() => handleScroll('right')}
+            className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white shadow-md border border-slate-200 text-slate-700 hover:text-brand-600 hover:bg-slate-50 flex items-center justify-center transition-all cursor-pointer hover:scale-105 active:scale-95"
+            title="Scroll categories right"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* 3. Search, Sort & Availability Controls */}

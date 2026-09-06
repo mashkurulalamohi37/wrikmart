@@ -30,6 +30,20 @@
   background: #94a3b8;
 }
 
+/* Hide scrollbar utility */
+.scrollbar-none::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.scrollbar-none,
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
 /* Glassmorphism & Card Utilities */
 .glass-panel {
   background: rgba(255, 255, 255, 0.85);
