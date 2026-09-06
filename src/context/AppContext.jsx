@@ -10,7 +10,9 @@ import {
   INITIAL_BALANCE_TRANSFERS,
   INITIAL_CHAT_MESSAGES,
   INITIAL_STOCK_INVENTORY,
-  INITIAL_COUPONS
+  INITIAL_COUPONS,
+  INITIAL_CUSTOMERS,
+  DEFAULT_BIRTHDAY_SETTINGS
 } from '../data/mockData';
 
 const AppContext = createContext();
@@ -117,6 +119,39 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : INITIAL_CHAT_MESSAGES;
   });
 
+  // Customer CRM & Birthday States
+  const [customers, setCustomers] = useState(() => {
+    const saved = localStorage.getItem('wrikmart_customers_v1');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return INITIAL_CUSTOMERS;
+  });
+
+  const [customerProfile, setCustomerProfile] = useState(() => {
+    const saved = localStorage.getItem('wrikmart_customer_profile');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return INITIAL_CUSTOMERS[0] || {
+      id: 'cust-101',
+      name: 'Rahim Chowdhury',
+      phone: '+880 1712-345678',
+      email: 'rahim.c@example.com',
+      address: 'House 12, Road 5, Dhanmondi, Dhaka-1205',
+      district: 'Dhaka',
+      dateOfBirth: '1995-09-06'
+    };
+  });
+
+  const [birthdaySettings, setBirthdaySettings] = useState(() => {
+    const saved = localStorage.getItem('wrikmart_birthday_settings');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return DEFAULT_BIRTHDAY_SETTINGS;
+  });
+
   // Notifications Toast
   const [toast, setToast] = useState(null);
 
@@ -179,6 +214,18 @@ export const AppProvider = ({ children }) => {
       localStorage.removeItem('wrikmart_applied_coupon');
     }
   }, [appliedCoupon]);
+
+  useEffect(() => {
+    localStorage.setItem('wrikmart_customers_v1', JSON.stringify(customers));
+  }, [customers]);
+
+  useEffect(() => {
+    localStorage.setItem('wrikmart_customer_profile', JSON.stringify(customerProfile));
+  }, [customerProfile]);
+
+  useEffect(() => {
+    localStorage.setItem('wrikmart_birthday_settings', JSON.stringify(birthdaySettings));
+  }, [birthdaySettings]);
 
   // Current active agent profile
   const activeAgent = agents.find(a => a.id === activeAgentId) || agents[0];
@@ -314,6 +361,7 @@ export const AppProvider = ({ children }) => {
         address: customerInfo.address,
         district: customerInfo.district || 'Dhaka',
         note: customerInfo.note || '',
+        dateOfBirth: customerInfo.dateOfBirth || null,
         isReturning: false
       },
       financials: {
@@ -362,6 +410,7 @@ export const AppProvider = ({ children }) => {
     };
 
     setOrders(prev => [newOrder, ...prev]);
+    recordCustomerOrder(customerInfo, estimatedTotal);
     showToast(`Order #${orderNumber} Confirmed with Advance ৳${advancePaid.toLocaleString()}!`, 'success');
     return newOrder;
   };
@@ -561,6 +610,7 @@ export const AppProvider = ({ children }) => {
         address: customerInfo.address,
         district: customerInfo.district || 'Dhaka',
         note: customerInfo.note || '',
+        dateOfBirth: customerInfo.dateOfBirth || null,
         isReturning: true
       },
       financials: {
@@ -637,9 +687,253 @@ export const AppProvider = ({ children }) => {
     };
 
     setOrders(prev => [newOrder, ...prev]);
+    recordCustomerOrder(customerInfo, grandTotal);
     clearCart();
     showToast(`Stock Order #${orderNumber} placed successfully!`, 'success');
     return newOrder;
+  };
+
+  // ==========================================
+  // ACTIONS: CUSTOMER CRM & BIRTHDAY CLUB
+  // ==========================================
+
+  // Helper: Keep customer CRM updated on order creation
+  const recordCustomerOrder = (customerInfo, orderTotal) => {
+    if (!customerInfo || !customerInfo.phone) return;
+    setCustomers(prev => {
+      const existingIndex = prev.findIndex(c => c.phone === customerInfo.phone || (customerInfo.email && c.email === customerInfo.email));
+      if (existingIndex >= 0) {
+        const existing = prev[existingIndex];
+        const updated = {
+          ...existing,
+          name: customerInfo.name || existing.name,
+          address: customerInfo.address || existing.address,
+          district: customerInfo.district || existing.district,
+          dateOfBirth: customerInfo.dateOfBirth || existing.dateOfBirth,
+          totalOrders: (existing.totalOrders || 0) + 1,
+          totalSpent: (existing.totalSpent || 0) + (orderTotal || 0)
+        };
+        const newList = [...prev];
+        newList[existingIndex] = updated;
+        return newList;
+      } else {
+        const newCust = {
+          id: `cust-${Date.now()}`,
+          name: customerInfo.name,
+          phone: customerInfo.phone,
+          email: customerInfo.email || '',
+          address: customerInfo.address || '',
+          district: customerInfo.district || 'Dhaka',
+          dateOfBirth: customerInfo.dateOfBirth || '',
+          totalOrders: 1,
+          totalSpent: orderTotal || 0,
+          preferredCategory: 'General Commerce',
+          notes: 'Customer created via checkout order',
+          birthdayWishes: []
+        };
+        return [newCust, ...prev];
+      }
+    });
+
+    // If current profile phone matches, update profile too
+    if (customerProfile?.phone === customerInfo.phone && customerInfo.dateOfBirth) {
+      setCustomerProfile(prev => ({
+        ...prev,
+        dateOfBirth: customerInfo.dateOfBirth,
+        name: customerInfo.name || prev.name,
+        address: customerInfo.address || prev.address
+      }));
+    }
+  };
+
+  // Helper: Birthday status calculator for any DOB string (YYYY-MM-DD)
+  const getBirthdayStatus = (dob) => {
+    if (!dob || typeof dob !== 'string' || !dob.includes('-')) {
+      return {
+        hasDOB: false,
+        isToday: false,
+        isUpcoming: false,
+        daysLeft: null,
+        turningAge: null,
+        formattedDOB: 'Not Set',
+        nextOccurrenceLabel: 'DOB Missing'
+      };
+    }
+
+    try {
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const currentMonth = today.getMonth(); // 0-11
+      const currentDate = today.getDate(); // 1-31
+
+      const [birthYear, birthMonthStr, birthDateStr] = dob.split('-').map(Number);
+      const birthMonth = birthMonthStr - 1; // 0-11
+      const birthDate = birthDateStr;
+
+      const isToday = currentMonth === birthMonth && currentDate === birthDate;
+      const turningAge = currentYear - birthYear;
+
+      // Next birthday occurrence
+      let nextBday = new Date(currentYear, birthMonth, birthDate);
+      const todayZero = new Date(currentYear, currentMonth, currentDate);
+      if (nextBday < todayZero && !isToday) {
+        nextBday = new Date(currentYear + 1, birthMonth, birthDate);
+      }
+
+      const diffTime = nextBday.getTime() - todayZero.getTime();
+      const daysLeft = isToday ? 0 : Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const isUpcoming = daysLeft > 0 && daysLeft <= 30;
+
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const formattedDOB = `${birthDate} ${monthNames[birthMonth]} ${birthYear}`;
+
+      let nextOccurrenceLabel = `${birthDate} ${monthNames[birthMonth]}`;
+      if (isToday) nextOccurrenceLabel = '🎉 Birthday Today!';
+      else if (daysLeft === 1) nextOccurrenceLabel = '🎂 Tomorrow!';
+      else if (daysLeft <= 7) nextOccurrenceLabel = `🎂 In ${daysLeft} days`;
+
+      return {
+        hasDOB: true,
+        isToday,
+        isUpcoming,
+        daysLeft,
+        turningAge,
+        formattedDOB,
+        nextOccurrenceLabel,
+        birthMonth,
+        birthDate
+      };
+    } catch (e) {
+      return {
+        hasDOB: false,
+        isToday: false,
+        isUpcoming: false,
+        daysLeft: null,
+        turningAge: null,
+        formattedDOB: dob,
+        nextOccurrenceLabel: dob
+      };
+    }
+  };
+
+  // Generate an active personalized birthday coupon
+  const generateBirthdayCoupon = (customer, customDiscount = null) => {
+    if (!customer) return null;
+    const cleanFirstName = (customer.name || 'VIP').split(' ')[0].replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    const discountVal = customDiscount?.discountValue ?? birthdaySettings.discountValue ?? 20;
+    const discountType = customDiscount?.discountType ?? birthdaySettings.discountType ?? 'percentage';
+    const currentYear = new Date().getFullYear();
+    const code = `BDAY-${cleanFirstName}-${currentYear}`;
+
+    // Check if code already exists in coupons
+    const existing = coupons.find(c => c.code.toUpperCase() === code.toUpperCase());
+    if (existing) return existing;
+
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + (birthdaySettings.validityDays || 7));
+    const expiresAt = expiryDate.toISOString().split('T')[0];
+
+    const newCoupon = {
+      id: `coup-bday-${customer.id || Date.now()}-${Date.now()}`,
+      code,
+      title: `🎂 Birthday Gift for ${customer.name}`,
+      description: discountType === 'percentage'
+        ? `Special ${discountVal}% OFF Birthday voucher for ${customer.name} (Max ৳${birthdaySettings.maxDiscountBDT || 1500})`
+        : `Special Flat ৳${discountVal} OFF Birthday voucher for ${customer.name}`,
+      discountType,
+      discountValue: Number(discountVal),
+      maxDiscountBDT: birthdaySettings.maxDiscountBDT || 1500,
+      minOrderBDT: birthdaySettings.minOrderBDT || 500,
+      applicableCategory: 'All',
+      status: 'Active',
+      expiresAt,
+      isBirthdaySpecial: true,
+      customerId: customer.id,
+      customerName: customer.name,
+      customerPhone: customer.phone,
+      usedCount: 0
+    };
+
+    setCoupons(prev => [newCoupon, ...prev]);
+    return newCoupon;
+  };
+
+  // Send/Log Birthday Wish & Promo dispatch
+  const sendBirthdayWish = (customerId, { discountValue, discountType, customNote } = {}) => {
+    const customer = customers.find(c => c.id === customerId);
+    if (!customer) return null;
+
+    const coupon = generateBirthdayCoupon(customer, { discountValue, discountType });
+    const currentYear = new Date().getFullYear();
+    const discountText = (discountType || birthdaySettings.discountType) === 'percentage'
+      ? `${discountValue || birthdaySettings.discountValue}%`
+      : `৳${discountValue || birthdaySettings.discountValue}`;
+
+    const wishRecord = {
+      id: `wish-${Date.now()}`,
+      year: currentYear,
+      sentAt: new Date().toISOString(),
+      couponCode: coupon?.code || `BDAY-${currentYear}`,
+      discount: discountText,
+      note: customNote || 'Birthday wish & coupon issued via WrikMart CRM'
+    };
+
+    // Update customer wishes in state
+    setCustomers(prev => prev.map(c => {
+      if (c.id === customerId) {
+        const wishes = c.birthdayWishes || [];
+        return {
+          ...c,
+          birthdayWishes: [wishRecord, ...wishes.filter(w => w.year !== currentYear)]
+        };
+      }
+      return c;
+    }));
+
+    // If active profile matches customer, update it too
+    if (customerProfile?.id === customerId || customerProfile?.phone === customer?.phone) {
+      setCustomerProfile(prev => ({
+        ...prev,
+        birthdayWishes: [wishRecord, ...(prev.birthdayWishes || []).filter(w => w.year !== currentYear)]
+      }));
+    }
+
+    const template = birthdaySettings.wishTemplate || "Happy Birthday {name}! 🎂 Team WrikMart wishes you a joyful day! We've gifted you an exclusive {discount} birthday discount voucher: {code}. Shop authentic global products: https://wrikmart.com";
+    const message = template
+      .replace('{name}', customer.name)
+      .replace('{discount}', discountText)
+      .replace('{code}', coupon?.code || `BDAY-${currentYear}`);
+
+    const cleanPhone = (customer.phone || '').replace(/[^0-9]/g, '');
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+
+    showToast(`Birthday wish logged & coupon ${coupon?.code} generated for ${customer.name}!`, 'success');
+
+    return {
+      coupon,
+      message,
+      whatsappUrl,
+      wishRecord
+    };
+  };
+
+  // Update customer profile (by customer)
+  const updateCustomerProfile = (updatedData) => {
+    setCustomerProfile(prev => {
+      const next = { ...prev, ...updatedData };
+      setCustomers(cList => cList.map(c => (c.id === next.id || c.phone === next.phone ? { ...c, ...next } : c)));
+      return next;
+    });
+    showToast('Customer profile updated successfully!', 'success');
+  };
+
+  // Admin updates customer DOB
+  const updateCustomerDOB = (customerId, dob) => {
+    setCustomers(prev => prev.map(c => (c.id === customerId ? { ...c, dateOfBirth: dob } : c)));
+    if (customerProfile?.id === customerId) {
+      setCustomerProfile(prev => ({ ...prev, dateOfBirth: dob }));
+    }
+    showToast('Customer date of birth updated!', 'success');
   };
 
   // ==========================================
@@ -1207,8 +1501,19 @@ export const AppProvider = ({ children }) => {
       removeFromCart,
       clearCart,
       applyCoupon,
-      removeCoupon,
-      createCustomerStockOrder
+      createCustomerStockOrder,
+      // Customer CRM & Birthday Suite
+      customers,
+      setCustomers,
+      customerProfile,
+      setCustomerProfile,
+      updateCustomerProfile,
+      birthdaySettings,
+      setBirthdaySettings,
+      updateCustomerDOB,
+      getBirthdayStatus,
+      generateBirthdayCoupon,
+      sendBirthdayWish
     }}>
       {children}
     </AppContext.Provider>

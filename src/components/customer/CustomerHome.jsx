@@ -19,11 +19,23 @@ import {
   Search, 
   ArrowRightLeft,
   Flame,
-  Plus
+  Plus,
+  Gift,
+  Cake,
+  Tag
 } from 'lucide-react';
 
 export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpenOrders }) => {
-  const { inventory = [], addToCart } = useApp();
+  const { 
+    inventory = [], 
+    addToCart,
+    customerProfile,
+    getBirthdayStatus,
+    birthdaySettings,
+    generateBirthdayCoupon,
+    setAppliedCoupon,
+    showToast
+  } = useApp();
   const [quickUrl, setQuickUrl] = useState('');
 
   const handleQuickPaste = () => {
@@ -36,6 +48,55 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
   return (
     <div className="space-y-10 pb-12">
       
+      {/* Birthday Celebration Banner for Logged-In Customer */}
+      {(() => {
+        const bday = getBirthdayStatus?.(customerProfile?.dateOfBirth);
+        if (!bday?.isToday) return null;
+        const cleanName = (customerProfile?.name || 'Friend').split(' ')[0];
+        const code = `BDAY-${cleanName.toUpperCase()}-${new Date().getFullYear()}`;
+        const discountText = (birthdaySettings?.discountType || 'percentage') === 'percentage'
+          ? `${birthdaySettings?.discountValue || 20}% OFF`
+          : `৳${birthdaySettings?.discountValue || 500} OFF`;
+
+        return (
+          <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-rose-500 via-pink-500 to-amber-400 text-white shadow-card flex flex-col md:flex-row items-center justify-between gap-4 animate-fade-in relative overflow-hidden">
+            <div className="flex items-center gap-4 relative z-10">
+              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center text-3xl shadow-inner flex-shrink-0">
+                🎂
+              </div>
+              <div className="space-y-0.5">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-wider">
+                  <Sparkles className="w-3 h-3 text-amber-200" />
+                  Your Birthday Celebration Special!
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black text-white">
+                  Happy Birthday, {cleanName}! 🎉
+                </h2>
+                <p className="text-xs text-rose-100 max-w-xl">
+                  Team WrikMart wishes you a joyful celebration! Use code <strong className="font-mono underline font-black text-white">{code}</strong> for <strong>{discountText}</strong> on all orders today!
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-stretch md:self-auto relative z-10 flex-shrink-0">
+              <button
+                onClick={() => {
+                  const coupon = generateBirthdayCoupon(customerProfile);
+                  if (coupon) {
+                    setAppliedCoupon(coupon);
+                    showToast(`🎉 Happy Birthday! Coupon ${coupon.code} applied!`, 'success');
+                  }
+                }}
+                className="w-full md:w-auto px-5 py-3 rounded-2xl bg-white text-rose-600 hover:bg-rose-50 font-black text-xs shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Gift className="w-4 h-4 text-rose-600" />
+                <span>Apply {discountText} to Cart</span>
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* 1. Full-Width Hero Section with Rich Visuals */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0AA79D] via-[#08867E] to-[#0D1B3D] text-white p-8 sm:p-12 lg:p-14 shadow-card">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">

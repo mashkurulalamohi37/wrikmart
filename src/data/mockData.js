@@ -1592,3 +1592,115 @@ export const DEFAULT_RECURRING_HQ_TEMPLATES = [
     paymentMethod: 'Bank Transfer (BRAC Bank)'
   }
 ];
+
+export const DEFAULT_BIRTHDAY_SETTINGS = {
+  autoBirthdayDiscountEnabled: true,
+  discountType: 'percentage', // 'percentage' | 'fixed'
+  discountValue: 20, // 20% OFF or ৳500
+  maxDiscountBDT: 1500,
+  minOrderBDT: 500,
+  validityDays: 7,
+  wishTemplate: "Happy Birthday {name}! 🎂 Team WrikMart wishes you a joyful day! We've gifted you an exclusive {discount} birthday discount voucher: {code}. Shop authentic global products: https://wrikmart.com"
+};
+
+export const INITIAL_CUSTOMERS = [
+  {
+    id: 'cust-101',
+    name: 'Rahim Chowdhury',
+    phone: '+880 1712-345678',
+    email: 'rahim.c@example.com',
+    address: 'House 12, Road 5, Dhanmondi, Dhaka-1205',
+    district: 'Dhaka',
+    dateOfBirth: '1995-09-06', // Today (6 September)
+    totalOrders: 5,
+    totalSpent: 48500,
+    preferredCategory: 'Footwear & Electronics',
+    notes: 'VIP Buyer. Frequently orders sneakers from Nike India.',
+    birthdayWishes: []
+  },
+  {
+    id: 'cust-102',
+    name: 'Tanvir Ahmed',
+    phone: '+880 1911-223344',
+    email: 'tanvir.ahmed@example.com',
+    address: 'Apartment 4B, Sector 7, Uttara, Dhaka',
+    district: 'Dhaka',
+    dateOfBirth: '1998-09-09', // Upcoming in 3 days
+    totalOrders: 3,
+    totalSpent: 28400,
+    preferredCategory: 'Gadgets & Audio',
+    notes: 'Orders electronics from Dubai Noon.',
+    birthdayWishes: []
+  },
+  {
+    id: 'cust-103',
+    name: 'Nusrat Jahan',
+    phone: '+880 1819-876543',
+    email: 'nusrat.j@example.com',
+    address: 'Flat 5A, Green Road, Farmgate, Dhaka',
+    district: 'Dhaka',
+    dateOfBirth: '1997-09-12', // Upcoming in 6 days
+    totalOrders: 4,
+    totalSpent: 36200,
+    preferredCategory: 'Cosmetics & Skincare',
+    notes: 'Regular Thai skincare buyer.',
+    birthdayWishes: []
+  },
+  {
+    id: 'cust-104',
+    name: 'Farhan Kabir',
+    phone: '+880 1711-998877',
+    email: 'farhan.k@example.com',
+    address: 'House 88, Road 11, Banani, Dhaka',
+    district: 'Dhaka',
+    dateOfBirth: '1994-09-24', // Later this month
+    totalOrders: 6,
+    totalSpent: 72000,
+    preferredCategory: 'Luxury Watches',
+    notes: 'High value premium buyer.',
+    birthdayWishes: []
+  },
+  {
+    id: 'cust-105',
+    name: 'Sadia Islam',
+    phone: '+880 1622-334455',
+    email: 'sadia.i@example.com',
+    address: 'CDA Avenue, GEC Circle, Chittagong',
+    district: 'Chittagong',
+    dateOfBirth: '1999-10-15', // Next month
+    totalOrders: 2,
+    totalSpent: 14500,
+    preferredCategory: 'Apparel & Bags',
+    notes: 'Chittagong delivery.',
+    birthdayWishes: []
+  },
+  {
+    id: 'cust-106',
+    name: 'Mahmudul Hasan',
+    phone: '+880 1715-443322',
+    email: 'mahmud.h@example.com',
+    address: 'Zindabazar, Sylhet',
+    district: 'Sylhet',
+    dateOfBirth: '1993-11-20',
+    totalOrders: 1,
+    totalSpent: 9800,
+    preferredCategory: 'Perfumes',
+    notes: 'Sylhet customer.',
+    birthdayWishes: []
+  },
+  {
+    id: 'cust-107',
+    name: 'Shaila Sharmin',
+    phone: '+880 1823-112233',
+    email: 'shaila.s@example.com',
+    address: 'Rajshahi Sadar, Rajshahi',
+    district: 'Rajshahi',
+    dateOfBirth: '', // Not provided yet
+    totalOrders: 2,
+    totalSpent: 18200,
+    preferredCategory: 'Footwear',
+    notes: 'DOB missing. Needs collection.',
+    birthdayWishes: []
+  }
+];
+

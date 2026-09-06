@@ -17,13 +17,14 @@ import {
   Info,
   Globe2,
   Lock,
-  RotateCcw
+  RotateCcw,
+  Cake
 } from 'lucide-react';
 import { BKashLogo, NagadLogo, VisaLogo, MastercardLogo } from '../common/PaymentLogos';
 import { CountryFlag } from '../common/CountryFlag';
 
 export const PreOrderWizard = ({ onComplete, onCancel }) => {
-  const { createCustomerPreOrder } = useApp();
+  const { createCustomerPreOrder, customerProfile } = useApp();
 
   // Wizard Steps: 1 (Country & Link), 2 (Product Details), 3 (Cart), 4 (Customer Info), 5 (Review & Pay), 6 (Confirmed)
   const [step, setStep] = useState(1);
@@ -44,9 +45,11 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
   // Items in Order Cart
   const [items, setItems] = useState([
     {
-      id: 'it-1',
+      id: 'item-demo-1',
       name: 'Nike Air Max 270',
-      url: 'https://www.nike.com/in/t/air-max-270-mens-shoes',
+      category: 'Footwear',
+      brand: 'Nike',
+      url: 'https://www.nike.com/in/t/air-max-270-mens-shoes-K2NzSd',
       image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format&fit=crop&q=80',
       specs: { size: '42', color: 'Black/Red', unit: 1 },
       expectedPrice: 8000,
@@ -56,11 +59,12 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
 
   // Customer Information
   const [customerInfo, setCustomerInfo] = useState({
-    name: 'Rahim Chowdhury',
-    phone: '+880 1712-345678',
-    email: 'rahim.c@example.com',
-    address: 'House 12, Road 5, Dhanmondi, Dhaka-1205',
-    district: 'Dhaka',
+    name: customerProfile?.name || 'Rahim Chowdhury',
+    phone: customerProfile?.phone || '+880 1712-345678',
+    email: customerProfile?.email || 'rahim.c@example.com',
+    address: customerProfile?.address || 'House 12, Road 5, Dhanmondi, Dhaka-1205',
+    district: customerProfile?.district || 'Dhaka',
+    dateOfBirth: customerProfile?.dateOfBirth || '',
     note: 'Please call 30 minutes before arrival.'
   });
 
@@ -480,6 +484,24 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-navy-900 mb-1 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Cake className="w-3.5 h-3.5 text-rose-500" />
+                      <span>Date of Birth / Birthday (Optional)</span>
+                    </span>
+                    <span className="text-[10px] text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                      🎂 Unlock annual birthday discount vouchers!
+                    </span>
+                  </label>
+                  <input
+                    type="date"
+                    value={customerInfo.dateOfBirth || ''}
+                    onChange={(e) => setCustomerInfo({ ...customerInfo, dateOfBirth: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500 font-medium"
+                  />
                 </div>
 
                 <div>

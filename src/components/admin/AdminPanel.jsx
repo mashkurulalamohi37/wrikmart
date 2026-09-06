@@ -13,6 +13,7 @@ import { AdminPreOrderSettings } from './AdminPreOrderSettings';
 import { AdminReportsAnalytics } from './AdminReportsAnalytics';
 import { AdminSystemSettings } from './AdminSystemSettings';
 import { AdminCreateOrderModal } from './AdminCreateOrderModal';
+import { AdminCustomerManagement } from './AdminCustomerManagement';
 import { 
   LayoutDashboard, 
   ShoppingBag, 
@@ -33,7 +34,8 @@ import {
   Menu,
   X,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Cake
 } from 'lucide-react';
 import { CountryFlag } from '../common/CountryFlag';
 
@@ -43,12 +45,19 @@ export const AdminPanel = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
 
-  const { balanceTransfers } = useApp();
+  const { balanceTransfers, customers = [], getBirthdayStatus } = useApp();
   const pendingTransferCount = balanceTransfers.filter(t => t.status === 'Pending').length;
+  const todayBirthdaysCount = customers.filter(c => getBirthdayStatus?.(c.dateOfBirth)?.isToday).length;
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { id: 'orders', label: 'Order Management', icon: <ShoppingBag className="w-4 h-4" /> },
+    { 
+      id: 'customers', 
+      label: 'Customers & Birthday Club', 
+      icon: <Cake className="w-4 h-4 text-rose-500" />,
+      badge: todayBirthdaysCount > 0 ? `🎂 ${todayBirthdaysCount}` : null
+    },
     { id: 'preorder_settings', label: 'Pre Order Form Settings', icon: <FileEdit className="w-4 h-4" /> },
     { id: 'agents', label: 'Agent Management', icon: <UserCheck className="w-4 h-4" /> },
     { 
@@ -152,6 +161,10 @@ export const AdminPanel = () => {
           <AdminOrderList 
             onSelectOrder={(order) => setSelectedOrder360(order)}
           />
+        )}
+
+        {activeNav === 'customers' && (
+          <AdminCustomerManagement />
         )}
 
         {activeNav === 'preorder_settings' && (

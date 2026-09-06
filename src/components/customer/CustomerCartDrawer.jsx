@@ -263,13 +263,17 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
                     {/* Quick Available Suggestions */}
                     <div className="flex flex-wrap gap-1.5 items-center">
                       <span className="text-[10px] text-slate-400 font-medium">Available:</span>
-                      {coupons.filter(c => c.status === 'Active').slice(0, 3).map(cp => (
+                      {coupons.filter(c => c.status === 'Active').slice(0, 4).map(cp => (
                         <button
                           key={cp.id}
                           onClick={() => handleApplyCoupon(cp.code)}
-                          className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-brand-50 hover:text-brand-700 border border-slate-200 text-[10px] font-bold text-slate-600 transition-colors"
+                          className={`px-2 py-0.5 rounded-lg border text-[10px] font-bold transition-colors ${
+                            cp.isBirthdaySpecial
+                              ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 font-black'
+                              : 'bg-slate-100 hover:bg-brand-50 hover:text-brand-700 border border-slate-200 text-slate-600'
+                          }`}
                         >
-                          🏷️ {cp.code}
+                          {cp.isBirthdaySpecial ? '🎂' : '🏷️'} {cp.code}
                         </button>
                       ))}
                     </div>

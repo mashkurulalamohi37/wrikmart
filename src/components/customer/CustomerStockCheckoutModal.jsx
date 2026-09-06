@@ -15,25 +15,28 @@ import {
   Clock,
   Sparkles,
   RotateCcw,
-  Check
+  Check,
+  Cake
 } from 'lucide-react';
 import { BKashLogo, NagadLogo, VisaLogo, MastercardLogo } from '../common/PaymentLogos';
 
 export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) => {
   const { 
-    cart, 
+    cart = [], 
     appliedCoupon,
     createCustomerStockOrder, 
-    setCustomerTab 
+    setCustomerTab,
+    customerProfile
   } = useApp();
 
   // Form State
   const [customerInfo, setCustomerInfo] = useState({
-    name: 'Rahim Chowdhury',
-    phone: '+880 1712-345678',
-    email: 'rahim.c@example.com',
-    district: 'Dhaka',
-    address: 'House 12, Road 5, Dhanmondi, Dhaka-1205',
+    name: customerProfile?.name || 'Rahim Chowdhury',
+    phone: customerProfile?.phone || '+880 1712-345678',
+    email: customerProfile?.email || 'rahim.c@example.com',
+    district: customerProfile?.district || 'Dhaka',
+    address: customerProfile?.address || 'House 12, Road 5, Dhanmondi, Dhaka-1205',
+    dateOfBirth: customerProfile?.dateOfBirth || '',
     note: 'Please call 30 minutes before arrival.'
   });
 
@@ -315,6 +318,24 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
                       value={customerInfo.email}
                       onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:outline-none font-medium"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-slate-600 font-semibold mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Cake className="w-3.5 h-3.5 text-rose-500" />
+                        <span>Date of Birth / Birthday (Optional)</span>
+                      </span>
+                      <span className="text-[10px] text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                        🎂 Unlock annual birthday discount vouchers!
+                      </span>
+                    </label>
+                    <input
+                      type="date"
+                      value={customerInfo.dateOfBirth || ''}
+                      onChange={(e) => setCustomerInfo({ ...customerInfo, dateOfBirth: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:outline-none font-medium text-xs"
                     />
                   </div>
 
