@@ -21,19 +21,16 @@ import {
   Clock, 
   Printer, 
   ChevronRight, 
+  Percent, 
   ShieldCheck, 
   Search, 
   Filter,
   Calendar,
   Sparkles,
-  ArrowRight,
-  Activity,
-  X,
-  ExternalLink,
-  RefreshCw,
-  BadgeCheck,
   Layers,
-  FileText
+  Activity,
+  SlidersHorizontal,
+  ChevronDown
 } from 'lucide-react';
 import { CountryFlag } from '../common/CountryFlag';
 
@@ -49,133 +46,103 @@ export const AdminReportsAnalytics = () => {
     showToast 
   } = useApp();
 
-  // Primary Tab Navigation: 'sales_corridors' | 'pnl_cashflow' | 'stock_health' | 'logistics_vips'
-  const [activeTab, setActiveTab] = useState('sales_corridors');
+  // Active Report Module (1 through 10)
+  const [activeReport, setActiveReport] = useState('sales');
 
-  // Time Period Filter: 'today' | 'week' | 'month' | 'year' | 'all'
-  const [timeRange, setTimeRange] = useState('month');
+  // Time Period Filter: 'today' | 'week' | 'month' | 'all'
+  const [period, setPeriod] = useState('month');
 
-  // Drill-Down Modals
-  const [modalType, setModalType] = useState(null); // 'orders' | 'inventory' | 'hq_expenses'
-  const [modalSearch, setModalSearch] = useState('');
-  const [modalFilter, setModalFilter] = useState('all');
+  // Search States for Tables
+  const [searchSales, setSearchSales] = useState('');
+  const [searchProfit, setSearchProfit] = useState('');
+  const [searchReceivables, setSearchReceivables] = useState('');
+  const [searchStock, setSearchStock] = useState('');
+  const [searchAgent, setSearchAgent] = useState('');
+  const [searchHubs, setSearchHubs] = useState('');
+  const [searchCustomer, setSearchCustomer] = useState('');
+  const [searchLogistics, setSearchLogistics] = useState('');
+  const [searchHqExp, setSearchHqExp] = useState('');
+  const [searchAgentExp, setSearchAgentExp] = useState('');
 
-  // Multiplier for simulating time range metrics dynamically
-  const timeMultiplier = useMemo(() => {
-    switch (timeRange) {
+  // Period multiplier to simulate time-range metrics realistically
+  const periodMultiplier = useMemo(() => {
+    switch (period) {
       case 'today': return 0.08;
       case 'week': return 0.28;
       case 'month': return 1.0;
-      case 'year': return 2.2;
-      case 'all': return 3.0;
+      case 'all': return 2.5;
       default: return 1.0;
     }
-  }, [timeRange]);
+  }, [period]);
 
-  const timeRangeLabel = useMemo(() => {
-    switch (timeRange) {
+  const periodDateLabel = useMemo(() => {
+    switch (period) {
       case 'today': return 'Today • 6 Sep 2026';
-      case 'week': return 'Last 7 Days • 31 Aug – 6 Sep 2026';
-      case 'month': return 'This Month • September 2026';
-      case 'year': return 'Calendar Year • 2026 YTD';
+      case 'week': return 'Current Week • 1 Sep – 7 Sep 2026';
+      case 'month': return 'Current Month • September 2026';
       case 'all': return 'All Time Cumulative (2025–2026)';
-      default: return 'This Month • September 2026';
+      default: return 'Current Month • September 2026';
     }
-  }, [timeRange]);
+  }, [period]);
 
-  // Core Financial & Operational Calculations
+  // Calculations from Context
+  const totalOrdersCount = Math.round(orders.length * (period === 'all' ? 2.4 : (period === 'today' ? 0.2 : (period === 'week' ? 0.45 : 1))));
+  const preOrders = orders.filter(o => (o.orderType || 'Pre-Order') === 'Pre-Order');
+  const stockOrders = orders.filter(o => o.orderType === 'Stock Product');
+  
+  const completedOrders = orders.filter(o => o.status === 'Delivered');
+  const pendingOrders = orders.filter(o => o.status !== 'Delivered' && o.status !== 'Cancelled' && o.status !== 'Damaged' && o.status !== 'Returned');
+  const damagedOrders = orders.filter(o => o.status === 'Damaged');
+  const returnedOrders = orders.filter(o => o.status === 'Returned');
+
   const rawGrossRevenue = orders.reduce((sum, o) => sum + (o.financials?.estimatedTotal || 0), 0);
-  const grossRevenue = Math.round(rawGrossRevenue * timeMultiplier);
+  const grossRevenue = Math.round(rawGrossRevenue * periodMultiplier);
 
   const rawAgentPurchaseCost = orders.reduce((sum, o) => sum + (o.financials?.agentCostBDT || Math.round((o.financials?.estimatedSubtotal || 0) * 0.75)), 0);
-  const totalAgentPurchaseCost = Math.round(rawAgentPurchaseCost * timeMultiplier);
+  const totalAgentPurchaseCost = Math.round(rawAgentPurchaseCost * periodMultiplier);
 
   const rawShippingCost = orders.reduce((sum, o) => sum + (o.financials?.shippingCostBDT || 600), 0);
-  const totalShippingCost = Math.round(rawShippingCost * timeMultiplier);
+  const totalShippingCost = Math.round(rawShippingCost * periodMultiplier);
 
   const rawLocalCourierCost = orders.reduce((sum, o) => sum + (o.financials?.localCourierCostBDT || 120), 0);
-  const totalLocalCourierCost = Math.round(rawLocalCourierCost * timeMultiplier);
-
-  const totalAgentExpensesAmount = Math.round(expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0) * timeMultiplier);
-  const totalHqExpensesAmount = Math.round(hqExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0) * timeMultiplier);
-  const totalOverheadAmount = totalAgentExpensesAmount + totalHqExpensesAmount;
-
-  const damagedOrders = orders.filter(o => o.status === 'Damaged');
-  const totalRefundsAmount = Math.round(damagedOrders.reduce((sum, o) => sum + (o.damageDetails?.refundAmount || 0), 0) * timeMultiplier);
+  const totalLocalCourierCost = Math.round(rawLocalCourierCost * periodMultiplier);
+  
+  const totalAgentExpensesAmount = Math.round(expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0) * periodMultiplier);
+  const totalHqExpensesAmount = Math.round(hqExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0) * periodMultiplier);
+  const totalExpensesAmount = totalAgentExpensesAmount + totalHqExpensesAmount;
+  const totalRefundsAmount = Math.round(damagedOrders.reduce((sum, o) => sum + (o.damageDetails?.refundAmount || 0), 0) * periodMultiplier);
 
   const grossProfit = grossRevenue - totalAgentPurchaseCost - totalShippingCost - totalLocalCourierCost;
-  const netProfit = grossProfit - totalOverheadAmount - totalRefundsAmount;
-
-  const grossMarginPercent = grossRevenue > 0 ? ((grossProfit / grossRevenue) * 100).toFixed(1) : '0.0';
-  const netMarginPercent = grossRevenue > 0 ? ((netProfit / grossRevenue) * 100).toFixed(1) : '0.0';
-
-  const totalOrdersCount = Math.round(orders.length * (timeRange === 'all' ? 2.4 : (timeRange === 'today' ? 0.2 : (timeRange === 'week' ? 0.45 : 1))));
-  const preOrdersCount = orders.filter(o => (o.orderType || 'Pre-Order') === 'Pre-Order').length;
-  const stockOrdersCount = orders.filter(o => o.orderType === 'Stock Product').length;
+  const netProfit = grossProfit - totalExpensesAmount - totalRefundsAmount;
+  const grossMarginPercent = grossRevenue > 0 ? ((grossProfit / grossRevenue) * 100).toFixed(1) : '0';
+  const netMarginPercent = grossRevenue > 0 ? ((netProfit / grossRevenue) * 100).toFixed(1) : '0';
   const averageOrderValue = orders.length > 0 ? Math.round(rawGrossRevenue / orders.length) : 0;
 
-  // Working Capital & Cashflow
-  const advanceCollected = Math.round(orders.reduce((sum, o) => sum + (o.financials?.advancePaid || 0), 0) * timeMultiplier);
-  const doorstepReceivables = Math.round(orders.reduce((sum, o) => sum + (o.financials?.dueAmount || 0), 0) * timeMultiplier);
-  const totalMoneyIn = advanceCollected + doorstepReceivables;
-  const totalMoneyOut = totalAgentPurchaseCost + totalShippingCost + totalOverheadAmount;
-
-  // Inventory Health Calculations
+  // Inventory Calculations
   const stockItems = inventory || [];
   const totalStockQuantity = stockItems.reduce((sum, i) => sum + (i.currentStock || 0), 0);
-  const totalStockValuation = stockItems.reduce((sum, i) => sum + ((i.currentStock || 0) * (i.costPrice || 0)), 0);
+  const totalStockValue = stockItems.reduce((sum, i) => sum + ((i.currentStock || 0) * (i.costPrice || 0)), 0);
   const lowStockItems = stockItems.filter(i => (i.currentStock || 0) > 0 && (i.currentStock || 0) <= (i.reorderLevel || 5));
   const outOfStockItems = stockItems.filter(i => (i.currentStock || 0) === 0);
 
-  // Stock Aging
-  const agingFresh = stockItems.filter(i => (i.agingDays || 0) <= 30);
-  const agingMid = stockItems.filter(i => (i.agingDays || 0) > 30 && (i.agingDays || 0) <= 90);
-  const agingSlow = stockItems.filter(i => (i.agingDays || 0) > 90 && (i.agingDays || 0) <= 180);
-  const agingCritical = stockItems.filter(i => (i.agingDays || 0) > 180);
-
-  // Top 5 Bestselling Products
-  const bestsellingProducts = useMemo(() => {
-    return stockItems
-      .slice()
-      .sort((a, b) => (b.soldQty || 0) - (a.soldQty || 0))
-      .slice(0, 5);
-  }, [stockItems]);
-
-  // Country Corridor Data
-  const corridorData = useMemo(() => {
-    const list = [
-      { country: 'India', flag: 'India', hub: 'Delhi Gateway Hub', avgTransit: '2.5 Days', clearance: '98.5%' },
-      { country: 'Dubai', flag: 'Dubai', hub: 'Dubai Al Quoz Hub', avgTransit: '3.2 Days', clearance: '99.1%' },
-      { country: 'Thailand', flag: 'Thailand', hub: 'Bangkok Logistics Hub', avgTransit: '3.0 Days', clearance: '97.2%' },
-    ];
-    return list.map(c => {
-      const countryOrders = orders.filter(o => o.country === c.country);
-      const rev = countryOrders.reduce((sum, o) => sum + (o.financials?.estimatedTotal || 0), 0);
-      return {
-        ...c,
-        orderCount: countryOrders.length,
-        revenue: Math.round(rev * timeMultiplier),
-        sharePercent: grossRevenue > 0 ? Math.round((Math.round(rev * timeMultiplier) / grossRevenue) * 100) : 0
-      };
-    });
-  }, [orders, timeMultiplier, grossRevenue]);
-
-  // Customer Analytics Map
+  // Customer Analytics
   const customersList = useMemo(() => {
     const map = new Map();
     orders.forEach(o => {
-      const key = o.customer?.phone || o.customer?.name || 'Unknown';
-      if (!map.has(key)) {
-        map.set(key, {
+      const custId = o.customer?.phone || o.customer?.name || 'Unknown';
+      if (!map.has(custId)) {
+        map.set(custId, {
           name: o.customer?.name || 'Customer',
           phone: o.customer?.phone || 'N/A',
+          email: o.customer?.email || '',
           district: o.customer?.district || 'Dhaka',
           ordersCount: 0,
           totalSpent: 0,
           dueAmount: 0,
+          isReturning: o.customer?.isReturning
         });
       }
-      const c = map.get(key);
+      const c = map.get(custId);
       c.ordersCount += 1;
       c.totalSpent += (o.financials?.estimatedTotal || 0);
       c.dueAmount += (o.financials?.dueAmount || 0);
@@ -183,88 +150,98 @@ export const AdminReportsAnalytics = () => {
     return Array.from(map.values()).sort((a, b) => b.totalSpent - a.totalSpent);
   }, [orders]);
 
-  const repeatCustomersCount = customersList.filter(c => c.ordersCount > 1).length;
-  const repeatCustomerRate = customersList.length > 0 ? Math.round((repeatCustomersCount / customersList.length) * 100) : 0;
-  const customerLTV = customersList.length > 0 ? Math.round(rawGrossRevenue / customersList.length) : 0;
+  const repeatCustomers = customersList.filter(c => c.ordersCount > 1 || c.isReturning);
+  const repeatCustomerRate = customersList.length > 0 ? Math.round((repeatCustomers.length / customersList.length) * 100) : 0;
+  const repeatSalesAmount = Math.round(orders.filter(o => o.customer?.isReturning).reduce((sum, o) => sum + (o.financials?.estimatedTotal || 0), 0) * periodMultiplier);
 
-  // Print Handler
+  // Print Report Handler
   const handlePrint = () => {
     window.print();
-    if (showToast) showToast('Official Executive Financial Statement prepared for print/PDF!', 'success');
+    if (showToast) showToast('Complete analytical dossier formatted for Print/PDF saving!', 'success');
   };
 
   // CSV Export Handler
   const handleExportCSV = () => {
-    const headers = ['Financial / KPI Section', 'Indicator', 'Amount (BDT / Value)', 'Context'];
+    const headers = ['Report Category', 'Metric Indicator', 'Value (BDT / Count)', 'Audit Notes'];
     const rows = [
-      ['Time Window', 'Audit Scope', timeRangeLabel, 'Active filter'],
-      ['Revenue & Volume', 'Gross Invoiced Revenue', grossRevenue, 'BDT total billings'],
-      ['Revenue & Volume', 'Total Orders Volume', totalOrdersCount, 'Orders fulfilled'],
-      ['Revenue & Volume', 'Average Order Value (AOV)', averageOrderValue, 'BDT per basket'],
-      ['Cost Breakdown', 'Product Sourcing Cost (Agents)', totalAgentPurchaseCost, 'Wholesale BDT'],
-      ['Cost Breakdown', 'Air Freight & Customs Cargo', totalShippingCost, 'Cross-border cargo'],
-      ['Cost Breakdown', 'Domestic Courier Logistics', totalLocalCourierCost, 'Steadfast & Pathao'],
-      ['Cost Breakdown', 'HQ Bangladesh Office OPEX', totalHqExpensesAmount, 'Banani Head Office'],
-      ['Cost Breakdown', 'Overseas Agent Claims', totalAgentExpensesAmount, 'Travel & ground cost'],
-      ['Profitability', 'Gross Operating Profit', grossProfit, `${grossMarginPercent}% gross margin`],
-      ['Profitability', 'Net Comprehensive Income', netProfit, `${netMarginPercent}% net margin`],
-      ['Working Capital', 'Advance Collected Online', advanceCollected, 'bKash / Nagad / Cards'],
-      ['Working Capital', 'Doorstep COD Receivables', doorstepReceivables, 'Due upon delivery'],
-      ['Inventory Assets', 'Warehouse Units on Hand', totalStockQuantity, 'Dhaka Hub Units'],
-      ['Inventory Assets', 'Warehouse Cost Valuation', totalStockValuation, 'Cost basis BDT'],
-      ['Customer Metrics', 'Unique Active Buyers', customersList.length, 'Clients'],
-      ['Customer Metrics', 'Customer Lifetime Value (CLV)', customerLTV, 'BDT per client'],
-      ['Customer Metrics', 'Repeat Purchase Rate', `${repeatCustomerRate}%`, 'Loyalty velocity']
+      ['Audit Scope', 'Time Period', periodDateLabel, 'Selected date range'],
+      ['1. Sales & Orders', 'Gross Revenue', grossRevenue, 'Total billings volume'],
+      ['1. Sales & Orders', 'Total Orders Handled', totalOrdersCount, 'Pre-order + Stock'],
+      ['1. Sales & Orders', 'Pre-Orders Count', preOrders.length, 'Overseas Sourcing'],
+      ['1. Sales & Orders', 'Stock Orders Count', stockOrders.length, 'Dhaka Hub Stock'],
+      ['1. Sales & Orders', 'Average Order Value (AOV)', averageOrderValue, 'Per order BDT'],
+      ['2. Profit & Financials', 'Product Procurement Cost', totalAgentPurchaseCost, 'Sourced by agents'],
+      ['2. Profit & Financials', 'International Air Freight', totalShippingCost, 'Cargo & customs'],
+      ['2. Profit & Financials', 'Gross Operating Profit', grossProfit, `${grossMarginPercent}% Gross Margin`],
+      ['2. Profit & Financials', 'Net Operating Profit', netProfit, `${netMarginPercent}% Net Margin`],
+      ['3. Accounts & Pre-Orders', 'Advance Collected Online', orders.reduce((s, o) => s + (o.financials?.advancePaid || 0), 0), 'bKash/Nagad/Cards'],
+      ['3. Accounts & Pre-Orders', 'Due Balance at Doorstep', orders.reduce((s, o) => s + (o.financials?.dueAmount || 0), 0), 'COD to collect'],
+      ['4. Stock & Inventory', 'Total Warehouse Units', totalStockQuantity, 'Units in BD Hubs'],
+      ['4. Stock & Inventory', 'Total Stock Valuation', totalStockValue, 'At cost price BDT'],
+      ['5. Agent Performance', 'Active Sourcing Agents', agents.length, 'India, UAE, Thailand'],
+      ['6. Country & Hubs', 'Hub Storage Facilities', hubs.length, 'Operational centers'],
+      ['7. Customer Analytics', 'Unique Customers', customersList.length, 'Buyers'],
+      ['7. Customer Analytics', 'Repeat Purchase Rate', `${repeatCustomerRate}%`, 'Loyalty velocity'],
+      ['8. Delivery & Logistics', 'Courier On-Time Rate', '96.8%', 'Steadfast & Pathao'],
+      ['9. Expenses & Payments', 'HQ Bangladesh OPEX', totalHqExpensesAmount, 'Banani Head Office'],
+      ['9. Expenses & Payments', 'Overseas Agent Claims', totalAgentExpensesAmount, 'Field claims'],
+      ['10. Executive & Growth', 'Month-over-Month Growth', '+22.4%', 'Accelerating sales']
     ];
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => `"${e.join('","')}"`)].join('\n');
     const link = document.createElement('a');
     link.setAttribute('href', encodeURI(csvContent));
-    link.setAttribute('download', `WrikMart_Executive_Analytics_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `WrikMart_Complete_10_Reports_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    if (showToast) showToast('Executive Analytics CSV Exported!', 'success');
+    if (showToast) showToast('Executive Analytics CSV downloaded with all 10 reports!', 'success');
   };
 
-  // Filtered Data for Active Drilldown Modal
-  const modalData = useMemo(() => {
-    const q = modalSearch.toLowerCase().trim();
-    if (modalType === 'orders') {
-      return orders.filter(o => {
-        const matchesSearch = !q || 
-          o.orderNumber?.toLowerCase().includes(q) ||
-          o.customer?.name?.toLowerCase().includes(q) ||
-          o.country?.toLowerCase().includes(q);
-        const matchesFilter = modalFilter === 'all' || o.status === modalFilter;
-        return matchesSearch && matchesFilter;
-      });
+  // 10 Reports grouped into 4 intuitive categories
+  const reportGroups = [
+    {
+      groupName: 'Commercial & Revenue',
+      icon: <TrendingUp className="w-3.5 h-3.5" />,
+      reports: [
+        { id: 'sales', num: '1', label: 'Sales & Orders', icon: <ShoppingBag className="w-3.5 h-3.5" /> },
+        { id: 'profit', num: '2', label: 'Profit & Financials', icon: <DollarSign className="w-3.5 h-3.5" /> },
+        { id: 'receivables', num: '3', label: 'Accounts & Pipeline', icon: <Receipt className="w-3.5 h-3.5" /> },
+      ]
+    },
+    {
+      groupName: 'Supply Chain & Logistics',
+      icon: <Package className="w-3.5 h-3.5" />,
+      reports: [
+        { id: 'stock', num: '4', label: 'Stock & Inventory', icon: <Package className="w-3.5 h-3.5" /> },
+        { id: 'country_hub', num: '6', label: 'Country & Hubs', icon: <Globe2 className="w-3.5 h-3.5" /> },
+        { id: 'logistics', num: '8', label: 'Delivery & Logistics', icon: <Truck className="w-3.5 h-3.5" /> },
+      ]
+    },
+    {
+      groupName: 'Team, Clients & OPEX',
+      icon: <Users className="w-3.5 h-3.5" />,
+      reports: [
+        { id: 'agent', num: '5', label: 'Agent Performance', icon: <UserCheck className="w-3.5 h-3.5" /> },
+        { id: 'customer', num: '7', label: 'Customer Analytics', icon: <Users className="w-3.5 h-3.5" /> },
+        { id: 'expenses', num: '9', label: 'Expenses & HQ OPEX', icon: <CreditCard className="w-3.5 h-3.5" /> },
+      ]
+    },
+    {
+      groupName: 'Executive',
+      icon: <BarChart3 className="w-3.5 h-3.5" />,
+      reports: [
+        { id: 'management', num: '10', label: 'Executive & Growth', icon: <BarChart3 className="w-3.5 h-3.5" /> },
+      ]
     }
-    if (modalType === 'inventory') {
-      return stockItems.filter(i => {
-        const matchesSearch = !q || 
-          i.name?.toLowerCase().includes(q) ||
-          i.sku?.toLowerCase().includes(q) ||
-          i.category?.toLowerCase().includes(q);
-        const matchesFilter = modalFilter === 'all' || i.category === modalFilter;
-        return matchesSearch && matchesFilter;
-      });
-    }
-    if (modalType === 'hq_expenses') {
-      return hqExpenses.filter(e => {
-        const matchesSearch = !q || 
-          e.title?.toLowerCase().includes(q) ||
-          e.voucherNo?.toLowerCase().includes(q) ||
-          e.payee?.toLowerCase().includes(q);
-        const matchesFilter = modalFilter === 'all' || e.category === modalFilter;
-        return matchesSearch && matchesFilter;
-      });
-    }
-    return [];
-  }, [modalType, orders, stockItems, hqExpenses, modalSearch, modalFilter]);
+  ];
+
+  // Flat list for quick navigation
+  const allReportsFlat = reportGroups.flatMap(g => g.reports);
+  const currentReportObj = allReportsFlat.find(r => r.id === activeReport) || allReportsFlat[0];
 
   return (
-    <div className="space-y-6 animate-fade-in print:p-0 print:space-y-3">
+    <div className="space-y-6 animate-fade-in print:p-0 print:space-y-4">
       
       {/* ========================================================= */}
       {/* 1. TOP HEADER & AUDIT CONTROLS */}
@@ -274,42 +251,41 @@ export const AdminReportsAnalytics = () => {
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-50 text-brand-700 border border-brand-200 flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-brand-600" />
-              Executive Analytics Center
+              10-Module Business Intelligence Suite
             </span>
             <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full flex items-center gap-1">
               <Calendar className="w-3 h-3 text-slate-400" />
-              {timeRangeLabel}
+              {periodDateLabel}
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-navy-900 tracking-tight">
-            Financial & Operational Intelligence
+            Reports & Financial Analytics Center
           </h2>
           <p className="text-xs text-slate-500 max-w-xl mt-0.5">
-            Real-time cross-border sourcing margins, Dhaka ready stock velocity, and verified cashflow.
+            Complete audited reports covering sales, margins, accounts receivable, warehouse inventory, logistics & HQ OPEX.
           </p>
         </div>
 
         {/* Action Controls & Period Filter */}
         <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-start lg:justify-end print:hidden">
-          {/* Time Filter Pills */}
+          {/* Period Filter */}
           <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold border border-slate-200/60">
             {[
               { id: 'today', label: 'Today' },
-              { id: 'week', label: '7D' },
-              { id: 'month', label: 'This Month' },
-              { id: 'year', label: 'Year' },
+              { id: 'week', label: 'Week' },
+              { id: 'month', label: 'Month' },
               { id: 'all', label: 'All Time' },
-            ].map((t) => (
+            ].map((p) => (
               <button
-                key={t.id}
-                onClick={() => setTimeRange(t.id)}
+                key={p.id}
+                onClick={() => setPeriod(p.id)}
                 className={`px-3 py-1.5 rounded-lg transition-all text-xs font-bold ${
-                  timeRange === t.id 
+                  period === p.id 
                     ? 'bg-white text-navy-900 shadow-sm border border-slate-200/50' 
                     : 'text-slate-500 hover:text-navy-900'
                 }`}
               >
-                {t.label}
+                {p.label}
               </button>
             ))}
           </div>
@@ -337,597 +313,776 @@ export const AdminReportsAnalytics = () => {
       </div>
 
       {/* ========================================================= */}
-      {/* 2. TOP 4 HERO KPI CARDS */}
+      {/* 2. PERSISTENT EXECUTIVE KPI RIBBON */}
       {/* ========================================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* KPI 1: Gross Sales */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft relative overflow-hidden group hover:border-brand-300 transition-all">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">Gross Sales Volume</span>
-            <div className="w-8 h-8 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl sm:text-3xl font-black text-navy-900">৳{grossRevenue.toLocaleString()}</p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
-            <span className="text-emerald-600 font-black flex items-center gap-0.5">
-              <ArrowUpRight className="w-3.5 h-3.5 stroke-[2.5]" /> +18.4%
-            </span>
-            <span className="text-slate-400 font-medium">{totalOrdersCount} Total Orders</span>
-          </div>
-        </div>
-
-        {/* KPI 2: Net Operating Income */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft relative overflow-hidden group hover:border-emerald-300 transition-all">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">Net Operating Profit</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <DollarSign className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl sm:text-3xl font-black text-emerald-600">৳{netProfit.toLocaleString()}</p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
-            <span className="text-emerald-800 font-black bg-emerald-100/80 px-2 py-0.5 rounded-full text-[10px]">
-              {netMarginPercent}% Net Margin
-            </span>
-            <span className="text-slate-500 font-semibold">{grossMarginPercent}% Gross</span>
-          </div>
-        </div>
-
-        {/* KPI 3: Order Sourcing Split */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft relative overflow-hidden group hover:border-cyan-300 transition-all">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">Fulfillment Split</span>
-            <div className="w-8 h-8 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
-              <ShoppingBag className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl sm:text-3xl font-black text-navy-900">
-            {preOrdersCount} <span className="text-xs text-slate-400 font-medium">Pre</span> / {stockOrdersCount} <span className="text-xs text-slate-400 font-medium">Stock</span>
-          </p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
-            <span className="text-brand-600 font-bold">
-              {Math.round((preOrdersCount / (orders.length || 1)) * 100)}% Cross-Border
-            </span>
-            <span className="text-purple-600 font-bold">
-              {Math.round((stockOrdersCount / (orders.length || 1)) * 100)}% BD Hub
-            </span>
-          </div>
-        </div>
-
-        {/* KPI 4: Ready Stock Assets */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft relative overflow-hidden group hover:border-amber-300 transition-all">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">Ready Stock Valuation</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Package className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl sm:text-3xl font-black text-navy-900">৳{totalStockValuation.toLocaleString()}</p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
-            <span className="text-slate-600 font-bold">{totalStockQuantity} units on hand</span>
-            {lowStockItems.length > 0 ? (
-              <span className="text-amber-600 font-black flex items-center gap-0.5">
-                <AlertTriangle className="w-3.5 h-3.5" /> {lowStockItems.length} Low
-              </span>
-            ) : (
-              <span className="text-emerald-600 font-bold">Optimal</span>
-            )}
-          </div>
-        </div>
-
-      </div>
-
-      {/* ========================================================= */}
-      {/* 3. VISUAL FINANCIAL WATERFALL (THE CORE HIGHLIGHT) */}
-      {/* ========================================================= */}
-      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-soft space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
-          <div>
-            <h3 className="text-sm font-black text-navy-900 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-brand-600" />
-              Cashflow Waterfall: Revenue to Net Comprehensive Income
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">Step-by-step visual deductions from customer checkout to net retained earnings</p>
-          </div>
-          <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200">
-            Net Margin: {netMarginPercent}%
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft">
+          <span className="text-[10px] font-black uppercase text-slate-400 block">Gross Sales</span>
+          <p className="text-xl sm:text-2xl font-black text-navy-900 mt-1">৳{grossRevenue.toLocaleString()}</p>
+          <span className="text-[11px] text-emerald-600 font-bold flex items-center mt-1">
+            <ArrowUpRight className="w-3 h-3" /> +18.4% MoM
           </span>
         </div>
 
-        {/* Visual Step-by-Step Flow */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 pt-2">
-          
-          {/* Step 1: Gross Sales */}
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">1. Gross Sales</span>
-            <p className="text-base font-black text-navy-900">৳{(grossRevenue / 1000).toFixed(0)}k</p>
-            <span className="text-[10px] font-bold text-slate-500 block">100% Invoiced</span>
-          </div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft">
+          <span className="text-[10px] font-black uppercase text-slate-400 block">Net Profit (Margin)</span>
+          <p className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">৳{netProfit.toLocaleString()}</p>
+          <span className="text-[11px] text-emerald-800 font-bold bg-emerald-50 px-1.5 py-0.2 rounded mt-1 inline-block">
+            {netMarginPercent}% Net ({grossMarginPercent}% Gross)
+          </span>
+        </div>
 
-          {/* Step 2: Sourcing Cost */}
-          <div className="p-3.5 rounded-xl bg-cyan-50/70 border border-cyan-100 text-center space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-cyan-800 block">2. Agent Sourcing</span>
-            <p className="text-base font-black text-cyan-900">-৳{(totalAgentPurchaseCost / 1000).toFixed(0)}k</p>
-            <span className="text-[10px] font-bold text-cyan-700 block">Wholesale Buy</span>
-          </div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft">
+          <span className="text-[10px] font-black uppercase text-slate-400 block">Order Volume</span>
+          <p className="text-xl sm:text-2xl font-black text-navy-900 mt-1">{totalOrdersCount} Orders</p>
+          <span className="text-[11px] text-slate-400 block mt-1">
+            {preOrders.length} Pre / {stockOrders.length} Stock
+          </span>
+        </div>
 
-          {/* Step 3: Cargo Freight */}
-          <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-100 text-center space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-blue-800 block">3. Air Cargo</span>
-            <p className="text-base font-black text-blue-900">-৳{(totalShippingCost / 1000).toFixed(0)}k</p>
-            <span className="text-[10px] font-bold text-blue-700 block">Freight & Customs</span>
-          </div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft">
+          <span className="text-[10px] font-black uppercase text-slate-400 block">Warehouse Stock Value</span>
+          <p className="text-xl sm:text-2xl font-black text-brand-600 mt-1">৳{totalStockValue.toLocaleString()}</p>
+          <span className="text-[11px] text-slate-500 font-medium block mt-1">
+            {totalStockQuantity} Units on hand
+          </span>
+        </div>
 
-          {/* Step 4: Local Courier */}
-          <div className="p-3.5 rounded-xl bg-purple-50/70 border border-purple-100 text-center space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-purple-800 block">4. Domestic Courier</span>
-            <p className="text-base font-black text-purple-900">-৳{(totalLocalCourierCost / 1000).toFixed(0)}k</p>
-            <span className="text-[10px] font-bold text-purple-700 block">Doorstep Last-Mile</span>
-          </div>
-
-          {/* Step 5: Gross Margin */}
-          <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 text-center space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 block">5. Gross Profit</span>
-            <p className="text-base font-black text-amber-900">৳{(grossProfit / 1000).toFixed(0)}k</p>
-            <span className="text-[10px] font-bold text-amber-700 block">{grossMarginPercent}% Gross</span>
-          </div>
-
-          {/* Step 6: HQ OPEX & Overhead */}
-          <div className="p-3.5 rounded-xl bg-rose-50/70 border border-rose-100 text-center space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-rose-800 block">6. HQ & Claims</span>
-            <p className="text-base font-black text-rose-900">-৳{((totalOverheadAmount + totalRefundsAmount) / 1000).toFixed(0)}k</p>
-            <span className="text-[10px] font-bold text-rose-700 block">Banani OPEX</span>
-          </div>
-
-          {/* Step 7: Net Comprehensive Profit */}
-          <div className="p-3.5 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white text-center space-y-1 shadow-md shadow-emerald-600/20 col-span-2 md:col-span-4 lg:col-span-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-100 block">7. Net Profit</span>
-            <p className="text-lg font-black text-white">৳{(netProfit / 1000).toFixed(0)}k</p>
-            <span className="text-[10px] font-bold text-emerald-200 block">{netMarginPercent}% Net Margin</span>
-          </div>
-
+        <div className="col-span-2 lg:col-span-1 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft">
+          <span className="text-[10px] font-black uppercase text-slate-400 block">Doorstep COD Dues</span>
+          <p className="text-xl sm:text-2xl font-black text-amber-600 mt-1">
+            ৳{orders.reduce((sum, o) => sum + (o.financials?.dueAmount || 0), 0).toLocaleString()}
+          </p>
+          <span className="text-[11px] text-slate-400 block mt-1">To collect upon delivery</span>
         </div>
       </div>
 
       {/* ========================================================= */}
-      {/* 4. STREAMLINED 4-TAB NAVIGATION */}
+      {/* 3. CATEGORIZED 2-LEVEL REPORT NAVIGATION */}
       {/* ========================================================= */}
-      <div className="bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-soft flex items-center gap-1.5 overflow-x-auto scrollbar-thin print:hidden">
-        {[
-          { id: 'sales_corridors', label: 'Sales & Corridors', icon: <TrendingUp className="w-4 h-4" />, badge: `${orders.length} Orders` },
-          { id: 'pnl_cashflow', label: 'P&L Statement & Cashflow', icon: <Receipt className="w-4 h-4" />, badge: 'Audited' },
-          { id: 'stock_health', label: 'Ready Stock Health', icon: <Package className="w-4 h-4" />, badge: `${totalStockQuantity} Units` },
-          { id: 'logistics_vips', label: 'Logistics & VIPs', icon: <Globe2 className="w-4 h-4" />, badge: `${customersList.length} Clients` },
-        ].map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex-1 justify-center min-w-[190px] ${
-                isActive
-                  ? 'bg-navy-900 text-white shadow-md shadow-navy-900/15'
-                  : 'text-slate-600 hover:bg-slate-100/80 hover:text-navy-900'
-              }`}
-            >
-              <span className={isActive ? 'text-brand-400' : 'text-slate-400'}>
-                {tab.icon}
+      <div className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-soft space-y-2.5 print:hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 px-1 pb-2 border-b border-slate-100">
+          <span className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+            <Layers className="w-4 h-4 text-brand-600" />
+            Select Analytical Module (All 10 Reports Available):
+          </span>
+          <span className="text-xs font-extrabold text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-full border border-brand-200">
+            Active: #{currentReportObj.num} {currentReportObj.label}
+          </span>
+        </div>
+
+        {/* 4 Category Pill Groups */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+          {reportGroups.map((group) => (
+            <div key={group.groupName} className="p-2 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1 px-1">
+                {group.icon}
+                {group.groupName}
               </span>
-              <span>{tab.label}</span>
-              {tab.badge && (
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                  isActive 
-                    ? 'bg-white/20 text-white' 
-                    : 'bg-slate-100 text-slate-500 border border-slate-200/60'
-                }`}>
-                  {tab.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ========================================================= */}
-      {/* TAB A: SALES, SOURCING CORRIDORS & BESTSELLERS */}
-      {/* ========================================================= */}
-      {activeTab === 'sales_corridors' && (
-        <div className="space-y-6 animate-fade-in">
-          
-          {/* Row 1: 3 Regional Corridors Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {corridorData.map((c) => (
-              <div key={c.country} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CountryFlag country={c.flag} className="w-6 h-4 rounded-xs shadow-2xs border border-slate-200" />
-                    <div>
-                      <strong className="text-navy-900 text-sm block">{c.hub}</strong>
-                      <span className="text-[10px] text-slate-400">Transit: {c.avgTransit} • Clearance: {c.clearance}</span>
-                    </div>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-brand-50 text-brand-700 border border-brand-200">
-                    {c.sharePercent}% Share
-                  </span>
-                </div>
-
-                <div className="pt-2 border-t border-slate-100 flex items-baseline justify-between text-xs">
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Corridor Volume</span>
-                    <strong className="text-base font-black text-navy-900">৳{c.revenue.toLocaleString()}</strong>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Fulfilled Orders</span>
-                    <strong className="text-slate-800 font-bold">{c.orderCount} Orders</strong>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Row 2: Top 5 Bestsellers & Recent Orders Preview */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            {/* Top 5 Bestsellers */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div>
-                  <h3 className="text-sm font-black text-navy-900 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-500" />
-                    Top Performing Bestselling Products
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Highest volume and sales velocity in Bangladesh Hub</p>
-                </div>
-                <button
-                  onClick={() => setModalType('inventory')}
-                  className="text-xs font-bold text-brand-600 hover:underline flex items-center gap-1"
-                >
-                  View All <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <div className="divide-y divide-slate-100">
-                {bestsellingProducts.map((p, idx) => {
-                  const margin = p.sellingPrice > 0 ? (((p.sellingPrice - p.costPrice) / p.sellingPrice) * 100).toFixed(1) : '0';
+              <div className="flex flex-col gap-1">
+                {group.reports.map((r) => {
+                  const isActive = activeReport === r.id;
                   return (
-                    <div key={p.id || idx} className="py-2.5 flex items-center justify-between gap-3 text-xs">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {p.image ? (
-                          <img src={p.image} alt={p.name} className="w-9 h-9 rounded-lg object-cover border border-slate-200 flex-shrink-0" />
-                        ) : (
-                          <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center font-bold text-slate-400 flex-shrink-0">
-                            📦
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <p className="font-bold text-navy-900 truncate">{p.name}</p>
-                          <p className="text-[10px] text-slate-400 font-mono">{p.category} • {p.soldQty || 12} sold</p>
-                        </div>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <span className="font-black text-brand-700 block">৳{p.sellingPrice?.toLocaleString()}</span>
-                        <span className="text-[10px] font-bold text-emerald-600">~{margin}% Margin</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Recent Orders Quick Preview */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div>
-                  <h3 className="text-sm font-black text-navy-900 flex items-center gap-2">
-                    <Receipt className="w-4 h-4 text-brand-600" />
-                    Order Profitability Quick Snapshot
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Recent orders with verified gross profit margin</p>
-                </div>
-                <button
-                  onClick={() => setModalType('orders')}
-                  className="text-xs font-bold text-brand-600 hover:underline flex items-center gap-1"
-                >
-                  Full Ledger ({orders.length}) <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <div className="divide-y divide-slate-100">
-                {orders.slice(0, 5).map((o) => {
-                  const sell = o.financials?.estimatedTotal || 0;
-                  const cost = o.financials?.agentCostBDT || Math.round((o.financials?.estimatedSubtotal || 0) * 0.75);
-                  const ship = (o.financials?.shippingCostBDT || 600) + (o.financials?.localCourierCostBDT || 120);
-                  const prof = sell - cost - ship;
-                  const margin = sell > 0 ? ((prof / sell) * 100).toFixed(1) : 0;
-
-                  return (
-                    <div key={o.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono font-bold text-navy-900">{o.orderNumber}</span>
-                          <span className="text-[10px] text-slate-400 font-medium">({o.customer?.name})</span>
-                        </div>
-                        <span className="text-[10px] text-slate-400 block">{o.country || 'Bangladesh'} • {o.orderType || 'Pre-Order'}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-black text-slate-900 block">৳{sell.toLocaleString()}</span>
-                        <span className={`text-[10px] font-black ${prof >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                          Profit: ৳{prof.toLocaleString()} ({margin}%)
+                    <button
+                      key={r.id}
+                      onClick={() => setActiveReport(r.id)}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all text-left ${
+                        isActive
+                          ? 'bg-navy-900 text-white shadow-sm'
+                          : 'text-slate-600 hover:bg-white hover:text-navy-900'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5 truncate">
+                        <span className={`w-4 h-4 rounded text-[9px] font-mono font-black flex items-center justify-center ${
+                          isActive ? 'bg-brand-500 text-white' : 'bg-slate-200 text-slate-700'
+                        }`}>
+                          {r.num}
                         </span>
-                      </div>
-                    </div>
+                        <span className="truncate">{r.label}</span>
+                      </span>
+                      {isActive && <span className="w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0"></span>}
+                    </button>
                   );
                 })}
               </div>
             </div>
-
-          </div>
-
+          ))}
         </div>
-      )}
+      </div>
 
       {/* ========================================================= */}
-      {/* TAB B: P&L STATEMENT, CASHFLOW & HQ OPEX */}
+      {/* 1. SALES & ORDER REPORTS */}
       {/* ========================================================= */}
-      {activeTab === 'pnl_cashflow' && (
-        <div className="space-y-6 animate-fade-in">
-          
-          {/* Executive P&L Table */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-soft space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-full border border-brand-200">
-                  Audited Monthly Accounting
-                </span>
-                <h3 className="text-lg font-black text-navy-900 mt-1">Official Profit & Loss (P&L) Ledger</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Comprehensive operating statement for {timeRangeLabel}</p>
-              </div>
-              <button
-                onClick={handlePrint}
-                className="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Print Statement</span>
-              </button>
-            </div>
-
-            <div className="space-y-2.5 text-xs">
-              <div className="flex items-center justify-between py-2 border-b border-slate-100 font-black text-sm text-navy-900">
-                <span className="flex items-center gap-2">
-                  <span className="text-emerald-600 font-black">(+)</span> 1. Gross Invoiced Revenue (Pre-Orders + Stock)
-                </span>
-                <span className="text-brand-700 font-black text-base">৳{grossRevenue.toLocaleString()}</span>
-              </div>
-
-              <div className="pl-4 space-y-2 text-slate-600">
-                <div className="flex justify-between">
-                  <span>(-) Product Sourcing & Overseas Procurement (Agents)</span>
-                  <span className="font-bold text-slate-800">-৳{totalAgentPurchaseCost.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>(-) Air Freight Cargo & Customs</span>
-                  <span className="font-bold text-slate-800">-৳{totalShippingCost.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>(-) Domestic Courier Logistics (Pathao / Steadfast)</span>
-                  <span className="font-bold text-slate-800">-৳{totalLocalCourierCost.toLocaleString()}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 font-black text-xs text-navy-900">
-                <span>(=) Gross Operating Profit ({grossMarginPercent}% Margin)</span>
-                <span className="text-emerald-700 font-black text-sm">৳{grossProfit.toLocaleString()}</span>
-              </div>
-
-              <div className="pl-4 space-y-2 text-slate-600 pt-1">
-                <div className="flex justify-between">
-                  <span>(-) HQ Bangladesh Office OPEX (Banani Head Office & Tejgaon Hub)</span>
-                  <span className="font-bold text-slate-800">-৳{totalHqExpensesAmount.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>(-) Overseas Purchasing Agent Claims & Travel</span>
-                  <span className="font-bold text-slate-800">-৳{totalAgentExpensesAmount.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>(-) Customer Damage Claims & Refunds</span>
-                  <span className="font-bold text-slate-800">-৳{totalRefundsAmount.toLocaleString()}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 font-black text-sm text-navy-900 mt-2">
-                <div>
-                  <span className="block text-emerald-950">(=) Net Comprehensive Operating Income</span>
-                  <span className="text-[11px] text-emerald-700 font-semibold block mt-0.5">
-                    Net profit after all wholesale procurement, freight, and HQ operating expenses
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-xl sm:text-2xl font-black text-emerald-700">৳{netProfit.toLocaleString()}</span>
-                  <span className="block text-[10px] text-emerald-800 font-bold uppercase">{netMarginPercent}% Net Margin</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Cashflow In vs Out & HQ OPEX Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            {/* Cashflow Snapshot */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft space-y-4">
-              <h3 className="text-sm font-black text-navy-900 flex items-center gap-2 pb-3 border-b border-slate-100">
-                <CreditCard className="w-4 h-4 text-blue-600" />
-                Working Capital & Cash Flow Balance
-              </h3>
-
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-100">
-                  <span className="text-[10px] text-emerald-800 font-black uppercase block">Money In (Collected)</span>
-                  <p className="text-xl font-black text-emerald-900 mt-1">৳{advanceCollected.toLocaleString()}</p>
-                  <span className="text-[10px] text-emerald-700 font-semibold block mt-0.5">bKash, Nagad & Cards</span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-100">
-                  <span className="text-[10px] text-amber-800 font-black uppercase block">Money In (Pending COD)</span>
-                  <p className="text-xl font-black text-amber-900 mt-1">৳{doorstepReceivables.toLocaleString()}</p>
-                  <span className="text-[10px] text-amber-700 font-semibold block mt-0.5">Doorstep Deliveries</span>
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
-                <span>Total Inflow Pipeline:</span>
-                <strong className="text-navy-900 font-black">৳{totalMoneyIn.toLocaleString()}</strong>
-              </div>
-            </div>
-
-            {/* HQ OPEX Summary Card */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div>
-                  <h3 className="text-sm font-black text-navy-900 flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-purple-600" />
-                    HQ Bangladesh Office OPEX
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Banani Head Office & Warehouse Facilities</p>
-                </div>
-                <button
-                  onClick={() => setModalType('hq_expenses')}
-                  className="text-xs font-bold text-brand-600 hover:underline flex items-center gap-1"
-                >
-                  All Vouchers ({hqExpenses.length}) <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <div className="space-y-2 text-xs">
-                {hqExpenses.slice(0, 3).map((exp) => (
-                  <div key={exp.id} className="p-2.5 rounded-xl bg-slate-50 flex items-center justify-between">
-                    <div>
-                      <strong className="text-navy-900 block">{exp.title}</strong>
-                      <span className="text-[10px] text-slate-400 font-mono">{exp.voucherNo} • {exp.payee}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-black text-slate-900 block">৳{Number(exp.amount || 0).toLocaleString()}</span>
-                      <span className="text-[10px] font-bold text-emerald-600">{exp.status}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      )}
-
-      {/* ========================================================= */}
-      {/* TAB C: READY STOCK & INVENTORY HEALTH */}
-      {/* ========================================================= */}
-      {activeTab === 'stock_health' && (
-        <div className="space-y-6 animate-fade-in">
-          
-          {/* Warehouse Aging Cards */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 className="text-sm font-black text-navy-900 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-brand-600" />
-                  Warehouse Inventory Aging Breakdown
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">Classification by storage days in Bangladesh fulfillment center</p>
-              </div>
-              <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-xl">
-                4-Stage Aging Model
+      {activeReport === 'sales' && (
+        <div className="space-y-5 animate-fade-in">
+          {/* Top Metric Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Orders</span>
+              <p className="text-2xl font-extrabold text-navy-900 mt-1">{totalOrdersCount}</p>
+              <span className="text-[11px] text-emerald-600 font-bold flex items-center mt-1">
+                <ArrowUpRight className="w-3 h-3" /> +18.4% this month
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-100">
-                <span className="text-[10px] font-black uppercase text-emerald-800 block">Fresh Stock (0–30 Days)</span>
-                <p className="text-xl font-black text-emerald-900 mt-1">{agingFresh.length} SKUs</p>
-                <span className="text-[10px] text-emerald-700 font-semibold mt-1 block">High turnover velocity</span>
-              </div>
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Gross Sales (BDT)</span>
+              <p className="text-2xl font-extrabold text-brand-600 mt-1">৳{grossRevenue.toLocaleString()}</p>
+              <span className="text-[11px] text-slate-400 block mt-1">From Pre-orders & Stock</span>
+            </div>
 
-              <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-100">
-                <span className="text-[10px] font-black uppercase text-blue-800 block">Active Stock (31–90 Days)</span>
-                <p className="text-xl font-black text-blue-900 mt-1">{agingMid.length} SKUs</p>
-                <span className="text-[10px] text-blue-700 font-semibold mt-1 block">Normal replenishment cycle</span>
-              </div>
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Average Order Value (AOV)</span>
+              <p className="text-2xl font-extrabold text-cyan-600 mt-1">৳{averageOrderValue.toLocaleString()}</p>
+              <span className="text-[11px] text-cyan-600 font-bold block mt-1">Across all categories</span>
+            </div>
 
-              <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-100">
-                <span className="text-[10px] font-black uppercase text-amber-800 block">Slow-Moving (91–180 Days)</span>
-                <p className="text-xl font-black text-amber-900 mt-1">{agingSlow.length} SKUs</p>
-                <span className="text-[10px] text-amber-700 font-semibold mt-1 block">Consider promo discount</span>
-              </div>
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Repeat Customer Sales</span>
+              <p className="text-2xl font-extrabold text-emerald-600 mt-1">৳{repeatSalesAmount.toLocaleString()}</p>
+              <span className="text-[11px] text-emerald-600 font-bold block mt-1">{repeatCustomerRate}% Repeat Order Rate</span>
+            </div>
+          </div>
 
-              <div className="p-3.5 rounded-xl bg-rose-50/70 border border-rose-100">
-                <span className="text-[10px] font-black uppercase text-rose-800 block">Critical Aging (&gt;180 Days)</span>
-                <p className="text-xl font-black text-rose-900 mt-1">{agingCritical.length} SKUs</p>
-                <span className="text-[10px] text-rose-700 font-semibold mt-1 block">Clearance / liquidation</span>
+          {/* Breakdown Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Pre-Order vs Stock Sales */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft space-y-3">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">
+                Pre-Order vs Stock Product Sales
+              </h3>
+              <div className="space-y-2 text-xs">
+                <div>
+                  <div className="flex justify-between font-bold mb-1">
+                    <span className="text-slate-700">Pre-Order (Overseas)</span>
+                    <span className="text-brand-600">{preOrders.length} Orders ({Math.round((preOrders.length / (orders.length || 1)) * 100)}%)</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-brand-500 rounded-full" style={{ width: `${(preOrders.length / (orders.length || 1)) * 100}%` }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between font-bold mb-1">
+                    <span className="text-slate-700">Stock Product (Local Dhaka)</span>
+                    <span className="text-purple-600">{stockOrders.length} Orders ({Math.round((stockOrders.length / (orders.length || 1)) * 100)}%)</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-purple-500 rounded-full" style={{ width: `${(stockOrders.length / (orders.length || 1)) * 100}%` }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Order Pipeline Statuses */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft space-y-3">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">
+                Fulfillment Status Distribution
+              </h3>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 bg-emerald-50 rounded-xl border border-emerald-100">
+                  <span className="text-[10px] text-emerald-700 font-bold block">Delivered</span>
+                  <span className="text-lg font-extrabold text-emerald-700">{completedOrders.length}</span>
+                </div>
+                <div className="p-2.5 bg-cyan-50 rounded-xl border border-cyan-100">
+                  <span className="text-[10px] text-cyan-700 font-bold block">Active / Pending</span>
+                  <span className="text-lg font-extrabold text-cyan-700">{pendingOrders.length}</span>
+                </div>
+                <div className="p-2.5 bg-rose-50 rounded-xl border border-rose-100">
+                  <span className="text-[10px] text-rose-700 font-bold block">Damaged</span>
+                  <span className="text-lg font-extrabold text-rose-700">{damagedOrders.length}</span>
+                </div>
+                <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-100">
+                  <span className="text-[10px] text-amber-700 font-bold block">Returned</span>
+                  <span className="text-lg font-extrabold text-amber-700">{returnedOrders.length}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Country Sales Share */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft space-y-3">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">
+                Country-wise Sales Volume
+              </h3>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+                  <span className="font-bold text-slate-800 inline-flex items-center gap-1.5">
+                    <CountryFlag country="India" className="w-4 h-3 rounded-[2px]" />
+                    <span>India</span>
+                  </span>
+                  <span className="font-extrabold text-brand-700">
+                    ৳{orders.filter(o => o.country === 'India').reduce((s, o) => s + (o.financials?.estimatedTotal || 0), 0).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+                  <span className="font-bold text-slate-800 inline-flex items-center gap-1.5">
+                    <CountryFlag country="Dubai" className="w-4 h-3 rounded-[2px]" />
+                    <span>Dubai (UAE)</span>
+                  </span>
+                  <span className="font-extrabold text-brand-700">
+                    ৳{orders.filter(o => o.country === 'Dubai').reduce((s, o) => s + (o.financials?.estimatedTotal || 0), 0).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50">
+                  <span className="font-bold text-slate-800 inline-flex items-center gap-1.5">
+                    <CountryFlag country="Thailand" className="w-4 h-3 rounded-[2px]" />
+                    <span>Thailand</span>
+                  </span>
+                  <span className="font-extrabold text-brand-700">
+                    ৳{orders.filter(o => o.country === 'Thailand').reduce((s, o) => s + (o.financials?.estimatedTotal || 0), 0).toLocaleString()}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Quick Inventory Preview Table with Button to Open Full Modal */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-soft overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+          {/* Category & Product Sales Table with Live Search */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-soft overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <h3 className="font-black text-sm text-navy-900 flex items-center gap-2">
-                  <Package className="w-4 h-4 text-brand-600" />
-                  Ready Stock Master Catalog Preview
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-600">
+                  Category-wise, Brand-wise & Product Sales Performance
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">Top available inventory items in Dhaka warehouse</p>
+                <p className="text-[11px] text-slate-400">All products ordered across channels</p>
               </div>
-              <button
-                onClick={() => setModalType('inventory')}
-                className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-black shadow transition-all flex items-center gap-1.5"
-              >
-                <span>View Full Catalog ({stockItems.length})</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+
+              {/* Search Bar */}
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search product, category, brand..."
+                  value={searchSales}
+                  onChange={(e) => setSearchSales(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+                />
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
+                  <tr>
+                    <th className="px-5 py-3">Product Name</th>
+                    <th className="px-5 py-3">Category</th>
+                    <th className="px-5 py-3">Brand</th>
+                    <th className="px-5 py-3 text-center">Units Sold</th>
+                    <th className="px-5 py-3 text-right">Selling Price (BDT)</th>
+                    <th className="px-5 py-3 text-center">Est. Margin</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {orders.flatMap(o => o.items || []).filter(item => {
+                    const q = searchSales.toLowerCase().trim();
+                    if (!q) return true;
+                    return item.name?.toLowerCase().includes(q) ||
+                      item.category?.toLowerCase().includes(q) ||
+                      item.brand?.toLowerCase().includes(q);
+                  }).map((item, idx) => (
+                    <tr key={item.id || idx} className="hover:bg-slate-50">
+                      <td className="px-5 py-3 font-bold text-navy-900">{item.name}</td>
+                      <td className="px-5 py-3 font-semibold text-slate-600">{item.category || 'General'}</td>
+                      <td className="px-5 py-3 text-slate-500">{item.brand || 'Original Brand'}</td>
+                      <td className="px-5 py-3 text-center font-bold">{item.specs?.unit || item.quantity || 1}</td>
+                      <td className="px-5 py-3 text-right font-bold text-brand-700">৳{(item.expectedPrice || item.sellingPrice || 0).toLocaleString()}</td>
+                      <td className="px-5 py-3 text-center text-emerald-600 font-bold">~22.5%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* 2. PROFIT & FINANCIAL REPORTS */}
+      {/* ========================================================= */}
+      {activeReport === 'profit' && (
+        <div className="space-y-5 animate-fade-in">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Gross Revenue</span>
+              <p className="text-2xl font-extrabold text-navy-900 mt-1">৳{grossRevenue.toLocaleString()}</p>
+              <span className="text-[11px] text-slate-400 block mt-1">Customer billings</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Product Procurement Cost</span>
+              <p className="text-2xl font-extrabold text-cyan-600 mt-1">৳{totalAgentPurchaseCost.toLocaleString()}</p>
+              <span className="text-[11px] text-slate-400 block mt-1">Agent store purchases</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Gross Profit (BDT)</span>
+              <p className="text-2xl font-extrabold text-emerald-600 mt-1">৳{grossProfit.toLocaleString()}</p>
+              <span className="text-[11px] text-emerald-600 font-bold block mt-1">{grossMarginPercent}% Gross Margin</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Net Profit (after Overhead)</span>
+              <p className="text-2xl font-extrabold text-brand-600 mt-1">৳{netProfit.toLocaleString()}</p>
+              <span className="text-[11px] text-brand-600 font-bold block mt-1">{netMarginPercent}% Net Margin</span>
+            </div>
+          </div>
+
+          {/* Operating Cost Breakdown */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft space-y-4">
+            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">
+              Cross-Border Operational Cost Breakdown
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-slate-400 text-[10px] font-bold uppercase block">Agent Sourcing Cost</span>
+                <span className="text-base font-bold text-navy-900 mt-1 block">৳{totalAgentPurchaseCost.toLocaleString()}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-slate-400 text-[10px] font-bold uppercase block">Intl. Freight / Air Cargo</span>
+                <span className="text-base font-bold text-navy-900 mt-1 block">৳{totalShippingCost.toLocaleString()}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-slate-400 text-[10px] font-bold uppercase block">Domestic BD Courier</span>
+                <span className="text-base font-bold text-navy-900 mt-1 block">৳{totalLocalCourierCost.toLocaleString()}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-slate-400 text-[10px] font-bold uppercase block">Overseas Agent Claims</span>
+                <span className="text-base font-bold text-purple-700 mt-1 block">৳{totalAgentExpensesAmount.toLocaleString()}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-slate-400 text-[10px] font-bold uppercase block">HQ Bangladesh OPEX</span>
+                <span className="text-base font-bold text-amber-600 mt-1 block">৳{totalHqExpensesAmount.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Order-wise Profit Table with Live Search */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-soft overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-600">
+                  Order-wise Profitability & Margin Ledger
+                </h3>
+                <p className="text-[11px] text-slate-400">Order by order cost and gross profit calculation</p>
+              </div>
+
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search order number or customer..."
+                  value={searchProfit}
+                  onChange={(e) => setSearchProfit(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+                />
+              </div>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-100">
+                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
                   <tr>
-                    <th className="px-5 py-3">Item Details</th>
-                    <th className="px-5 py-3">Category</th>
-                    <th className="px-5 py-3 text-center">Available Units</th>
-                    <th className="px-5 py-3 text-right">Cost Price</th>
-                    <th className="px-5 py-3 text-right">Selling Price</th>
-                    <th className="px-5 py-3 text-center">Velocity</th>
+                    <th className="px-5 py-3">Order Number</th>
+                    <th className="px-5 py-3">Customer</th>
+                    <th className="px-5 py-3 text-right">Customer Selling (BDT)</th>
+                    <th className="px-5 py-3 text-right">Agent Cost</th>
+                    <th className="px-5 py-3 text-right">Shipping & Courier</th>
+                    <th className="px-5 py-3 text-right">Gross Profit</th>
+                    <th className="px-5 py-3 text-center">Profit Margin %</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {stockItems.slice(0, 6).map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50">
+                  {orders.filter(o => {
+                    const q = searchProfit.toLowerCase().trim();
+                    if (!q) return true;
+                    return o.orderNumber?.toLowerCase().includes(q) ||
+                      o.customer?.name?.toLowerCase().includes(q);
+                  }).map((o) => {
+                    const sell = o.financials?.estimatedTotal || 0;
+                    const cost = o.financials?.agentCostBDT || Math.round((o.financials?.estimatedSubtotal || 0) * 0.75);
+                    const ship = (o.financials?.shippingCostBDT || 600) + (o.financials?.localCourierCostBDT || 120);
+                    const prof = sell - cost - ship;
+                    const margin = sell > 0 ? ((prof / sell) * 100).toFixed(1) : 0;
+                    return (
+                      <tr key={o.id} className="hover:bg-slate-50">
+                        <td className="px-5 py-3 font-mono font-bold text-navy-900">{o.orderNumber}</td>
+                        <td className="px-5 py-3 font-medium text-slate-700">{o.customer?.name}</td>
+                        <td className="px-5 py-3 text-right font-bold">৳{sell.toLocaleString()}</td>
+                        <td className="px-5 py-3 text-right font-semibold text-cyan-700">৳{cost.toLocaleString()}</td>
+                        <td className="px-5 py-3 text-right text-slate-600">৳{ship.toLocaleString()}</td>
+                        <td className={`px-5 py-3 text-right font-extrabold ${prof >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          ৳{prof.toLocaleString()}
+                        </td>
+                        <td className={`px-5 py-3 text-center font-bold ${prof >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {margin}%
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* 3. ACCOUNTS RECEIVABLE / PAYABLE & PRE-ORDER REPORTS */}
+      {/* ========================================================= */}
+      {activeReport === 'receivables' && (
+        <div className="space-y-5 animate-fade-in">
+          {/* Monthly P&L Snapshot */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-extrabold text-sm text-navy-900">Monthly Receivables, Dues & Agent Floats</h3>
+              <span className="text-xs font-bold text-slate-400">{periodDateLabel}</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+              <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-200">
+                <span className="text-emerald-800 font-bold block text-[10px] uppercase">Advance Collected (Receivables)</span>
+                <span className="text-xl font-extrabold text-emerald-800 mt-1 block">
+                  ৳{orders.reduce((sum, o) => sum + (o.financials?.advancePaid || 0), 0).toLocaleString()}
+                </span>
+                <span className="text-[10px] text-emerald-600 mt-1 block">Collected via bKash / Nagad / Cards</span>
+              </div>
+
+              <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200">
+                <span className="text-amber-800 font-bold block text-[10px] uppercase">Due Balance to Collect at Doorstep</span>
+                <span className="text-xl font-extrabold text-amber-800 mt-1 block">
+                  ৳{orders.reduce((sum, o) => sum + (o.financials?.dueAmount || 0), 0).toLocaleString()}
+                </span>
+                <span className="text-[10px] text-amber-600 mt-1 block">Payable upon delivery in Bangladesh</span>
+              </div>
+
+              <div className="p-3.5 bg-cyan-50 rounded-xl border border-cyan-200">
+                <span className="text-cyan-800 font-bold block text-[10px] uppercase">Agent Floating Floats (Payables)</span>
+                <span className="text-xl font-extrabold text-cyan-800 mt-1 block">
+                  ৳{balanceTransfers.filter(t => t.status === 'Pending').reduce((s, t) => s + Number(t.amountBDT || 0), 0).toLocaleString()}
+                </span>
+                <span className="text-[10px] text-cyan-600 mt-1 block">Pending acceptance by overseas agents</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 9-Stage Pre-Order Pipeline Breakdown */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft space-y-4">
+            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-600">
+              Pre-Order Lifecycle & Sourcing Volume
+            </h3>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Total Pre-Orders</span>
+                <span className="text-lg font-bold text-navy-900">{preOrders.length}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Purchase Pending</span>
+                <span className="text-lg font-bold text-amber-600">{orders.filter(o => o.status === 'Processing').length}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Purchased by Agent</span>
+                <span className="text-lg font-bold text-cyan-600">{orders.filter(o => o.status === 'Purchased').length}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">In Transit (Air Cargo)</span>
+                <span className="text-lg font-bold text-blue-600">{orders.filter(o => o.status === 'Shipped').length}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Arrived Bangladesh</span>
+                <span className="text-lg font-bold text-purple-600">{orders.filter(o => o.status === 'BD Received' || o.status === 'Ready for Delivery').length}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Delivered</span>
+                <span className="text-lg font-bold text-emerald-600">{completedOrders.length}</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Avg. Fulfillment Time</span>
+                <span className="text-lg font-bold text-navy-900">5.4 Days</span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Cancelled / Refunded</span>
+                <span className="text-lg font-bold text-rose-600">{damagedOrders.length + returnedOrders.length}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* 4. STOCK & INVENTORY REPORTS */}
+      {/* ========================================================= */}
+      {activeReport === 'stock' && (
+        <div className="space-y-5 animate-fade-in">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Current Stock Units</span>
+              <p className="text-2xl font-extrabold text-navy-900 mt-1">{totalStockQuantity} Items</p>
+              <span className="text-[11px] text-slate-400 block mt-1">In Dhaka & Chittagong</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Stock Valuation</span>
+              <p className="text-2xl font-extrabold text-brand-600 mt-1">৳{totalStockValue.toLocaleString()}</p>
+              <span className="text-[11px] text-slate-400 block mt-1">Cost value in warehouse</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Low Stock Alerts</span>
+              <p className="text-2xl font-extrabold text-amber-600 mt-1">{lowStockItems.length} SKUs</p>
+              <span className="text-[11px] text-amber-600 font-bold block mt-1">Needs replenishment</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Out of Stock</span>
+              <p className="text-2xl font-extrabold text-rose-600 mt-1">{outOfStockItems.length} SKUs</p>
+              <span className="text-[11px] text-rose-600 font-bold block mt-1">Zero units available</span>
+            </div>
+          </div>
+
+          {/* Stock Inventory Catalog Table with Live Search */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-soft overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-600">
+                  Warehouse Stock Inventory, Velocity & Aging Analysis
+                </h3>
+                <span className="text-[11px] text-slate-400">Aging Thresholds: 30 / 60 / 90 / 180+ Days</span>
+              </div>
+
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search SKU, product title..."
+                  value={searchStock}
+                  onChange={(e) => setSearchStock(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
+                  <tr>
+                    <th className="px-5 py-3">SKU & Item Name</th>
+                    <th className="px-5 py-3">Category</th>
+                    <th className="px-5 py-3 text-center">Current Stock</th>
+                    <th className="px-5 py-3 text-right">Stock Value (BDT)</th>
+                    <th className="px-5 py-3 text-center">Stock Aging</th>
+                    <th className="px-5 py-3 text-center">Velocity</th>
+                    <th className="px-5 py-3 text-center">Margin %</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {stockItems.filter(i => {
+                    const q = searchStock.toLowerCase().trim();
+                    if (!q) return true;
+                    return i.name?.toLowerCase().includes(q) || i.sku?.toLowerCase().includes(q);
+                  }).map((item) => {
+                    const margin = item.sellingPrice > 0 ? (((item.sellingPrice - item.costPrice) / item.sellingPrice) * 100).toFixed(1) : 0;
+                    return (
+                      <tr key={item.id} className="hover:bg-slate-50">
+                        <td className="px-5 py-3">
+                          <span className="font-bold text-navy-900 block">{item.name}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">{item.sku} • {item.warehouse}</span>
+                        </td>
+                        <td className="px-5 py-3 font-medium text-slate-600">{item.category}</td>
+                        <td className="px-5 py-3 text-center">
+                          <span className={`font-bold ${item.currentStock === 0 ? 'text-rose-600' : (item.currentStock <= item.reorderLevel ? 'text-amber-600' : 'text-slate-900')}`}>
+                            {item.currentStock} Units
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-right font-bold text-brand-700">
+                          ৳{((item.currentStock || 0) * (item.costPrice || 0)).toLocaleString()}
+                        </td>
+                        <td className="px-5 py-3 text-center">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            item.agingDays > 180 ? 'bg-rose-100 text-rose-700' :
+                            item.agingDays > 90 ? 'bg-amber-100 text-amber-700' :
+                            'bg-slate-100 text-slate-700'
+                          }`}>
+                            {item.agingDays} Days
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-center">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            item.velocity === 'Fast-Moving' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {item.velocity}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3 text-center font-bold text-emerald-600">{margin}%</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* 5. AGENT PERFORMANCE REPORTS */}
+      {/* ========================================================= */}
+      {activeReport === 'agent' && (
+        <div className="space-y-5 animate-fade-in">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-soft overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-600">
+                  Agent Procurement Volume, Operating Floats & Efficiency Scorecard
+                </h3>
+                <p className="text-[11px] text-slate-400">Ground procurement velocity and wallet balances</p>
+              </div>
+
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search agent name or country..."
+                  value={searchAgent}
+                  onChange={(e) => setSearchAgent(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
+                  <tr>
+                    <th className="px-5 py-3">Agent Name & Country</th>
+                    <th className="px-5 py-3 text-right">Operating Balance</th>
+                    <th className="px-5 py-3 text-right">Total Sourced (BDT)</th>
+                    <th className="px-5 py-3 text-center">Orders Handled</th>
+                    <th className="px-5 py-3 text-center">Purchase Success</th>
+                    <th className="px-5 py-3 text-center">Avg. Buy Time</th>
+                    <th className="px-5 py-3 text-center">Cancellation Rate</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {agents.filter(ag => {
+                    const q = searchAgent.toLowerCase().trim();
+                    if (!q) return true;
+                    return ag.name?.toLowerCase().includes(q) || ag.country?.toLowerCase().includes(q);
+                  }).map((ag) => (
+                    <tr key={ag.id} className="hover:bg-slate-50">
                       <td className="px-5 py-3 flex items-center gap-2.5">
-                        {item.image ? (
-                          <img src={item.image} alt={item.name} className="w-8 h-8 rounded-lg object-cover border" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center font-bold text-slate-400">
-                            📦
-                          </div>
-                        )}
+                        <img src={ag.avatar} alt={ag.name} className="w-8 h-8 rounded-full object-cover border" />
                         <div>
-                          <strong className="text-navy-900 block">{item.name}</strong>
-                          <span className="text-[10px] text-slate-400 font-mono">{item.sku}</span>
+                          <span className="font-bold text-navy-900 block">{ag.name}</span>
+                          <span className="text-[10px] text-slate-400">{ag.flag} {ag.country} ({ag.currency})</span>
                         </div>
                       </td>
-                      <td className="px-5 py-3 font-medium text-slate-600">{item.category}</td>
-                      <td className="px-5 py-3 text-center font-black">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] ${
-                          item.currentStock <= 5 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-                        }`}>
-                          {item.currentStock} Units
-                        </span>
+                      <td className="px-5 py-3 text-right font-bold text-emerald-600">
+                        {ag.symbol}{ag.balance?.toLocaleString()}
                       </td>
-                      <td className="px-5 py-3 text-right text-slate-500">৳{item.costPrice?.toLocaleString()}</td>
-                      <td className="px-5 py-3 text-right font-black text-slate-900">৳{item.sellingPrice?.toLocaleString()}</td>
+                      <td className="px-5 py-3 text-right font-bold text-slate-900">
+                        ৳{ag.totalSpent ? (ag.totalSpent * 1.4).toLocaleString() : '0'}
+                      </td>
+                      <td className="px-5 py-3 text-center font-bold">
+                        {(ag.completedOrders || 0) + (ag.activeOrders || 0)} Orders
+                      </td>
+                      <td className="px-5 py-3 text-center font-bold text-emerald-600">98.2%</td>
+                      <td className="px-5 py-3 text-center text-slate-600 font-medium">4.2 Hours</td>
+                      <td className="px-5 py-3 text-center font-bold text-slate-600">1.8%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* 6. COUNTRY / HUB PERFORMANCE */}
+      {/* ========================================================= */}
+      {activeReport === 'country_hub' && (
+        <div className="space-y-5 animate-fade-in">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft">
+              <CountryFlag country="India" className="w-8 h-5.5 rounded-sm shadow-xs border border-slate-200" />
+              <h4 className="font-bold text-navy-900 mt-2">India Gateway (Delhi Hub)</h4>
+              <p className="text-xs text-slate-500 mt-1">Procurement: 3.8 hrs • Transit: 2.5 days</p>
+              <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between font-bold text-xs">
+                <span>Fulfillment Rate:</span>
+                <span className="text-emerald-600">97.8%</span>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft">
+              <CountryFlag country="Dubai" className="w-8 h-5.5 rounded-sm shadow-xs border border-slate-200" />
+              <h4 className="font-bold text-navy-900 mt-2">Dubai Gateway (Al Quoz Hub)</h4>
+              <p className="text-xs text-slate-500 mt-1">Procurement: 4.1 hrs • Transit: 3.2 days</p>
+              <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between font-bold text-xs">
+                <span>Fulfillment Rate:</span>
+                <span className="text-emerald-600">99.1%</span>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft">
+              <CountryFlag country="Thailand" className="w-8 h-5.5 rounded-sm shadow-xs border border-slate-200" />
+              <h4 className="font-bold text-navy-900 mt-2">Bangkok Logistics Hub</h4>
+              <p className="text-xs text-slate-500 mt-1">Procurement: 5.2 hrs • Transit: 3.0 days</p>
+              <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between font-bold text-xs">
+                <span>Fulfillment Rate:</span>
+                <span className="text-emerald-600">96.4%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Hub Table with Live Search */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-soft overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-600">
+                  Staging Facilities, Storage Capacity & Active Packages
+                </h3>
+                <p className="text-[11px] text-slate-400">Regional warehouse facilities across country networks</p>
+              </div>
+
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search hub facility or manager..."
+                  value={searchHubs}
+                  onChange={(e) => setSearchHubs(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
+                  <tr>
+                    <th className="px-5 py-3">Hub Facility</th>
+                    <th className="px-5 py-3">Region</th>
+                    <th className="px-5 py-3">Manager & Phone</th>
+                    <th className="px-5 py-3 text-center">Capacity</th>
+                    <th className="px-5 py-3 text-center">Active Packages</th>
+                    <th className="px-5 py-3 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {hubs.filter(hub => {
+                    const q = searchHubs.toLowerCase().trim();
+                    if (!q) return true;
+                    return hub.name?.toLowerCase().includes(q) || hub.country?.toLowerCase().includes(q) || hub.manager?.toLowerCase().includes(q);
+                  }).map((hub) => (
+                    <tr key={hub.id} className="hover:bg-slate-50">
+                      <td className="px-5 py-3 font-bold text-navy-900">{hub.name}</td>
+                      <td className="px-5 py-3 font-semibold text-slate-600">{hub.country}</td>
+                      <td className="px-5 py-3 text-slate-600">{hub.manager} ({hub.phone})</td>
+                      <td className="px-5 py-3 text-center font-medium">{hub.capacity} cartons</td>
+                      <td className="px-5 py-3 text-center font-bold text-brand-700">{hub.activePackages} pkgs</td>
                       <td className="px-5 py-3 text-center">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
-                          {item.velocity || 'Normal'}
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                          {hub.status}
                         </span>
                       </td>
                     </tr>
@@ -936,231 +1091,437 @@ export const AdminReportsAnalytics = () => {
               </table>
             </div>
           </div>
-
         </div>
       )}
 
       {/* ========================================================= */}
-      {/* TAB D: COURIER LOGISTICS & VIP CUSTOMERS */}
+      {/* 7. CUSTOMER ANALYTICS */}
       {/* ========================================================= */}
-      {activeTab === 'logistics_vips' && (
-        <div className="space-y-6 animate-fade-in">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            {/* Courier Scorecard */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-soft overflow-hidden p-5 space-y-4">
-              <h3 className="font-black text-sm text-navy-900 flex items-center gap-2 pb-3 border-b border-slate-100">
-                <Truck className="w-4 h-4 text-emerald-600" />
-                Domestic BD Courier Performance Scorecard
-              </h3>
-
-              <div className="space-y-3 text-xs">
-                {[
-                  { name: 'Steadfast Courier', consignments: '186 Consignments', onTime: '97.4%', speed: '24 Hours (Dhaka)', damage: '0.8%' },
-                  { name: 'Pathao Express', consignments: '112 Consignments', onTime: '96.1%', speed: '36 Hours (All BD)', damage: '1.2%' },
-                  { name: 'RedX Logistics', consignments: '64 Consignments', onTime: '95.0%', speed: '48 Hours', damage: '2.1%' },
-                ].map((c) => (
-                  <div key={c.name} className="p-3 rounded-xl bg-slate-50 flex items-center justify-between">
-                    <div>
-                      <strong className="text-navy-900 block">{c.name}</strong>
-                      <span className="text-[10px] text-slate-400">{c.consignments} • Speed: {c.speed}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-black text-emerald-600 block">{c.onTime} On-Time</span>
-                      <span className="text-[10px] text-slate-400 font-medium">Damage: {c.damage}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+      {activeReport === 'customer' && (
+        <div className="space-y-5 animate-fade-in">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Customers</span>
+              <p className="text-2xl font-extrabold text-navy-900 mt-1">{customersList.length}</p>
+              <span className="text-[11px] text-emerald-600 font-bold block mt-1">+24 new this week</span>
             </div>
 
-            {/* VIP Customers Leaderboard */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-soft overflow-hidden p-5 space-y-4">
-              <h3 className="font-black text-sm text-navy-900 flex items-center gap-2 pb-3 border-b border-slate-100">
-                <Users className="w-4 h-4 text-purple-600" />
-                VIP Regular Buyers Leaderboard
-              </h3>
-
-              <div className="space-y-3 text-xs">
-                {customersList.slice(0, 4).map((cust, idx) => (
-                  <div key={idx} className="p-3 rounded-xl bg-slate-50 flex items-center justify-between">
-                    <div>
-                      <strong className="text-navy-900 block flex items-center gap-1.5">
-                        {cust.name}
-                        {cust.ordersCount > 1 && (
-                          <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-purple-100 text-purple-700">
-                            👑 VIP
-                          </span>
-                        )}
-                      </strong>
-                      <span className="text-[10px] text-slate-400 font-mono">{cust.phone} • {cust.district}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-black text-brand-700 block">৳{cust.totalSpent.toLocaleString()}</span>
-                      <span className="text-[10px] text-slate-500 font-bold">{cust.ordersCount} Orders Placed</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Repeat Purchase Rate</span>
+              <p className="text-2xl font-extrabold text-emerald-600 mt-1">{repeatCustomerRate}%</p>
+              <span className="text-[11px] text-slate-400 block mt-1">High customer retention</span>
             </div>
 
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Customer Lifetime Value (CLV)</span>
+              <p className="text-2xl font-extrabold text-brand-600 mt-1">
+                ৳{customersList.length > 0 ? Math.round(grossRevenue / customersList.length).toLocaleString() : '0'}
+              </p>
+              <span className="text-[11px] text-brand-600 font-bold block mt-1">Average per customer</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Outstanding Due Balance</span>
+              <p className="text-2xl font-extrabold text-amber-600 mt-1">
+                ৳{customersList.reduce((s, c) => s + c.dueAmount, 0).toLocaleString()}
+              </p>
+              <span className="text-[11px] text-slate-400 block mt-1">To collect upon delivery</span>
+            </div>
           </div>
 
-        </div>
-      )}
-
-      {/* ========================================================= */}
-      {/* 5. DEDICATED DRILL-DOWN MODAL (ORDERS, INVENTORY, HQ OPEX) */}
-      {/* ========================================================= */}
-      {modalType && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-navy-950/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden">
-            
-            {/* Modal Header */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+          {/* Top Customers Leaderboard with Live Search */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-soft overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-base font-black text-navy-900">
-                  {modalType === 'orders' && 'Order Profitability & Financial Ledger'}
-                  {modalType === 'inventory' && 'Ready Stock Master Inventory Catalog'}
-                  {modalType === 'hq_expenses' && 'HQ Bangladesh Office Operating Expenses (OPEX)'}
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-600">
+                  VIP Customer Leaderboard & Purchase Frequency
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">Showing {modalData.length} records</p>
+                <p className="text-[11px] text-slate-400">Buyers ranked by total order volume and spend</p>
               </div>
-              <button
-                onClick={() => {
-                  setModalType(null);
-                  setModalSearch('');
-                  setModalFilter('all');
-                }}
-                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
 
-            {/* Modal Search & Filter Bar */}
-            <div className="p-4 border-b border-slate-100 bg-white flex gap-3">
-              <div className="relative flex-1">
+              <div className="relative w-full sm:w-64">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search records..."
-                  value={modalSearch}
-                  onChange={(e) => setModalSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+                  placeholder="Search customer name or phone..."
+                  value={searchCustomer}
+                  onChange={(e) => setSearchCustomer(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
                 />
               </div>
             </div>
 
-            {/* Modal Table Content */}
-            <div className="flex-1 overflow-y-auto p-4">
-              {modalType === 'orders' && (
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
-                    <tr>
-                      <th className="p-3">Order Number</th>
-                      <th className="p-3">Customer</th>
-                      <th className="p-3 text-right">Selling Price</th>
-                      <th className="p-3 text-right">Agent Cost</th>
-                      <th className="p-3 text-right">Profit</th>
-                      <th className="p-3 text-center">Status</th>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
+                  <tr>
+                    <th className="px-5 py-3">Customer Name</th>
+                    <th className="px-5 py-3">Contact Phone</th>
+                    <th className="px-5 py-3">District</th>
+                    <th className="px-5 py-3 text-center">Orders Placed</th>
+                    <th className="px-5 py-3 text-right">Total Spent (BDT)</th>
+                    <th className="px-5 py-3 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {customersList.filter(c => {
+                    const q = searchCustomer.toLowerCase().trim();
+                    if (!q) return true;
+                    return c.name?.toLowerCase().includes(q) || c.phone?.toLowerCase().includes(q);
+                  }).map((cust, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50">
+                      <td className="px-5 py-3 font-bold text-navy-900">{cust.name}</td>
+                      <td className="px-5 py-3 font-mono text-slate-600">{cust.phone}</td>
+                      <td className="px-5 py-3 font-medium text-slate-600">{cust.district}</td>
+                      <td className="px-5 py-3 text-center font-bold">{cust.ordersCount} Orders</td>
+                      <td className="px-5 py-3 text-right font-bold text-brand-700">৳{cust.totalSpent.toLocaleString()}</td>
+                      <td className="px-5 py-3 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          cust.ordersCount > 1 ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'
+                        }`}>
+                          {cust.ordersCount > 1 ? 'VIP Regular' : 'Standard'}
+                        </span>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {modalData.map((o) => {
-                      const sell = o.financials?.estimatedTotal || 0;
-                      const cost = o.financials?.agentCostBDT || Math.round((o.financials?.estimatedSubtotal || 0) * 0.75);
-                      const ship = (o.financials?.shippingCostBDT || 600) + (o.financials?.localCourierCostBDT || 120);
-                      const prof = sell - cost - ship;
-                      return (
-                        <tr key={o.id} className="hover:bg-slate-50">
-                          <td className="p-3 font-mono font-bold text-navy-900">{o.orderNumber}</td>
-                          <td className="p-3 font-medium text-slate-700">{o.customer?.name}</td>
-                          <td className="p-3 text-right font-black">৳{sell.toLocaleString()}</td>
-                          <td className="p-3 text-right text-slate-500">৳{cost.toLocaleString()}</td>
-                          <td className={`p-3 text-right font-black ${prof >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                            ৳{prof.toLocaleString()}
-                          </td>
-                          <td className="p-3 text-center font-bold text-[10px]">{o.status}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
-              {modalType === 'inventory' && (
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
-                    <tr>
-                      <th className="p-3">Item Details</th>
-                      <th className="p-3">Category</th>
-                      <th className="p-3 text-center">Stock</th>
-                      <th className="p-3 text-right">Cost Price</th>
-                      <th className="p-3 text-right">Selling Price</th>
-                      <th className="p-3 text-center">Aging</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {modalData.map((i) => (
-                      <tr key={i.id} className="hover:bg-slate-50">
-                        <td className="p-3">
-                          <strong className="text-navy-900 block">{i.name}</strong>
-                          <span className="text-[10px] text-slate-400 font-mono">{i.sku}</span>
-                        </td>
-                        <td className="p-3 font-medium text-slate-600">{i.category}</td>
-                        <td className="p-3 text-center font-black">{i.currentStock} Units</td>
-                        <td className="p-3 text-right text-slate-500">৳{i.costPrice?.toLocaleString()}</td>
-                        <td className="p-3 text-right font-black text-slate-900">৳{i.sellingPrice?.toLocaleString()}</td>
-                        <td className="p-3 text-center text-slate-500 font-bold">{i.agingDays || 14}d</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-
-              {modalType === 'hq_expenses' && (
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
-                    <tr>
-                      <th className="p-3">Voucher #</th>
-                      <th className="p-3">Expense Title</th>
-                      <th className="p-3">Payee / Dept</th>
-                      <th className="p-3 text-right">Amount</th>
-                      <th className="p-3">Date</th>
-                      <th className="p-3 text-center">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {modalData.map((exp) => (
-                      <tr key={exp.id} className="hover:bg-slate-50">
-                        <td className="p-3 font-mono font-bold text-brand-600">{exp.voucherNo || exp.id}</td>
-                        <td className="p-3">
-                          <strong className="text-navy-900 block">{exp.title}</strong>
-                          <span className="text-[10px] text-slate-400">{exp.category}</span>
-                        </td>
-                        <td className="p-3 text-slate-600">{exp.payee} ({exp.department})</td>
-                        <td className="p-3 text-right font-black text-slate-900">৳{Number(exp.amount || 0).toLocaleString()}</td>
-                        <td className="p-3 text-slate-500">{exp.date}</td>
-                        <td className="p-3 text-center font-bold text-[10px] text-emerald-600">{exp.status}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+      {/* ========================================================= */}
+      {/* 8. DELIVERY & LOGISTICS REPORTS */}
+      {/* ========================================================= */}
+      {activeReport === 'logistics' && (
+        <div className="space-y-5 animate-fade-in">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Intl. Air Transit Time</span>
+              <p className="text-2xl font-extrabold text-navy-900 mt-1">3.1 Days</p>
+              <span className="text-[11px] text-emerald-600 font-bold block mt-1">Airport to Dhaka DAC</span>
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
-              <button
-                onClick={() => setModalType(null)}
-                className="px-5 py-2 rounded-xl bg-navy-900 hover:bg-navy-800 text-white font-bold text-xs"
-              >
-                Close View
-              </button>
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">BD Last-Mile Delivery</span>
+              <p className="text-2xl font-extrabold text-brand-600 mt-1">1.6 Days</p>
+              <span className="text-[11px] text-slate-400 block mt-1">Warehouse to doorstep</span>
             </div>
 
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">On-Time Delivery Rate</span>
+              <p className="text-2xl font-extrabold text-emerald-600 mt-1">96.8%</p>
+              <span className="text-[11px] text-emerald-600 font-bold block mt-1">Steadfast & Pathao</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Damaged / Lost Shipments</span>
+              <p className="text-2xl font-extrabold text-rose-600 mt-1">{damagedOrders.length}</p>
+              <span className="text-[11px] text-rose-600 font-bold block mt-1">Claims filed with cargo</span>
+            </div>
+          </div>
+
+          {/* Courier Performance Matrix */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-soft overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-600">
+                  Courier Partner Logistics Scorecard
+                </h3>
+                <p className="text-[11px] text-slate-400">Performance across domestic last-mile delivery partners</p>
+              </div>
+
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Filter courier partner..."
+                  value={searchLogistics}
+                  onChange={(e) => setSearchLogistics(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
+                  <tr>
+                    <th className="px-5 py-3">Courier Partner</th>
+                    <th className="px-5 py-3">Total Dispatched</th>
+                    <th className="px-5 py-3 text-center">On-Time Rate %</th>
+                    <th className="px-5 py-3">Avg Delivery Time</th>
+                    <th className="px-5 py-3 text-right">Avg Courier Fee</th>
+                    <th className="px-5 py-3 text-center">Return / Damage Rate</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {[
+                    { name: 'Steadfast Courier', count: '186 Consignments', onTime: '97.4%', time: '24 Hours (Inside Dhaka)', fee: '৳120', rate: '0.8%' },
+                    { name: 'Pathao Courier', count: '112 Consignments', onTime: '96.1%', time: '36 Hours (All BD)', fee: '৳130', rate: '1.2%' },
+                    { name: 'RedX Logistics', count: '64 Consignments', onTime: '95.0%', time: '48 Hours', fee: '৳150', rate: '2.1%' },
+                    { name: 'Paperfly', count: '45 Consignments', onTime: '94.8%', time: '48 Hours (District Hubs)', fee: '৳140', rate: '1.5%' },
+                  ].filter(c => {
+                    const q = searchLogistics.toLowerCase().trim();
+                    if (!q) return true;
+                    return c.name.toLowerCase().includes(q);
+                  }).map((c, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50">
+                      <td className="px-5 py-3 font-bold text-navy-900">{c.name}</td>
+                      <td className="px-5 py-3 font-bold">{c.count}</td>
+                      <td className="px-5 py-3 text-center font-bold text-emerald-600">{c.onTime}</td>
+                      <td className="px-5 py-3 text-slate-600">{c.time}</td>
+                      <td className="px-5 py-3 text-right font-bold text-slate-900">{c.fee}</td>
+                      <td className="px-5 py-3 text-center font-semibold text-slate-600">{c.rate}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* 9. EXPENSE & PAYMENT REPORTS */}
+      {/* ========================================================= */}
+      {activeReport === 'expenses' && (
+        <div className="space-y-5 animate-fade-in">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total OPEX & Expenses</span>
+              <p className="text-2xl font-extrabold text-navy-900 mt-1">৳{totalExpensesAmount.toLocaleString()}</p>
+              <span className="text-[11px] text-slate-500 block mt-1 font-medium">
+                HQ: ৳{totalHqExpensesAmount.toLocaleString()} | Agent: ৳{totalAgentExpensesAmount.toLocaleString()}
+              </span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">HQ Bangladesh OPEX</span>
+              <p className="text-2xl font-extrabold text-brand-600 mt-1">
+                ৳{totalHqExpensesAmount.toLocaleString()}
+              </p>
+              <span className="text-[11px] text-brand-600 font-bold block mt-1">
+                {hqExpenses.length} Dhaka Vouchers
+              </span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">bKash / Nagad Collections</span>
+              <p className="text-2xl font-extrabold text-emerald-600 mt-1">
+                ৳{orders.reduce((sum, o) => sum + (o.financials?.advancePaid || 0), 0).toLocaleString()}
+              </p>
+              <span className="text-[11px] text-emerald-600 font-bold block mt-1">100% Reconciled Advance</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Customer Refunds</span>
+              <p className="text-2xl font-extrabold text-rose-600 mt-1">৳{totalRefundsAmount.toLocaleString()}</p>
+              <span className="text-[11px] text-rose-600 font-bold block mt-1">Damaged/Returned claims</span>
+            </div>
+          </div>
+
+          {/* HQ Bangladesh Office OPEX Log Table with Live Search */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-soft overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-brand-600"></span>
+                  HQ Bangladesh Office Operating Expenses (OPEX)
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">Banani Head Office & Tejgaon Fulfillment Warehouse Monthly Outflows</p>
+              </div>
+              
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search voucher, payee, title..."
+                  value={searchHqExp}
+                  onChange={(e) => setSearchHqExp(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
+                  <tr>
+                    <th className="px-5 py-3">Voucher #</th>
+                    <th className="px-5 py-3">Expense Title & Category</th>
+                    <th className="px-5 py-3">Payee / Department</th>
+                    <th className="px-5 py-3">Payment Channel</th>
+                    <th className="px-5 py-3 text-right">Amount</th>
+                    <th className="px-5 py-3">Date</th>
+                    <th className="px-5 py-3 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {hqExpenses.filter(exp => {
+                    const q = searchHqExp.toLowerCase().trim();
+                    if (!q) return true;
+                    return exp.title?.toLowerCase().includes(q) ||
+                      exp.voucherNo?.toLowerCase().includes(q) ||
+                      exp.payee?.toLowerCase().includes(q) ||
+                      exp.category?.toLowerCase().includes(q);
+                  }).map((exp) => (
+                    <tr key={exp.id} className="hover:bg-slate-50">
+                      <td className="px-5 py-3 font-mono font-bold text-brand-600">{exp.voucherNo || exp.id}</td>
+                      <td className="px-5 py-3">
+                        <p className="font-bold text-navy-900">{exp.title}</p>
+                        <p className="text-[10px] text-slate-400">{exp.category}</p>
+                      </td>
+                      <td className="px-5 py-3 font-medium text-slate-600">
+                        <p>{exp.payee}</p>
+                        <p className="text-[10px] text-slate-400">{exp.department}</p>
+                      </td>
+                      <td className="px-5 py-3 text-slate-600 font-medium">
+                        {exp.paymentMethod || 'Bank Transfer'}
+                      </td>
+                      <td className="px-5 py-3 text-right font-bold text-slate-900">৳{Number(exp.amount || 0).toLocaleString()}</td>
+                      <td className="px-5 py-3 text-slate-500">{exp.date}</td>
+                      <td className="px-5 py-3 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          exp.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 
+                          exp.status === 'Approved' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {exp.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {hqExpenses.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="text-center py-6 text-slate-400 italic">No HQ expenses recorded yet.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Overseas Agent Expense Claims Table with Live Search */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-soft overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  Overseas Agent Expense Claims (Field Purchases & Travel)
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">Purchasing agents in India, UAE, and Thailand</p>
+              </div>
+
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search agent name or category..."
+                  value={searchAgentExp}
+                  onChange={(e) => setSearchAgentExp(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 font-medium"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px]">
+                  <tr>
+                    <th className="px-5 py-3">Agent</th>
+                    <th className="px-5 py-3">Category</th>
+                    <th className="px-5 py-3 text-right">Amount</th>
+                    <th className="px-5 py-3">Date</th>
+                    <th className="px-5 py-3 text-center">Status</th>
+                    <th className="px-5 py-3">Notes</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {expenses.filter(exp => {
+                    const q = searchAgentExp.toLowerCase().trim();
+                    if (!q) return true;
+                    return exp.agentName?.toLowerCase().includes(q) || exp.category?.toLowerCase().includes(q);
+                  }).map((exp) => (
+                    <tr key={exp.id} className="hover:bg-slate-50">
+                      <td className="px-5 py-3 font-bold text-navy-900">{exp.agentName} ({exp.country})</td>
+                      <td className="px-5 py-3 font-semibold text-slate-600">{exp.category}</td>
+                      <td className="px-5 py-3 text-right font-bold text-slate-900">{exp.symbol}{exp.amount}</td>
+                      <td className="px-5 py-3 text-slate-500">{exp.date}</td>
+                      <td className="px-5 py-3 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          exp.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {exp.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-slate-500">{exp.notes}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* 10. MANAGEMENT / GROWTH REPORTS */}
+      {/* ========================================================= */}
+      {activeReport === 'management' && (
+        <div className="space-y-5 animate-fade-in">
+          {/* Executive Growth Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Month-over-Month (MoM)</span>
+              <p className="text-2xl font-extrabold text-emerald-600 mt-1">+22.4%</p>
+              <span className="text-[11px] text-emerald-600 font-bold block mt-1">Accelerating pre-orders</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Year-over-Year (YoY)</span>
+              <p className="text-2xl font-extrabold text-brand-600 mt-1">+142.8%</p>
+              <span className="text-[11px] text-slate-400 block mt-1">vs May 2025</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Cost-to-Revenue Ratio</span>
+              <p className="text-2xl font-extrabold text-cyan-600 mt-1">76.8%</p>
+              <span className="text-[11px] text-cyan-600 font-bold block mt-1">Healthy unit economics</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-soft">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Agent Efficiency Score</span>
+              <p className="text-2xl font-extrabold text-purple-600 mt-1">94.5 / 100</p>
+              <span className="text-[11px] text-purple-600 font-bold block mt-1">High purchase velocity</span>
+            </div>
+          </div>
+
+          {/* Strategic Highlights */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Most Profitable Region</span>
+              <h4 className="text-lg font-extrabold text-navy-900 flex items-center gap-2">
+                <CountryFlag country="Dubai" className="w-5 h-3.5 rounded-[2px]" />
+                <span>Dubai Central (28.4% Margin)</span>
+              </h4>
+              <p className="text-xs text-slate-500">Driven by high-ticket electronics (AirPods Max, PlayStation 5, Dyson).</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Fastest Sourcing Corridor</span>
+              <h4 className="text-lg font-extrabold text-navy-900 flex items-center gap-2">
+                <CountryFlag country="India" className="w-5 h-3.5 rounded-[2px]" />
+                <span>Delhi Gateway (2.5 Days)</span>
+              </h4>
+              <p className="text-xs text-slate-500">Short flight transit to Dhaka DAC enables 48-hour turnarounds.</p>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-soft space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Top Margin Category</span>
+              <h4 className="text-lg font-extrabold text-navy-900">💄 Beauty, Skincare & Fragrance</h4>
+              <p className="text-xs text-slate-500">Compact cargo volume with premium retail markups averaging 34%.</p>
+            </div>
           </div>
         </div>
       )}
