@@ -92,7 +92,7 @@ export const Header = () => {
         {/* Desktop Quick Action (Customer Pre-Order Search / Link Trigger) */}
         <div 
           onClick={handleSearchClick}
-          className="hidden lg:flex items-center gap-2 bg-[#14234B]/80 hover:bg-[#14234B] px-4 py-2 rounded-2xl border border-slate-700/60 max-w-md w-full cursor-pointer transition-colors group"
+          className="hidden md:flex items-center gap-2 bg-[#14234B]/80 hover:bg-[#14234B] px-4 py-2 rounded-2xl border border-slate-700/60 max-w-md w-full cursor-pointer transition-colors group"
         >
           <Search className="w-4 h-4 text-slate-400 group-hover:text-brand-400 transition-colors flex-shrink-0" />
           <span className="text-xs text-slate-300 truncate select-none">
@@ -261,8 +261,8 @@ export const Header = () => {
 
       </div>
 
-      {/* 3. Mobile & Tablet Quick Search / Link Paste Bar */}
-      <div className="lg:hidden px-3 sm:px-6 pb-2.5 pt-0.5 max-w-7xl mx-auto">
+      {/* 3. Mobile Quick Search / Link Paste Bar */}
+      <div className="md:hidden px-3 sm:px-6 pb-2.5 pt-0.5 max-w-7xl mx-auto">
         <div 
           onClick={handleSearchClick}
           className="flex items-center gap-2 bg-[#14234B]/90 hover:bg-[#14234B] active:bg-[#1A2E63] px-3.5 py-2 rounded-xl border border-slate-700/80 shadow-inner cursor-pointer transition-all group"

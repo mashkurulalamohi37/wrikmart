@@ -35,10 +35,10 @@ export const AgentApp = () => {
   const pendingTransferCount = balanceTransfers.filter(t => t.agentId === activeAgent.id && t.status === 'Pending').length;
 
   return (
-    <div className="min-h-[calc(100vh-92px)] flex flex-col bg-[#F4F7FB]">
+    <div className="min-h-[calc(100vh-64px)] flex flex-col bg-[#F4F7FB]">
       
       {/* Desktop Sub-Navigation Header */}
-      <div className="bg-white border-b border-slate-200/80 shadow-soft sticky top-[92px] z-30 hidden md:block">
+      <div className="bg-white border-b border-slate-200/80 shadow-soft sticky top-14 sm:top-16 z-30 hidden md:block">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-6">
           <nav className="flex items-center gap-1">
             <button

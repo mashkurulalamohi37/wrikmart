@@ -63,7 +63,7 @@ export const AdminPanel = () => {
   ];
 
   return (
-    <div className="flex min-h-[calc(100vh-92px)] bg-[#F2F7FB]">
+    <div className="flex min-h-[calc(100vh-64px)] bg-[#F2F7FB]">
       
       {/* Mobile Sidebar Toggle Button */}
       <div className="lg:hidden fixed bottom-5 right-5 z-50">
@@ -86,7 +86,7 @@ export const AdminPanel = () => {
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed lg:sticky top-0 lg:top-[92px] left-0 z-40 lg:z-30 h-screen lg:h-[calc(100vh-92px)] w-64 bg-[#0D1B3D] text-white flex flex-col justify-between border-r border-slate-800 transition-transform duration-300 shadow-xl flex-shrink-0 self-start ${
+        className={`fixed lg:sticky top-0 lg:top-14 sm:lg:top-16 left-0 z-40 lg:z-30 h-screen lg:h-[calc(100vh-64px)] w-64 bg-[#0D1B3D] text-white flex flex-col justify-between border-r border-slate-800 transition-transform duration-300 shadow-xl flex-shrink-0 self-start ${
           sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         }`}
       >
