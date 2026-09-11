@@ -49,77 +49,69 @@ export const parseInitialRoute = () => {
   try {
     const rawHash = typeof window !== 'undefined' ? window.location.hash : '';
     const hash = rawHash.replace(/^#\/?/, '').trim();
-    if (hash) {
-      const parts = hash.split('/').map(p => decodeURIComponent(p).trim()).filter(Boolean);
-      if (parts.length > 0) {
-        const first = parts[0].toLowerCase();
-        
-        if (first === 'customer') {
-          const tab = parts[1]?.toLowerCase();
-          return {
-            role: 'customer',
-            customerTab: VALID_CUSTOMER_TABS.includes(tab) ? tab : 'home'
-          };
-        }
-        
-        if (first === 'admin') {
-          const nav = parts[1]?.toLowerCase();
-          return {
-            role: 'admin',
-            adminNav: VALID_ADMIN_NAVS.includes(nav) ? nav : 'dashboard'
-          };
-        }
-        
-        if (first === 'agent') {
-          let agentId = null;
-          let agentTab = 'dashboard';
-          if (parts[1]?.toLowerCase().startsWith('agent-')) {
-            agentId = parts[1];
-            if (parts[2]) agentTab = parts[2].toLowerCase();
-          } else if (parts[1]) {
-            agentTab = parts[1].toLowerCase();
-          }
-          return {
-            role: 'agent',
-            agentId: agentId || localStorage.getItem('wrikmart_active_agent_id') || 'agent-1',
-            agentTab: VALID_AGENT_TABS.includes(agentTab) ? agentTab : 'dashboard'
-          };
-        }
+    
+    // If no hash is present in the URL, this is the root storefront homepage
+    if (!hash) {
+      return {
+        role: 'customer',
+        customerTab: 'home',
+        adminNav: 'dashboard',
+        agentTab: 'dashboard',
+        agentId: 'agent-1'
+      };
+    }
 
-        // Direct shortcuts in hash (e.g. #/stock, #/orders, #/customers, #/reports)
-        if (VALID_CUSTOMER_TABS.includes(first)) {
-          return { role: 'customer', customerTab: first };
+    const parts = hash.split('/').map(p => decodeURIComponent(p).trim()).filter(Boolean);
+    if (parts.length > 0) {
+      const first = parts[0].toLowerCase();
+      
+      // Backward compatibility for #/customer/home or #/customer/stock
+      if (first === 'customer') {
+        const tab = parts[1]?.toLowerCase();
+        return {
+          role: 'customer',
+          customerTab: VALID_CUSTOMER_TABS.includes(tab) ? tab : 'home'
+        };
+      }
+      
+      if (first === 'admin') {
+        const nav = parts[1]?.toLowerCase();
+        return {
+          role: 'admin',
+          adminNav: VALID_ADMIN_NAVS.includes(nav) ? nav : 'dashboard'
+        };
+      }
+      
+      if (first === 'agent') {
+        let agentId = null;
+        let agentTab = 'dashboard';
+        if (parts[1]?.toLowerCase().startsWith('agent-')) {
+          agentId = parts[1];
+          if (parts[2]) agentTab = parts[2].toLowerCase();
+        } else if (parts[1]) {
+          agentTab = parts[1].toLowerCase();
         }
-        if (VALID_ADMIN_NAVS.includes(first)) {
-          return { role: 'admin', adminNav: first };
-        }
-        if (VALID_AGENT_TABS.includes(first)) {
-          return { role: 'agent', agentTab: first };
-        }
+        return {
+          role: 'agent',
+          agentId: agentId || localStorage.getItem('wrikmart_active_agent_id') || 'agent-1',
+          agentTab: VALID_AGENT_TABS.includes(agentTab) ? agentTab : 'dashboard'
+        };
+      }
+
+      // Direct shortcuts in hash (e.g. #/stock, #/orders, #/customers, #/reports)
+      if (VALID_CUSTOMER_TABS.includes(first)) {
+        return { role: 'customer', customerTab: first };
+      }
+      if (VALID_ADMIN_NAVS.includes(first)) {
+        return { role: 'admin', adminNav: first };
+      }
+      if (VALID_AGENT_TABS.includes(first)) {
+        return { role: 'agent', agentTab: first };
       }
     }
   } catch (e) {}
 
-  // 2. Fall back to localStorage
-  try {
-    const savedRole = localStorage.getItem('wrikmart_current_role');
-    const savedCustomerTab = localStorage.getItem('wrikmart_customer_tab');
-    const savedAdminNav = localStorage.getItem('wrikmart_admin_nav');
-    const savedAgentTab = localStorage.getItem('wrikmart_agent_tab');
-    const savedAgentId = localStorage.getItem('wrikmart_active_agent_id');
-
-    if (savedRole && VALID_ROLES.includes(savedRole)) {
-      return {
-        role: savedRole,
-        customerTab: VALID_CUSTOMER_TABS.includes(savedCustomerTab) ? savedCustomerTab : 'home',
-        adminNav: VALID_ADMIN_NAVS.includes(savedAdminNav) ? savedAdminNav : 'dashboard',
-        agentTab: VALID_AGENT_TABS.includes(savedAgentTab) ? savedAgentTab : 'dashboard',
-        agentId: savedAgentId || 'agent-1'
-      };
-    }
-  } catch (e) {}
-
-  // 3. Default fallback if fresh user
+  // 2. Default fallback if fresh user
   return {
     role: 'customer',
     customerTab: 'home',
@@ -150,14 +142,21 @@ export const AppProvider = ({ children }) => {
 
       let targetHash = '';
       if (currentRole === 'customer') {
-        targetHash = `#/customer/${customerTab}`;
+        // Customer homepage has a clean root URL without any hash (e.g. wrikmart.com/)
+        targetHash = customerTab === 'home' ? '' : `#/${customerTab}`;
       } else if (currentRole === 'admin') {
-        targetHash = `#/admin/${adminNav}`;
+        targetHash = adminNav === 'dashboard' ? '#/admin' : `#/admin/${adminNav}`;
       } else if (currentRole === 'agent') {
         targetHash = `#/agent/${activeAgentId}/${agentTab}`;
       }
 
-      if (window.location.hash !== targetHash) {
+      const currentFullHash = window.location.hash;
+      if (targetHash === '') {
+        // Cleanly strip any trailing hash from root homepage URL
+        if (currentFullHash && currentFullHash !== '') {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      } else if (currentFullHash !== targetHash) {
         window.history.replaceState(null, '', targetHash);
       }
     } catch (e) {}
