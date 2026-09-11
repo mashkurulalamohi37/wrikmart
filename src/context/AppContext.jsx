@@ -187,6 +187,20 @@ export const AppProvider = ({ children }) => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [currentRole, customerTab, adminNav, agentTab, activeAgentId]);
 
+  // One-time complete clean data wipe migration for Admin & Agent panels
+  try {
+    if (!localStorage.getItem('wrikmart_admin_clean_v1')) {
+      localStorage.removeItem('wrikmart_agents_v2');
+      localStorage.removeItem('wrikmart_hubs');
+      localStorage.removeItem('wrikmart_expenses');
+      localStorage.removeItem('wrikmart_hq_expenses');
+      localStorage.removeItem('wrikmart_transfers');
+      localStorage.removeItem('wrikmart_customers_v1');
+      localStorage.removeItem('wrikmart_customer_profile');
+      localStorage.setItem('wrikmart_admin_clean_v1', '1');
+    }
+  } catch (e) {}
+
   // Data States with automatic migration for fresh schema
   const [orders, setOrders] = useState(() => {
     try {
@@ -313,14 +327,14 @@ export const AppProvider = ({ children }) => {
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
-    return INITIAL_CUSTOMERS[0] || {
-      id: 'cust-101',
-      name: 'Rahim Chowdhury',
-      phone: '+880 1712-345678',
-      email: 'rahim.c@example.com',
-      address: 'House 12, Road 5, Dhanmondi, Dhaka-1205',
+    return {
+      id: `cust-${Date.now()}`,
+      name: '',
+      phone: '',
+      email: '',
+      address: '',
       district: 'Dhaka',
-      dateOfBirth: '1995-09-06'
+      dateOfBirth: ''
     };
   });
 

@@ -17,7 +17,12 @@ import {
 import { CountryFlag } from '../common/CountryFlag';
 
 export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrder }) => {
-  const { orders, agents, exchangeRates } = useApp();
+  const { orders = [], agents = [], registeredUsers = [], customers = [] } = useApp();
+
+  const totalOrdersCount = orders.length;
+  const totalRevenue = orders.reduce((sum, o) => sum + (o.financials?.estimatedTotal || o.financials?.finalSellingPrice || 0), 0);
+  const totalCustomerCount = (registeredUsers.filter(u => u.role === 'customer').length) + customers.length;
+  const totalAgentsCount = agents.length;
 
   return (
     <div className="space-y-6">
@@ -55,12 +60,10 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-extrabold text-navy-900 font-sans">2,548</span>
-            <span className="text-xs font-bold text-emerald-600 flex items-center">
-              <ArrowUpRight className="w-3.5 h-3.5" /> +18.5%
-            </span>
+            <span className="text-3xl font-extrabold text-navy-900 font-sans">{totalOrdersCount}</span>
+            <span className="text-xs font-bold text-slate-500">Live Active</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Cross-border pre-orders this month</p>
+          <p className="text-[11px] text-slate-400 mt-1">Cross-border pre-orders & ready stock</p>
         </div>
 
         {/* Total Customers */}
@@ -72,10 +75,8 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-extrabold text-navy-900 font-sans">1,685</span>
-            <span className="text-xs font-bold text-emerald-600 flex items-center">
-              <ArrowUpRight className="w-3.5 h-3.5" /> +12.3%
-            </span>
+            <span className="text-3xl font-extrabold text-navy-900 font-sans">{totalCustomerCount}</span>
+            <span className="text-xs font-bold text-slate-500">Registered</span>
           </div>
           <p className="text-[11px] text-slate-400 mt-1">Active verified pre-order buyers</p>
         </div>
@@ -89,12 +90,10 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-extrabold text-navy-900 font-sans">58</span>
-            <span className="text-xs font-bold text-emerald-600 flex items-center">
-              <ArrowUpRight className="w-3.5 h-3.5" /> +6.2%
-            </span>
+            <span className="text-3xl font-extrabold text-navy-900 font-sans">{totalAgentsCount}</span>
+            <span className="text-xs font-bold text-slate-500">Stationed</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">India (24), Dubai (18), Thailand (16)</p>
+          <p className="text-[11px] text-slate-400 mt-1">India, Dubai & Thailand sourcing hubs</p>
         </div>
 
         {/* Total Revenue */}
@@ -106,12 +105,10 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-3">
-            <span className="text-3xl font-extrabold text-navy-900 font-sans">৳ 42,95,300</span>
-            <span className="text-xs font-bold text-emerald-600 flex items-center">
-              <ArrowUpRight className="w-3.5 h-3.5" /> +22.1%
-            </span>
+            <span className="text-3xl font-extrabold text-navy-900 font-sans">৳ {totalRevenue.toLocaleString()}</span>
+            <span className="text-xs font-bold text-slate-500">Gross</span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Gross pre-order transaction volume</p>
+          <p className="text-[11px] text-slate-400 mt-1">Gross order transaction volume</p>
         </div>
       </div>
 

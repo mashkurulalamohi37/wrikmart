@@ -16,7 +16,7 @@ export const INITIAL_AGENTS = [
     phone: '+91 98765 43210',
     whatsapp: '+91 98765 43210',
     email: 'arafat.india@wrikmart.com',
-    address: 'Flat 402, Lotus Heights, Saket, New Delhi 110017, India',
+    address: 'Lotus Heights, Saket, New Delhi 110017, India',
     referencePerson: {
       name: 'Mohit Agrawal',
       phone: '+91 98111 55667',
@@ -29,14 +29,14 @@ export const INITIAL_AGENTS = [
       verified: true
     },
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    balance: 24350.00,
-    totalSpent: 185400.00,
-    activeOrders: 6,
-    completedOrders: 845,
+    balance: 0.00,
+    totalSpent: 0.00,
+    activeOrders: 0,
+    completedOrders: 0,
     status: 'Active',
-    pendingBalance: 10000.00,
-    pendingBalanceBDT: 14285.71,
-    pendingTransferId: 'TRF-2026-089'
+    pendingBalance: 0,
+    pendingBalanceBDT: 0,
+    pendingTransferId: null
   },
   {
     id: 'agent-2',
@@ -48,7 +48,7 @@ export const INITIAL_AGENTS = [
     phone: '+971 50 123 4567',
     whatsapp: '+971 50 123 4567',
     email: 'sabbir.dubai@wrikmart.com',
-    address: 'Building 14, Al Karama, Dubai, United Arab Emirates',
+    address: 'Al Karama, Dubai, United Arab Emirates',
     referencePerson: {
       name: 'Kazi Farhan',
       phone: '+971 52 987 6543',
@@ -61,10 +61,10 @@ export const INITIAL_AGENTS = [
       verified: true
     },
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    balance: 8420.00,
-    totalSpent: 420500.00,
-    activeOrders: 4,
-    completedOrders: 612,
+    balance: 0.00,
+    totalSpent: 0.00,
+    activeOrders: 0,
+    completedOrders: 0,
     status: 'Active',
     pendingBalance: 0,
     pendingBalanceBDT: 0,
@@ -80,7 +80,7 @@ export const INITIAL_AGENTS = [
     phone: '+66 81 234 5678',
     whatsapp: '+66 81 234 5678',
     email: 'mehedi.thai@wrikmart.com',
-    address: '88 Sukhumvit Soi 21, Asoke, Bangkok 10110, Thailand',
+    address: 'Asoke, Sukhumvit, Bangkok 10110, Thailand',
     referencePerson: {
       name: 'Anan Chokchai',
       phone: '+66 89 555 4321',
@@ -93,14 +93,14 @@ export const INITIAL_AGENTS = [
       verified: true
     },
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    balance: 35800.00,
-    totalSpent: 310200.00,
-    activeOrders: 3,
-    completedOrders: 523,
+    balance: 0.00,
+    totalSpent: 0.00,
+    activeOrders: 0,
+    completedOrders: 0,
     status: 'Active',
-    pendingBalance: 15200.00,
-    pendingBalanceBDT: 53900.00,
-    pendingTransferId: 'TRF-2026-092'
+    pendingBalance: 0,
+    pendingBalanceBDT: 0,
+    pendingTransferId: null
   }
 ];
 
@@ -114,7 +114,7 @@ export const INITIAL_HUBS = [
     phone: '+880 1812345678',
     status: 'Active',
     capacity: 2500,
-    activePackages: 142
+    activePackages: 0
   },
   {
     id: 'hub-2',
@@ -125,7 +125,7 @@ export const INITIAL_HUBS = [
     phone: '+880 1712345679',
     status: 'Active',
     capacity: 1500,
-    activePackages: 68
+    activePackages: 0
   },
   {
     id: 'hub-3',
@@ -136,7 +136,7 @@ export const INITIAL_HUBS = [
     phone: '+971 52 987 6543',
     status: 'Active',
     capacity: 3000,
-    activePackages: 95
+    activePackages: 0
   },
   {
     id: 'hub-4',
@@ -147,7 +147,7 @@ export const INITIAL_HUBS = [
     phone: '+91 98111 22334',
     status: 'Active',
     capacity: 2000,
-    activePackages: 110
+    activePackages: 0
   },
   {
     id: 'hub-5',
@@ -158,7 +158,7 @@ export const INITIAL_HUBS = [
     phone: '+66 89 876 5432',
     status: 'Active',
     capacity: 1800,
-    activePackages: 54
+    activePackages: 0
   }
 ];
 
@@ -651,98 +651,9 @@ export const INITIAL_COUPONS = [
 
 export const INITIAL_ORDERS = [];
 
-export const INITIAL_EXPENSES = [
-  {
-    id: 'exp-1',
-    agentId: 'agent-1',
-    agentName: 'Arafat Khan',
-    country: 'India',
-    currency: 'INR',
-    symbol: '₹',
-    category: 'Travel / Transport',
-    amount: 1200,
-    date: '2026-05-12',
-    paymentMethod: 'Agent Cash/Card',
-    status: 'Approved',
-    receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
-    notes: 'Metro & auto fare to Nike Flagship Connaught Place'
-  },
-  {
-    id: 'exp-2',
-    agentId: 'agent-1',
-    agentName: 'Arafat Khan',
-    country: 'India',
-    currency: 'INR',
-    symbol: '₹',
-    category: 'Packaging & Bubble Wrap',
-    amount: 650,
-    date: '2026-05-11',
-    paymentMethod: 'Agent Cash',
-    status: 'Approved',
-    receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
-    notes: 'Export grade bubble wrap & sturdy cartons'
-  },
-  {
-    id: 'exp-3',
-    agentId: 'agent-2',
-    agentName: 'Sabbir Hossain',
-    country: 'Dubai',
-    currency: 'AED',
-    symbol: 'د.إ',
-    category: 'Fuel / Petrol',
-    amount: 150,
-    date: '2026-05-10',
-    paymentMethod: 'Fuel Card',
-    status: 'Pending',
-    receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
-    notes: 'Enoc petrol station refill for delivery trips'
-  }
-];
+export const INITIAL_EXPENSES = [];
 
-export const INITIAL_BALANCE_TRANSFERS = [
-  {
-    id: 'TRF-2026-089',
-    agentId: 'agent-1',
-    agentName: 'Arafat Khan',
-    country: 'India',
-    amountBDT: 14285.71,
-    conversionRate: 0.70,
-    amountTarget: 10000.00,
-    targetCurrency: 'INR',
-    symbol: '₹',
-    date: '12 May 2026, 10:20 AM',
-    status: 'Pending',
-    adminNote: 'Top-up for Nike order batch #125'
-  },
-  {
-    id: 'TRF-2026-092',
-    agentId: 'agent-3',
-    agentName: 'Mehedi Hasan',
-    country: 'Thailand',
-    amountBDT: 53900.00,
-    conversionRate: 0.282,
-    amountTarget: 15200.00,
-    targetCurrency: 'THB',
-    symbol: '฿',
-    date: '12 May 2026, 09:40 AM',
-    status: 'Pending',
-    adminNote: 'Top-up for Siam Paragon cosmetics purchase'
-  },
-  {
-    id: 'TRF-2026-085',
-    agentId: 'agent-2',
-    agentName: 'Sabbir Hossain',
-    country: 'Dubai',
-    amountBDT: 65000.00,
-    conversionRate: 0.0308,
-    amountTarget: 2000.00,
-    targetCurrency: 'AED',
-    symbol: 'د.إ',
-    date: '10 May 2026, 02:15 PM',
-    status: 'Accepted',
-    adminNote: 'Electronics purchase fund'
-  }
-];
+export const INITIAL_BALANCE_TRANSFERS = [];
 
 export const INITIAL_CHAT_MESSAGES = [
   {
@@ -755,188 +666,7 @@ export const INITIAL_CHAT_MESSAGES = [
   }
 ];
 
-export const INITIAL_HQ_EXPENSES = [
-  {
-    id: 'HQ-VOUCH-2026-001',
-    title: 'Banani Head Office Monthly Lease Rent',
-    category: 'Rent & Facilities',
-    department: 'Corporate Headquarters',
-    payeeName: 'Ahmed Properties Holdings Ltd.',
-    amount: 85000,
-    date: '2026-05-01',
-    dueDate: '2026-05-05',
-    paymentMethod: 'Bank Transfer (BRAC Bank)',
-    paymentReference: 'BRAC-FT-992140',
-    status: 'Paid',
-    billingFrequency: 'Monthly Recurring',
-    vatTaxDeduction: 4250,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
-    approvedBy: 'Managing Director',
-    notes: 'Floor 4, House 42, Road 11, Banani, Dhaka-1213. Monthly commercial office lease.'
-  },
-  {
-    id: 'HQ-VOUCH-2026-002',
-    title: 'Tejgaon Central Sorting Warehouse & Hub Lease',
-    category: 'Rent & Facilities',
-    department: 'Tejgaon Fulfillment Center',
-    payeeName: 'Bengal Logistics Industrial Park',
-    amount: 45000,
-    date: '2026-05-01',
-    dueDate: '2026-05-05',
-    paymentMethod: 'Bank Transfer (City Bank)',
-    paymentReference: 'CITY-TX-102941',
-    status: 'Paid',
-    billingFrequency: 'Monthly Recurring',
-    vatTaxDeduction: 2250,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
-    approvedBy: 'Operations Director',
-    notes: 'Tejgaon I/A storage, packing floor and dispatch bay facility rent.'
-  },
-  {
-    id: 'HQ-VOUCH-2026-003',
-    title: 'Core Management & Tech Team Salary Disbursement',
-    category: 'Salaries & Payroll',
-    department: 'Head Office Staff',
-    payeeName: 'WrikMart Corporate Payroll Account (8 Employees)',
-    amount: 145000,
-    date: '2026-05-05',
-    dueDate: '2026-05-05',
-    paymentMethod: 'Corporate Bank BEFTN',
-    paymentReference: 'BEFTN-SAL-202605',
-    status: 'Paid',
-    billingFrequency: 'Monthly Recurring',
-    vatTaxDeduction: 0,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
-    approvedBy: 'Managing Director',
-    notes: 'Software developers, UI designer, accounts executive & operations lead.'
-  },
-  {
-    id: 'HQ-VOUCH-2026-004',
-    title: 'Customer Support & Dispatch Team Salaries',
-    category: 'Salaries & Payroll',
-    department: 'Customer Service & Dispatch',
-    payeeName: 'Operations Support Staff (4 Employees)',
-    amount: 58000,
-    date: '2026-05-05',
-    dueDate: '2026-05-05',
-    paymentMethod: 'Corporate Bank BEFTN',
-    paymentReference: 'BEFTN-CS-202605',
-    status: 'Paid',
-    billingFrequency: 'Monthly Recurring',
-    vatTaxDeduction: 0,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
-    approvedBy: 'HR & Accounts',
-    notes: '24/7 pre-order tracking agents and package quality inspection crew.'
-  },
-  {
-    id: 'HQ-VOUCH-2026-005',
-    title: 'Commercial Electricity Bill - DESCO (Banani & Tejgaon)',
-    category: 'Utilities & Internet',
-    department: 'Facilities & Logistics',
-    payeeName: 'Dhaka Electric Supply Company (DESCO)',
-    amount: 19800,
-    date: '2026-05-08',
-    dueDate: '2026-05-15',
-    paymentMethod: 'bKash Merchant Pay',
-    paymentReference: 'BKASH-BILL-88192',
-    status: 'Paid',
-    billingFrequency: 'Monthly Recurring',
-    vatTaxDeduction: 990,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
-    approvedBy: 'Admin Executive',
-    notes: 'Meter #20918239, 3-phase commercial billing for office air conditioning and warehouse lighting.'
-  },
-  {
-    id: 'HQ-VOUCH-2026-006',
-    title: 'Optical Fiber Dedicated Leased Internet (100 Mbps)',
-    category: 'Utilities & Internet',
-    department: 'Head Office & Warehouse',
-    payeeName: 'Dot Internet Technologies Ltd.',
-    amount: 8500,
-    date: '2026-05-06',
-    dueDate: '2026-05-10',
-    paymentMethod: 'bKash Merchant Pay',
-    paymentReference: 'BKASH-ISP-44102',
-    status: 'Paid',
-    billingFrequency: 'Monthly Recurring',
-    vatTaxDeduction: 425,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
-    approvedBy: 'Admin Executive',
-    notes: 'Primary 100Mbps dedicated duplex link with warehouse backup connection.'
-  },
-  {
-    id: 'HQ-VOUCH-2026-007',
-    title: 'Branded Polybags, Bubble Wrap & Carton Box Restock',
-    category: 'Packaging & Supplies',
-    department: 'Tejgaon Fulfillment Center',
-    payeeName: 'Dhaka Packaging & Polymers Ltd.',
-    amount: 32500,
-    date: '2026-05-10',
-    dueDate: '2026-05-10',
-    paymentMethod: 'Bank Transfer (BRAC Bank)',
-    paymentReference: 'BRAC-TX-882193',
-    status: 'Paid',
-    billingFrequency: 'Ad-hoc Batch',
-    vatTaxDeduction: 1625,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
-    approvedBy: 'Operations Director',
-    notes: '3,000 WrikMart branded tamper-evident flyer bags, 10 rolls 100m bubble wrap, 500 corrugated boxes.'
-  },
-  {
-    id: 'HQ-VOUCH-2026-008',
-    title: 'Meta Ads (Facebook & Instagram) Sourcing Campaign',
-    category: 'Marketing & Advertising',
-    department: 'Marketing & Growth',
-    payeeName: 'Meta Platforms Ireland Ltd.',
-    amount: 65000,
-    date: '2026-05-12',
-    dueDate: '2026-05-15',
-    paymentMethod: 'Corporate Credit Card (EBL Dual Currency)',
-    paymentReference: 'EBL-CARD-5521',
-    status: 'Paid',
-    billingFrequency: 'Bi-Weekly Ad Spend',
-    vatTaxDeduction: 9750,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
-    approvedBy: 'Growth Lead',
-    notes: 'Acquisition campaigns for Nike India sneakers and Dubai Apple pre-orders.'
-  },
-  {
-    id: 'HQ-VOUCH-2026-009',
-    title: 'Cloud Infrastructure & High-Availability Database Hosting',
-    category: 'Cloud & Software',
-    department: 'Engineering',
-    payeeName: 'Amazon Web Services (AWS)',
-    amount: 14200,
-    date: '2026-05-02',
-    dueDate: '2026-05-05',
-    paymentMethod: 'Corporate Credit Card',
-    paymentReference: 'AWS-INV-2026-05',
-    status: 'Paid',
-    billingFrequency: 'Monthly Recurring',
-    vatTaxDeduction: 2130,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
-    approvedBy: 'Tech Lead',
-    notes: 'EC2, RDS Postgres, S3 image storage & CDN acceleration.'
-  },
-  {
-    id: 'HQ-VOUCH-2026-010',
-    title: 'WASA Water Bill & Commercial Generator Diesel Refill',
-    category: 'Utilities & Internet',
-    department: 'Facilities & Logistics',
-    payeeName: 'Jamuna Oil Fuel Station & Dhaka WASA',
-    amount: 8200,
-    date: '2026-05-14',
-    dueDate: '2026-05-20',
-    paymentMethod: 'Petty Cash',
-    paymentReference: 'PC-2026-05-14',
-    status: 'Pending',
-    billingFrequency: 'Monthly Recurring',
-    vatTaxDeduction: 0,
-    voucherScanUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
-    approvedBy: 'Admin Officer',
-    notes: '60 Litres Diesel for warehouse power backup and monthly water utility supply bill.'
-  }
-];
+export const INITIAL_HQ_EXPENSES = [];
 
 export const DEFAULT_RECURRING_HQ_TEMPLATES = [
   {
@@ -1023,104 +753,5 @@ export const DEFAULT_BIRTHDAY_SETTINGS = {
   wishTemplate: "Happy Birthday {name}! 🎂 Team WrikMart wishes you a joyful day! We've gifted you an exclusive {discount} birthday discount voucher: {code}. Shop authentic global products: https://wrikmart.com"
 };
 
-export const INITIAL_CUSTOMERS = [
-  {
-    id: 'cust-101',
-    name: 'Rahim Chowdhury',
-    phone: '+880 1712-345678',
-    email: 'rahim.c@example.com',
-    address: 'House 12, Road 5, Dhanmondi, Dhaka-1205',
-    district: 'Dhaka',
-    dateOfBirth: '1995-09-06', // Today (6 September)
-    totalOrders: 5,
-    totalSpent: 48500,
-    preferredCategory: 'Footwear & Electronics',
-    notes: 'VIP Buyer. Frequently orders sneakers from Nike India.',
-    birthdayWishes: []
-  },
-  {
-    id: 'cust-102',
-    name: 'Tanvir Ahmed',
-    phone: '+880 1911-223344',
-    email: 'tanvir.ahmed@example.com',
-    address: 'Apartment 4B, Sector 7, Uttara, Dhaka',
-    district: 'Dhaka',
-    dateOfBirth: '1998-09-09', // Upcoming in 3 days
-    totalOrders: 3,
-    totalSpent: 28400,
-    preferredCategory: 'Gadgets & Audio',
-    notes: 'Orders electronics from Dubai Noon.',
-    birthdayWishes: []
-  },
-  {
-    id: 'cust-103',
-    name: 'Nusrat Jahan',
-    phone: '+880 1819-876543',
-    email: 'nusrat.j@example.com',
-    address: 'Flat 5A, Green Road, Farmgate, Dhaka',
-    district: 'Dhaka',
-    dateOfBirth: '1997-09-12', // Upcoming in 6 days
-    totalOrders: 4,
-    totalSpent: 36200,
-    preferredCategory: 'Cosmetics & Skincare',
-    notes: 'Regular Thai skincare buyer.',
-    birthdayWishes: []
-  },
-  {
-    id: 'cust-104',
-    name: 'Farhan Kabir',
-    phone: '+880 1711-998877',
-    email: 'farhan.k@example.com',
-    address: 'House 88, Road 11, Banani, Dhaka',
-    district: 'Dhaka',
-    dateOfBirth: '1994-09-24', // Later this month
-    totalOrders: 6,
-    totalSpent: 72000,
-    preferredCategory: 'Luxury Watches',
-    notes: 'High value premium buyer.',
-    birthdayWishes: []
-  },
-  {
-    id: 'cust-105',
-    name: 'Sadia Islam',
-    phone: '+880 1622-334455',
-    email: 'sadia.i@example.com',
-    address: 'CDA Avenue, GEC Circle, Chittagong',
-    district: 'Chittagong',
-    dateOfBirth: '1999-10-15', // Next month
-    totalOrders: 2,
-    totalSpent: 14500,
-    preferredCategory: 'Apparel & Bags',
-    notes: 'Chittagong delivery.',
-    birthdayWishes: []
-  },
-  {
-    id: 'cust-106',
-    name: 'Mahmudul Hasan',
-    phone: '+880 1715-443322',
-    email: 'mahmud.h@example.com',
-    address: 'Zindabazar, Sylhet',
-    district: 'Sylhet',
-    dateOfBirth: '1993-11-20',
-    totalOrders: 1,
-    totalSpent: 9800,
-    preferredCategory: 'Perfumes',
-    notes: 'Sylhet customer.',
-    birthdayWishes: []
-  },
-  {
-    id: 'cust-107',
-    name: 'Shaila Sharmin',
-    phone: '+880 1823-112233',
-    email: 'shaila.s@example.com',
-    address: 'Rajshahi Sadar, Rajshahi',
-    district: 'Rajshahi',
-    dateOfBirth: '', // Not provided yet
-    totalOrders: 2,
-    totalSpent: 18200,
-    preferredCategory: 'Footwear',
-    notes: 'DOB missing. Needs collection.',
-    birthdayWishes: []
-  }
-];
+export const INITIAL_CUSTOMERS = [];
 
