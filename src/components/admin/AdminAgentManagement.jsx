@@ -18,15 +18,21 @@ import {
   ExternalLink,
   MessageCircle,
   Building,
-  Upload
+  Upload,
+  Edit3,
+  Trash2,
+  AlertTriangle,
+  ShieldAlert
 } from 'lucide-react';
 import { CountryFlag } from '../common/CountryFlag';
 
 export const AdminAgentManagement = () => {
-  const { agents, addAgent, showToast } = useApp();
+  const { agents = [], addAgent, updateAgent, deleteAgent, showToast } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedAgentProfile, setSelectedAgentProfile] = useState(null);
+  const [editingAgent, setEditingAgent] = useState(null);
+  const [deletingAgent, setDeletingAgent] = useState(null);
 
   // Form State with all 8 Required Fields
   const [formData, setFormData] = useState({
@@ -47,12 +53,44 @@ export const AdminAgentManagement = () => {
     docUrl: ''
   });
 
+  // Edit Form State
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    country: 'India',
+    balance: '0',
+    whatsapp: '',
+    phone: '',
+    email: '',
+    address: '',
+    status: 'Active',
+    avatar: '',
+    refName: '',
+    refPhone: '',
+    refAddress: '',
+    docType: 'Aadhaar Card',
+    docNumber: '',
+    docUrl: '',
+    docVerified: true
+  });
+
   const handleCountryChange = (selectedCountry) => {
     let defaultDoc = 'Aadhaar Card';
     if (selectedCountry === 'Dubai') defaultDoc = 'Emirates ID';
     else if (selectedCountry === 'Thailand') defaultDoc = 'Thai National ID / Passport';
 
     setFormData(prev => ({
+      ...prev,
+      country: selectedCountry,
+      docType: defaultDoc
+    }));
+  };
+
+  const handleEditCountryChange = (selectedCountry) => {
+    let defaultDoc = 'Aadhaar Card';
+    if (selectedCountry === 'Dubai') defaultDoc = 'Emirates ID';
+    else if (selectedCountry === 'Thailand') defaultDoc = 'Thai National ID / Passport';
+
+    setEditFormData(prev => ({
       ...prev,
       country: selectedCountry,
       docType: defaultDoc
@@ -98,6 +136,99 @@ export const AdminAgentManagement = () => {
       docNumber: '',
       docUrl: ''
     });
+  };
+
+  const handleStartEdit = (agent) => {
+    setEditingAgent(agent);
+    setEditFormData({
+      name: agent.name || '',
+      country: agent.country || 'India',
+      balance: agent.balance !== undefined ? String(agent.balance) : '0',
+      whatsapp: agent.whatsapp || '',
+      phone: agent.phone || '',
+      email: agent.email || '',
+      address: agent.address || '',
+      status: agent.status || 'Active',
+      avatar: agent.avatar || '',
+      refName: agent.referencePerson?.name || '',
+      refPhone: agent.referencePerson?.phone || '',
+      refAddress: agent.referencePerson?.address || '',
+      docType: agent.govtDocument?.type || (agent.country === 'India' ? 'Aadhaar Card' : agent.country === 'Dubai' ? 'Emirates ID' : 'Thai National ID / Passport'),
+      docNumber: agent.govtDocument?.number || '',
+      docUrl: agent.govtDocument?.documentUrl || '',
+      docVerified: agent.govtDocument?.verified ?? true
+    });
+  };
+
+  const handleSaveEdit = (e) => {
+    e.preventDefault();
+    if (!editingAgent || !editFormData.name.trim() || !editFormData.phone.trim()) {
+      showToast('Agent Name and Phone number are mandatory', 'warning');
+      return;
+    }
+
+    if (updateAgent) {
+      updateAgent(editingAgent.id, {
+        name: editFormData.name.trim(),
+        country: editFormData.country,
+        balance: Number(editFormData.balance) || 0,
+        whatsapp: editFormData.whatsapp.trim() || editFormData.phone.trim(),
+        phone: editFormData.phone.trim(),
+        email: editFormData.email.trim(),
+        address: editFormData.address.trim(),
+        status: editFormData.status,
+        avatar: editFormData.avatar.trim() || editingAgent.avatar,
+        referencePerson: {
+          name: editFormData.refName.trim(),
+          phone: editFormData.refPhone.trim(),
+          address: editFormData.refAddress.trim()
+        },
+        govtDocument: {
+          type: editFormData.docType,
+          number: editFormData.docNumber.trim(),
+          documentUrl: editFormData.docUrl.trim(),
+          verified: Boolean(editFormData.docVerified)
+        }
+      });
+    }
+
+    // Keep viewing modal in sync if open
+    if (selectedAgentProfile && selectedAgentProfile.id === editingAgent.id) {
+      setSelectedAgentProfile(prev => ({
+        ...prev,
+        name: editFormData.name.trim(),
+        country: editFormData.country,
+        balance: Number(editFormData.balance) || 0,
+        whatsapp: editFormData.whatsapp.trim() || editFormData.phone.trim(),
+        phone: editFormData.phone.trim(),
+        email: editFormData.email.trim(),
+        address: editFormData.address.trim(),
+        status: editFormData.status,
+        referencePerson: {
+          name: editFormData.refName.trim(),
+          phone: editFormData.refPhone.trim(),
+          address: editFormData.refAddress.trim()
+        },
+        govtDocument: {
+          type: editFormData.docType,
+          number: editFormData.docNumber.trim(),
+          documentUrl: editFormData.docUrl.trim(),
+          verified: Boolean(editFormData.docVerified)
+        }
+      }));
+    }
+
+    setEditingAgent(null);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deletingAgent && deleteAgent) {
+      deleteAgent(deletingAgent.id);
+      if (selectedAgentProfile && selectedAgentProfile.id === deletingAgent.id) {
+        setSelectedAgentProfile(null);
+      }
+      setDeletingAgent(null);
+    }
   };
 
   const filtered = agents.filter(a => 
@@ -203,13 +334,36 @@ export const AdminAgentManagement = () => {
                     {(ag.completedOrders || 0) + (ag.activeOrders || 0)} Orders
                   </td>
 
-                  <td className="px-5 py-3.5 text-right">
-                    <button 
-                      onClick={() => setSelectedAgentProfile(ag)}
-                      className="px-3 py-1.5 rounded-lg bg-brand-50 hover:bg-brand-100 text-xs font-bold text-brand-700 transition-colors"
-                    >
-                      View KYC Profile
-                    </button>
+                  <td className="px-5 py-3.5 text-right whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button 
+                        type="button"
+                        onClick={() => setSelectedAgentProfile(ag)}
+                        className="px-2.5 py-1.5 rounded-lg bg-brand-50 hover:bg-brand-100 text-xs font-bold text-brand-700 transition-colors"
+                        title="View KYC Dossier"
+                      >
+                        KYC
+                      </button>
+
+                      <button 
+                        type="button"
+                        onClick={() => handleStartEdit(ag)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-xs font-bold text-slate-700 transition-colors"
+                        title="Edit Agent Profile"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Edit</span>
+                      </button>
+
+                      <button 
+                        type="button"
+                        onClick={() => setDeletingAgent(ag)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                        title="Delete Agent"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -595,12 +749,327 @@ export const AdminAgentManagement = () => {
             </div>
 
             {/* Footer */}
-            <div className="pt-2 flex items-center justify-end">
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
               <button
+                type="button"
+                onClick={() => {
+                  handleStartEdit(selectedAgentProfile);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold rounded-xl text-xs shadow transition-all"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Edit Agent Profile</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setSelectedAgentProfile(null)}
                 className="px-5 py-2 bg-navy-900 hover:bg-navy-800 text-white font-bold rounded-xl text-xs transition-colors"
               >
                 Close Dossier
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Edit Agent Modal */}
+      {editingAgent && (
+        <div className="fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-200 animate-scale-in">
+            <div className="sticky top-0 bg-white px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 flex items-center justify-between z-10">
+              <div className="flex items-center gap-2 text-navy-900">
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                  <Edit3 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base">Edit Agent Profile & Sourcing KYC</h3>
+                  <p className="text-[11px] text-slate-400">ID: {editingAgent.id} • {editingAgent.name}</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setEditingAgent(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="p-4 sm:p-6 space-y-5 text-xs">
+              {/* Section 1: Basic Identity & Station */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-navy-900 uppercase tracking-wider text-[11px] flex items-center gap-1.5 pb-1 border-b border-slate-100">
+                  <User className="w-3.5 h-3.5 text-brand-600" />
+                  <span>1. Identity, Station & Operating Status</span>
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="block font-bold text-slate-700 mb-1">Agent Full Legal Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editFormData.name}
+                      onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Operational Status</label>
+                    <select
+                      value={editFormData.status}
+                      onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white font-medium"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                      <option value="Suspended">Suspended</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Station Country *</label>
+                    <select
+                      value={editFormData.country}
+                      onChange={(e) => handleEditCountryChange(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white font-bold"
+                    >
+                      <option value="India">India (INR ₹) 🇮🇳</option>
+                      <option value="Dubai">Dubai (AED د.إ) 🇦🇪</option>
+                      <option value="Thailand">Thailand (THB ฿) 🇹🇭</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Operating Float Balance ({editFormData.country === 'India' ? '₹ INR' : editFormData.country === 'Dubai' ? 'د.إ AED' : '฿ THB'})
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editFormData.balance}
+                      onChange={(e) => setEditFormData({ ...editFormData, balance: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white font-mono font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">WhatsApp Number *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editFormData.whatsapp}
+                      onChange={(e) => setEditFormData({ ...editFormData, whatsapp: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Calling Phone *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editFormData.phone}
+                      onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Official Email</label>
+                    <input
+                      type="email"
+                      value={editFormData.email}
+                      onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Overseas Station Physical Address</label>
+                    <textarea
+                      rows="2"
+                      value={editFormData.address}
+                      onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Avatar Profile Photo URL</label>
+                    <input
+                      type="url"
+                      value={editFormData.avatar}
+                      onChange={(e) => setEditFormData({ ...editFormData, avatar: e.target.value })}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white mb-2"
+                    />
+                    {editFormData.avatar && (
+                      <div className="flex items-center gap-2">
+                        <img 
+                          src={editFormData.avatar} 
+                          alt="Avatar preview" 
+                          className="w-8 h-8 rounded-lg object-cover border" 
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                        <span className="text-[10px] text-slate-400">Preview</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Reference Person / Guarantor */}
+              <div className="space-y-3 pt-3 border-t border-slate-100">
+                <h4 className="font-bold text-navy-900 uppercase tracking-wider text-[11px] flex items-center gap-1.5 pb-1 border-b border-slate-100">
+                  <Building className="w-3.5 h-3.5 text-brand-600" />
+                  <span>2. Reference Person & Guarantor in Bangladesh / Local Hub</span>
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Reference Person Name</label>
+                    <input
+                      type="text"
+                      value={editFormData.refName}
+                      onChange={(e) => setEditFormData({ ...editFormData, refName: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Reference Contact Phone</label>
+                    <input
+                      type="text"
+                      value={editFormData.refPhone}
+                      onChange={(e) => setEditFormData({ ...editFormData, refPhone: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Reference Person Address</label>
+                  <input
+                    type="text"
+                    value={editFormData.refAddress}
+                    onChange={(e) => setEditFormData({ ...editFormData, refAddress: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Section 3: Govt. KYC Document */}
+              <div className="space-y-3 pt-3 border-t border-slate-100">
+                <h4 className="font-bold text-navy-900 uppercase tracking-wider text-[11px] flex items-center gap-1.5 pb-1 border-b border-slate-100">
+                  <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                  <span>3. Government Identification & Verified KYC</span>
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Govt. Document Type</label>
+                    <input
+                      type="text"
+                      value={editFormData.docType}
+                      onChange={(e) => setEditFormData({ ...editFormData, docType: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">Document / Card ID Number</label>
+                    <input
+                      type="text"
+                      value={editFormData.docNumber}
+                      onChange={(e) => setEditFormData({ ...editFormData, docNumber: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Document Scan Image URL / Storage Link</label>
+                  <input
+                    type="url"
+                    value={editFormData.docUrl}
+                    onChange={(e) => setEditFormData({ ...editFormData, docUrl: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                  />
+                </div>
+
+                <label className="flex items-center gap-2 pt-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={editFormData.docVerified}
+                    onChange={(e) => setEditFormData({ ...editFormData, docVerified: e.target.checked })}
+                    className="w-4 h-4 rounded text-brand-600 focus:ring-brand-500"
+                  />
+                  <span className="font-bold text-slate-700">Official Document Authenticated & KYC Verified</span>
+                </label>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingAgent(null)}
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold shadow-md transition-all"
+                >
+                  Save Agent Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Delete Agent Confirmation Modal */}
+      {deletingAgent && (
+        <div className="fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4 animate-scale-in text-center">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-navy-900 text-base">Remove Agent?</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Are you sure you want to remove <strong>"{deletingAgent.name}"</strong> ({deletingAgent.country}) from the active sourcing agent network?
+              </p>
+              {((deletingAgent.activeOrders || 0) > 0) && (
+                <div className="mt-3 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] flex items-center gap-2 text-left">
+                  <ShieldAlert className="w-4 h-4 flex-shrink-0 text-amber-600" />
+                  <span><strong>Warning:</strong> This agent currently has {deletingAgent.activeOrders} active orders assigned! Reassign orders before deleting.</span>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeletingAgent(null)}
+                className="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-slate-700 font-bold text-xs hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="flex-1 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow"
+              >
+                Yes, Delete
               </button>
             </div>
           </div>

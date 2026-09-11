@@ -2036,17 +2036,74 @@ export const AppProvider = ({ children }) => {
     showToast(`Agent ${newAgent.name} successfully registered with KYC documents!`, 'success');
   };
 
+  // Update Agent Details & KYC
+  const updateAgent = (agentId, updatedData) => {
+    setAgents(prev => {
+      const next = prev.map(a => {
+        if (a.id !== agentId) return a;
+        const country = updatedData.country || a.country;
+        return {
+          ...a,
+          ...updatedData,
+          country,
+          flag: country === 'India' ? '🇮🇳' : country === 'Dubai' ? '🇦🇪' : '🇹🇭',
+          currency: updatedData.currency || (country === 'India' ? 'INR' : country === 'Dubai' ? 'AED' : 'THB'),
+          symbol: country === 'India' ? '₹' : country === 'Dubai' ? 'د.إ' : '฿',
+          referencePerson: {
+            ...(a.referencePerson || {}),
+            ...(updatedData.referencePerson || {})
+          },
+          govtDocument: {
+            ...(a.govtDocument || {}),
+            ...(updatedData.govtDocument || {})
+          },
+          balance: updatedData.balance !== undefined ? Number(updatedData.balance) : a.balance
+        };
+      });
+      return next;
+    });
+    showToast('Agent profile updated successfully!', 'success');
+  };
+
+  // Delete Agent
+  const deleteAgent = (agentId) => {
+    setAgents(prev => prev.filter(a => a.id !== agentId));
+    showToast('Agent removed from network', 'info');
+  };
+
   // Add Delivery Hub
   const addHub = (newHub) => {
     const hub = {
       id: `hub-${Date.now()}`,
       status: 'Active',
       activePackages: 0,
-      capacity: 2000,
+      capacity: Number(newHub.capacity || 2000),
       ...newHub
     };
     setHubs(prev => [...prev, hub]);
     showToast(`New Hub "${newHub.name}" registered!`, 'success');
+  };
+
+  // Update Delivery Hub
+  const updateHub = (hubId, updatedData) => {
+    setHubs(prev => {
+      const next = prev.map(h => {
+        if (h.id !== hubId) return h;
+        return {
+          ...h,
+          ...updatedData,
+          capacity: updatedData.capacity !== undefined ? Number(updatedData.capacity) : h.capacity
+        };
+      });
+      return next;
+    });
+    showToast(`Hub "${updatedData.name || 'details'}" updated successfully!`, 'success');
+  };
+
+  // Delete Delivery Hub
+  const deleteHub = (hubId) => {
+    setHubs(prev => prev.filter(h => h.id !== hubId));
+    showToast('Hub deleted successfully', 'info');
   };
 
   // Send Chat Message
@@ -2125,6 +2182,11 @@ export const AppProvider = ({ children }) => {
     deleteHqExpense,
     updateExchangeRate,
     addAgent,
+    updateAgent,
+    deleteAgent,
+    addHub,
+    updateHub,
+    deleteHub,
     sendChatMessage,
     // Ready Stock Cart & Coupons
     cart,
