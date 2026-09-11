@@ -178,6 +178,7 @@ export const HeaderSearchBar = ({ isMobile = false }) => {
         <input
           ref={inputRef}
           type="text"
+          aria-label="Search ready stock products or paste product link"
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);

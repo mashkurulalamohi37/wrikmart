@@ -52,7 +52,18 @@ export const AuthModal = () => {
     password: ''
   });
 
-  if (!isAuthModalOpen) return null;
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
+
+  const handleResetSubmit = (e) => {
+    e.preventDefault();
+    if (!resetEmail.trim()) {
+      showToast('Please enter your registered email or phone', 'warning');
+      return;
+    }
+    setResetSent(true);
+    showToast(`Password reset link & SMS OTP sent to ${resetEmail}`, 'success');
+  };
 
   const handleLoginSubmit = (e) => {
     e.preventDefault();
@@ -115,12 +126,14 @@ export const AuthModal = () => {
             <ShoppingBag className="w-6 h-6" />
           </div>
           <h3 className="font-black text-xl text-navy-900">
-            {mode === 'login' ? 'Sign In to WrikMart' : 'Create Customer Account'}
+            {mode === 'login' ? 'Sign In to WrikMart' : mode === 'register' ? 'Create Customer Account' : 'Reset Password'}
           </h3>
           <p className="text-xs text-slate-500">
             {mode === 'login' 
               ? 'Access Admin Dashboard, Agent Workstation, or Customer Hub' 
-              : 'Join Bangladesh’s trusted authentic cross-border platform'}
+              : mode === 'register' 
+                ? 'Join Bangladesh’s trusted authentic cross-border platform'
+                : 'Recover your account access via SMS or Email OTP'}
           </p>
         </div>
 
@@ -217,9 +230,13 @@ export const AuthModal = () => {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="font-bold text-slate-700">Password *</label>
-                <span className="text-[10px] text-brand-600 hover:underline cursor-pointer">
+                <button 
+                  type="button"
+                  onClick={() => setMode('forgot')}
+                  className="text-[10px] text-brand-600 hover:underline cursor-pointer font-bold"
+                >
                   Forgot password?
-                </span>
+                </button>
               </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -261,7 +278,7 @@ export const AuthModal = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
-        ) : (
+        ) : mode === 'register' ? (
           /* Registration Form */
           <form onSubmit={handleRegisterSubmit} className="space-y-3.5 text-xs">
             <div>
@@ -347,6 +364,66 @@ export const AuthModal = () => {
               <span>Complete Registration</span>
               <ArrowRight className="w-4 h-4" />
             </button>
+          </form>
+        ) : (
+          /* Forgot Password Recovery Form */
+          <form onSubmit={handleResetSubmit} className="space-y-4 text-xs">
+            <div className="bg-brand-50 p-3.5 rounded-2xl border border-brand-200 text-brand-900 text-[11px] leading-relaxed">
+              <strong>Account Recovery:</strong> Enter your registered email address or mobile number. We will send you an SMS OTP and instant reset link.
+            </div>
+
+            {resetSent ? (
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900 text-center space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                <p className="font-bold text-xs">Recovery Instructions Sent!</p>
+                <p className="text-[11px] text-slate-500">Please check your SMS inbox or email ({resetEmail}) to verify your OTP code.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetSent(false);
+                    setMode('login');
+                  }}
+                  className="mt-2 px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-500 transition-colors"
+                >
+                  Back to Sign In
+                </button>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Email or Mobile Number *</label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      required
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      placeholder="e.g. customer@wrikmart.com or 017xxxxxxxx"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 font-medium"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-md shadow-brand-500/20 transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Send Recovery OTP & Link</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setMode('login')}
+                    className="text-slate-500 hover:text-slate-800 font-bold text-xs"
+                  >
+                    ← Back to Sign In
+                  </button>
+                </div>
+              </>
+            )}
           </form>
         )}
 

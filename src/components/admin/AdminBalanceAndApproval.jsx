@@ -31,8 +31,14 @@ export const AdminBalanceAndApproval = () => {
   const [amountBDT, setAmountBDT] = useState('20000');
   const [adminNote, setAdminNote] = useState('Operating capital allocation for new pre-order batch');
 
-  const selectedAgent = agents.find(a => a.id === selectedAgentId) || agents[0];
-  const currentRate = exchangeRates[selectedAgent.currency]?.rateFromBDT || 0.70;
+  const selectedAgent = agents.find(a => a.id === selectedAgentId) || agents[0] || {
+    id: 'agent-1',
+    name: 'India Agent',
+    currency: 'INR',
+    symbol: '₹',
+    country: 'India'
+  };
+  const currentRate = exchangeRates[selectedAgent.currency || 'INR']?.rateFromBDT || 0.70;
   const convertedTargetAmount = Math.round((Number(amountBDT || 0) * currentRate) * 100) / 100;
 
   const pendingTransfers = balanceTransfers.filter(t => t.status === 'Pending');

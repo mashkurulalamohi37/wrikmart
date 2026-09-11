@@ -33,7 +33,10 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
 
   // Calculate Agent Purchase Cost in BDT
   const targetRate = exchangeRates[order.items[0]?.actualPurchaseCurrency]?.rateToBDT || 1.43;
-  const totalPurchaseInForeign = order.items.reduce((sum, it) => sum + Number(it.actualPurchasePrice || 0), 0);
+  const totalPurchaseInForeign = order.items.reduce((sum, it) => {
+    const qty = it.specs?.unit || it.quantity || 1;
+    return sum + (Number(it.actualPurchasePrice || 0) * qty);
+  }, 0);
   const totalPurchaseInBDT = Math.round(totalPurchaseInForeign * targetRate);
   
   const grossSellingPrice = order.financials.finalSellingPrice || order.financials.estimatedTotal;

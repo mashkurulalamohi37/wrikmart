@@ -1100,8 +1100,11 @@ export const AppProvider = ({ children }) => {
       .replace('{discount}', discountText)
       .replace('{code}', coupon?.code || `BDAY-${currentYear}`);
 
-    const cleanPhone = (customer.phone || '').replace(/[^0-9]/g, '');
-    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    let cleanPhone = (customer.phone || '').replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith('01') && cleanPhone.length === 11) {
+      cleanPhone = '88' + cleanPhone;
+    }
+    const whatsappUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}` : null;
 
     showToast(`Birthday wish logged & coupon ${coupon?.code} generated for ${customer.name}!`, 'success');
 
@@ -1518,9 +1521,11 @@ export const AppProvider = ({ children }) => {
   const updateOrderPurchase = (orderId, updatedItems) => {
     let totalPurchasedCost = 0;
     let agentCurrency = 'INR';
+    let previousPurchasedCost = 0;
 
     setOrders(prev => prev.map(order => {
       if (order.id === orderId) {
+        previousPurchasedCost = order.items.reduce((sum, it) => sum + Number(it.actualPurchasePrice || 0), 0);
         const newItems = order.items.map((it, idx) => {
           const match = updatedItems[idx] || {};
           const purchaseCost = Number(match.actualPurchasePrice || it.actualPurchasePrice || 0);
@@ -1533,7 +1538,7 @@ export const AppProvider = ({ children }) => {
             actualPurchaseCurrency: agentCurrency,
             mrp: Number(match.mrp || it.mrp || 0),
             purchasedFrom: match.purchasedFrom || it.purchasedFrom || 'Official Store',
-            purchaseDate: new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            purchaseDate: it.purchaseDate || new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
             receiptImage: match.receiptImage || it.receiptImage || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500&auto=format&fit=crop&q=80',
             notes: match.notes || it.notes
           };
@@ -1543,7 +1548,7 @@ export const AppProvider = ({ children }) => {
           if (t.step === 'Purchase Updated') {
             return {
               ...t,
-              time: new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+              time: t.done ? t.time : new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
               note: `Purchase price & MRP successfully recorded`,
               done: true
             };
@@ -1561,14 +1566,15 @@ export const AppProvider = ({ children }) => {
       return order;
     }));
 
-    // Debit the Agent's Operating Balance
-    if (totalPurchasedCost > 0) {
+    // Debit the Agent's Operating Balance for the incremental delta
+    const costDelta = totalPurchasedCost - previousPurchasedCost;
+    if (costDelta !== 0) {
       setAgents(prev => prev.map(a => {
         if (a.id === activeAgentId) {
           return {
             ...a,
-            balance: Math.max(0, a.balance - totalPurchasedCost),
-            totalSpent: a.totalSpent + totalPurchasedCost
+            balance: Math.max(0, a.balance - costDelta),
+            totalSpent: Math.max(0, a.totalSpent + costDelta)
           };
         }
         return a;

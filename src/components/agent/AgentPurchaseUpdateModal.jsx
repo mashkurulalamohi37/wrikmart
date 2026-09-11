@@ -23,6 +23,21 @@ export const AgentPurchaseUpdateModal = ({ order, onClose }) => {
     setItemsData(updated);
   };
 
+  const handleReceiptUpload = (index, e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('Receipt file size must be less than 8MB', 'warning');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (uploadEvt) => {
+      handleFieldChange(index, 'receiptImage', uploadEvt.target.result);
+      showToast(`Uploaded receipt ${file.name}!`, 'success');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = (e) => {
     e.preventDefault();
 
@@ -130,13 +145,21 @@ export const AgentPurchaseUpdateModal = ({ order, onClose }) => {
                 <label className="block text-[11px] font-bold text-navy-900 mb-1">Invoice / Receipt Photo</label>
                 <div className="border border-slate-300 rounded-lg p-3 bg-white flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <img src={itemsData[idx].receiptImage} alt="Receipt" className="w-10 h-10 object-cover rounded border" />
+                    <img src={itemsData[idx].receiptImage} alt="Receipt" className="w-10 h-10 object-cover rounded border bg-slate-50" />
                     <div>
-                      <span className="text-xs font-bold text-emerald-600 block">Receipt_Attached.jpg</span>
-                      <span className="text-[10px] text-slate-400">VAT & Tax Invoice Verified</span>
+                      <span className="text-xs font-bold text-emerald-600 block">Receipt Attached ✓</span>
+                      <span className="text-[10px] text-slate-400">VAT & Tax Invoice for Audit</span>
                     </div>
                   </div>
-                  <button type="button" className="text-xs text-brand-600 font-bold hover:underline">Change</button>
+                  <label className="text-xs text-brand-600 font-bold hover:underline cursor-pointer bg-brand-50 px-2.5 py-1 rounded-md border border-brand-200">
+                    <span>Upload Photo</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleReceiptUpload(idx, e)}
+                    />
+                  </label>
                 </div>
               </div>
             </div>

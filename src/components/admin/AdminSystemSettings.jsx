@@ -47,7 +47,9 @@ export const AdminSystemSettings = () => {
               onChange={(e) => setInrRate(e.target.value)}
               className="w-full px-3 py-2 bg-white rounded-lg border font-mono font-bold text-navy-900 focus:ring-2 focus:ring-brand-500"
             />
-            <span className="text-[10px] text-slate-400 mt-1 block">1 INR ≈ ৳{(1 / inrRate).toFixed(2)} BDT</span>
+            <span className="text-[10px] text-slate-400 mt-1 block">
+              1 INR ≈ ৳{Number(inrRate) > 0 ? (1 / Number(inrRate)).toFixed(2) : '0.00'} BDT
+            </span>
           </div>
 
           <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50">
@@ -62,7 +64,9 @@ export const AdminSystemSettings = () => {
               onChange={(e) => setAedRate(e.target.value)}
               className="w-full px-3 py-2 bg-white rounded-lg border font-mono font-bold text-navy-900 focus:ring-2 focus:ring-brand-500"
             />
-            <span className="text-[10px] text-slate-400 mt-1 block">1 AED ≈ ৳{(1 / aedRate).toFixed(2)} BDT</span>
+            <span className="text-[10px] text-slate-400 mt-1 block">
+              1 AED ≈ ৳{Number(aedRate) > 0 ? (1 / Number(aedRate)).toFixed(2) : '0.00'} BDT
+            </span>
           </div>
 
           <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50">
@@ -77,7 +81,9 @@ export const AdminSystemSettings = () => {
               onChange={(e) => setThbRate(e.target.value)}
               className="w-full px-3 py-2 bg-white rounded-lg border font-mono font-bold text-navy-900 focus:ring-2 focus:ring-brand-500"
             />
-            <span className="text-[10px] text-slate-400 mt-1 block">1 THB ≈ ৳{(1 / thbRate).toFixed(2)} BDT</span>
+            <span className="text-[10px] text-slate-400 mt-1 block">
+              1 THB ≈ ৳{Number(thbRate) > 0 ? (1 / Number(thbRate)).toFixed(2) : '0.00'} BDT
+            </span>
           </div>
         </div>
 

@@ -390,11 +390,15 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
     setCurrentItem({
       name: '',
       url: '',
-      image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&auto=format&fit=crop&q=80',
+      image: '',
+      imageName: '',
+      imageSize: '',
+      hasUserCustomImage: false,
+      category: 'General',
       size: '',
       color: '',
       quantity: 1,
-      expectedPrice: 0,
+      expectedPrice: '',
       notes: ''
     });
 
@@ -720,7 +724,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!currentItem.url && !currentItem.name && !currentItem.image) {
+                    if (!currentItem.url?.trim() && !currentItem.name?.trim() && !currentItem.hasUserCustomImage && !currentItem.image) {
                       showToast("Please paste a product web link or upload a screenshot/photo.", "warning");
                       return;
                     }
