@@ -288,6 +288,13 @@ export const AppProvider = ({ children }) => {
   });
 
   const [chatMessages, setChatMessages] = useState(() => {
+    try {
+      if (!localStorage.getItem('wrikmart_chat_wiped_v2')) {
+        localStorage.removeItem('wrikmart_chat');
+        localStorage.setItem('wrikmart_chat_wiped_v2', '1');
+        return INITIAL_CHAT_MESSAGES;
+      }
+    } catch (e) {}
     const saved = localStorage.getItem('wrikmart_chat');
     return saved ? JSON.parse(saved) : INITIAL_CHAT_MESSAGES;
   });
@@ -1970,15 +1977,34 @@ export const AppProvider = ({ children }) => {
 
   // Send Chat Message
   const sendChatMessage = (text, isAgent = false) => {
+    const senderName = isAgent 
+      ? activeAgent.name 
+      : (currentUser ? currentUser.name : (currentRole === 'admin' ? 'WrikMart Support' : 'Customer'));
+
     const newMsg = {
       id: `msg-${Date.now()}`,
       senderRole: isAgent ? 'agent' : currentRole,
-      senderName: isAgent ? activeAgent.name : currentRole === 'admin' ? 'WrikMart Support' : 'Customer',
+      senderName,
       text,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       isAgent
     };
     setChatMessages(prev => [...prev, newMsg]);
+
+    // If sent by customer, simulate live support acknowledgment
+    if (!isAgent && (currentRole === 'customer' || !currentUser)) {
+      setTimeout(() => {
+        const supportReply = {
+          id: `msg-${Date.now() + 1}`,
+          senderRole: 'admin',
+          senderName: 'WrikMart Support',
+          text: `Thank you for reaching out! Our logistics & overseas sourcing team has received your inquiry: "${text.length > 45 ? text.slice(0, 42) + '...' : text}". A support representative is actively looking into this for you.`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          isAgent: false
+        };
+        setChatMessages(prev => [...prev, supportReply]);
+      }, 900);
+    }
   };
 
   const contextValue = useMemo(() => ({

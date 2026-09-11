@@ -746,28 +746,12 @@ export const INITIAL_BALANCE_TRANSFERS = [
 
 export const INITIAL_CHAT_MESSAGES = [
   {
-    id: 'msg-1',
-    senderRole: 'customer',
-    senderName: 'Rahim Chowdhury',
-    text: 'Hello, when will my Nike shoe order PO-2026-000125 be purchased?',
-    time: '12 May 2026, 10:35 AM',
-    isAgent: false
-  },
-  {
-    id: 'msg-2',
+    id: 'msg-welcome-1',
     senderRole: 'admin',
-    senderName: 'WrikMart Support',
-    text: 'Hi Rahim! Our India agent Arafat is already at the official store and will update the invoice shortly.',
-    time: '12 May 2026, 10:38 AM',
+    senderName: 'WrikMart Support Desk',
+    text: 'Hello! Welcome to WrikMart 24/7 Global Support. How can we help you with your cross-border pre-order, overseas store sourcing, or delivery tracking today?',
+    time: 'Live',
     isAgent: false
-  },
-  {
-    id: 'msg-3',
-    senderRole: 'agent',
-    senderName: 'Arafat Khan (India Agent)',
-    text: 'Product purchased! Size 42 Black/Red verified in brand new condition.',
-    time: '12 May 2026, 05:12 PM',
-    isAgent: true
   }
 ];
 

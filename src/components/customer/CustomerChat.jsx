@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Send, Image, MessageSquare, PhoneCall } from 'lucide-react';
+import { Send, PhoneCall } from 'lucide-react';
 
 export const CustomerChat = () => {
   const { chatMessages, sendChatMessage } = useApp();
   const [inputText, setInputText] = useState('');
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages]);
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -18,7 +27,7 @@ export const CustomerChat = () => {
       {/* Top Chat Header */}
       <div className="bg-navy-900 text-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center font-bold">
+          <div className="w-9 h-9 rounded-full bg-brand-500 flex items-center justify-center font-bold text-sm shadow-sm">
             WM
           </div>
           <div>
@@ -62,6 +71,7 @@ export const CustomerChat = () => {
             </div>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Message Input Box */}
@@ -75,7 +85,7 @@ export const CustomerChat = () => {
         />
         <button
           type="submit"
-          className="bg-brand-500 hover:bg-brand-600 text-white p-2.5 rounded-xl transition-colors shadow"
+          className="bg-brand-500 hover:bg-brand-600 active:scale-95 text-white p-2.5 rounded-xl transition-all shadow"
         >
           <Send className="w-4 h-4" />
         </button>
