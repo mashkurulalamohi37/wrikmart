@@ -144,8 +144,8 @@ export const AdminPanel = () => {
           {/* Mobile Drawer Top Header (Visible only on mobile/tablet) */}
           <div className="lg:hidden px-4 py-3.5 border-b border-slate-800 flex items-center justify-between bg-[#08132B]">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-brand-600 to-cyan-400 flex items-center justify-center">
-                <ShoppingBag className="w-3.5 h-3.5 text-white" />
+              <div className="w-7 h-7 rounded-lg bg-white p-0.5 flex items-center justify-center border border-white/20">
+                <img src="/wrikmart-logo.jpeg" alt="WrikMart" className="w-full h-full object-contain rounded-md" />
               </div>
               <span className="font-bold text-sm text-white">Admin Operations</span>
             </div>

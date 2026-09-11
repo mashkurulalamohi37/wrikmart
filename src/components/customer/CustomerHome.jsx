@@ -40,9 +40,77 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
   const [quickUrl, setQuickUrl] = useState('');
 
   const handleQuickPaste = () => {
-    if (quickUrl.trim() && setPrefilledPreOrder) {
-      setPrefilledPreOrder({ url: quickUrl.trim() });
+    let clean = (quickUrl || '').trim();
+    if (!clean) {
+      showToast('Please enter or paste a product link (e.g. Amazon, Nike, Zara, Apple)', 'warning');
+      return;
     }
+
+    if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
+      if (clean.includes('.') || clean.includes('/') || clean.startsWith('www.')) {
+        clean = `https://${clean}`;
+      }
+    }
+
+    const lower = clean.toLowerCase();
+    let detectedCountry = 'India';
+    let detectedPlatform = 'Global Store';
+
+    if (lower.includes('amazon.ae') || lower.includes('noon.com') || lower.includes('.ae') || lower.includes('dubai') || lower.includes('apple.com/ae')) {
+      detectedCountry = 'Dubai';
+      detectedPlatform = lower.includes('noon') ? 'Noon Dubai' : lower.includes('amazon') ? 'Amazon UAE' : lower.includes('apple') ? 'Apple Dubai' : 'Dubai Store';
+    } else if (lower.includes('shopee.co.th') || lower.includes('central.co.th') || lower.includes('.th') || lower.includes('thailand') || lower.includes('lazada')) {
+      detectedCountry = 'Thailand';
+      detectedPlatform = lower.includes('shopee') ? 'Shopee Thailand' : 'Thailand Store';
+    } else {
+      detectedCountry = 'India';
+      if (lower.includes('amazon') || lower.includes('amzn.')) detectedPlatform = 'Amazon India';
+      else if (lower.includes('flipkart')) detectedPlatform = 'Flipkart India';
+      else if (lower.includes('myntra')) detectedPlatform = 'Myntra India';
+      else if (lower.includes('nike')) detectedPlatform = 'Nike India';
+      else if (lower.includes('zara')) detectedPlatform = 'Zara India';
+    }
+
+    // Extract title from slug or ASIN
+    let title = '';
+    try {
+      const parsed = new URL(clean.startsWith('http') ? clean : `https://${clean}`);
+      const parts = decodeURIComponent(parsed.pathname).split('/').filter(Boolean);
+      const dpIdx = parts.indexOf('dp');
+      if (dpIdx > 0) {
+        title = parts[dpIdx - 1].replace(/[-_+]/g, ' ');
+      } else if (parts.length > 0) {
+        const candidates = parts.filter(p => p !== 'dp' && p !== 'gp' && p !== 'product' && p !== 'd' && !/^[A-Z0-9]{10}$/i.test(p));
+        if (candidates.length > 0) {
+          candidates.sort((a, b) => b.length - a.length);
+          title = candidates[0].replace(/[-_+]/g, ' ');
+        }
+      }
+    } catch (e) {}
+
+    if (title) {
+      title = title.split(' ').filter(w => w.length > 1 && !/^\d+$/.test(w) && w.length < 30).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+
+    if (!title) {
+      if (lower.includes('amazon') || lower.includes('amzn')) title = 'Amazon Imported Item';
+      else if (lower.includes('apple') || lower.includes('iphone')) title = 'Apple Device Import';
+      else if (lower.includes('nike')) title = 'Nike Footwear Import';
+      else title = 'Custom Imported Product';
+    }
+
+    const payload = {
+      url: clean,
+      name: title,
+      country: detectedCountry,
+      platform: detectedPlatform,
+      expectedPrice: lower.includes('apple') || lower.includes('iphone') ? 85000 : 4500
+    };
+
+    if (setPrefilledPreOrder) {
+      setPrefilledPreOrder(payload);
+    }
+    showToast(`Recognized ${detectedPlatform} link! Loading Pre-Order form...`, 'success');
     onStartPreOrder();
   };
 
@@ -126,19 +194,19 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
             <div className="bg-white/10 backdrop-blur-md p-2 rounded-2xl border border-white/30 max-w-xl flex flex-col sm:flex-row gap-2">
               <div className="relative flex-1">
                 <input
-                  type="url"
+                  type="text"
                   value={quickUrl}
                   onChange={(e) => setQuickUrl(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleQuickPaste();
                   }}
-                  placeholder="Paste product link (Nike, Amazon, Zara)..."
+                  placeholder="Paste product link (Amazon, Nike, Zara, Apple)..."
                   className="w-full pl-4 pr-3 py-3 rounded-xl bg-white text-navy-900 text-xs font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
                 />
               </div>
               <button
                 onClick={handleQuickPaste}
-                className="bg-amber-400 hover:bg-amber-300 text-navy-950 font-extrabold px-6 py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md transform active:scale-95"
+                className="bg-amber-400 hover:bg-amber-300 text-navy-950 font-extrabold px-6 py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md transform active:scale-95 cursor-pointer flex-shrink-0"
               >
                 <span>Start Pre-Order</span>
                 <ArrowRight className="w-4 h-4 text-navy-950" />
@@ -198,7 +266,66 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
         <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
       </section>
 
-      {/* 2. Ready Stock in Bangladesh Spotlight Section */}
+      {/* 2. Supported Global Sourcing Stores (Placed right after Hero with 2 Rows as requested) */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse"></span>
+              <h2 className="text-lg sm:text-xl font-extrabold text-navy-900">Supported Global Sourcing Stores</h2>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">Order authentic products from any official website or store across 3 countries</p>
+          </div>
+          <button 
+            onClick={onStartPreOrder} 
+            className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 transition-colors border border-brand-200"
+          >
+            <span>Custom Website Link</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* 2 Rows of Global Sourcing Stores */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            // Row 1
+            { name: 'Nike India', country: 'India', cat: 'Sneakers & Apparel' },
+            { name: 'Apple Dubai', country: 'Dubai', cat: 'iPhone, AirPods, Mac' },
+            { name: 'Amazon India', country: 'India', cat: 'Electronics & Books' },
+            { name: 'Zara Global', country: 'India', cat: 'Designer Fashion' },
+            { name: 'Noon Dubai', country: 'Dubai', cat: 'Perfumes & Watches' },
+            { name: 'Shopee Thailand', country: 'Thailand', cat: 'Skincare & Cosmetics' },
+            // Row 2
+            { name: 'Flipkart India', country: 'India', cat: 'Smartphones & Tech' },
+            { name: 'Sephora Dubai', country: 'Dubai', cat: 'Luxury Cosmetics' },
+            { name: 'Amazon UAE', country: 'Dubai', cat: 'Dubai Lifestyle & Tech' },
+            { name: 'Central Thailand', country: 'Thailand', cat: 'Bangkok Mall Fashion' },
+            { name: 'Myntra India', country: 'India', cat: 'Trending Western Fashion' },
+            { name: 'Lazada Thailand', country: 'Thailand', cat: 'Thai Beauty & Tech' }
+          ].map((store, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                if (setPrefilledPreOrder) {
+                  setPrefilledPreOrder({ country: store.country, platform: store.name });
+                }
+                onStartPreOrder();
+              }}
+              className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/80 shadow-soft hover:shadow-card hover:border-brand-500 text-left transition-all group flex flex-col justify-between"
+            >
+              <div className="mb-2.5">
+                <StoreBrandBadge storeName={store.name} />
+              </div>
+              <div>
+                <h3 className="font-bold text-xs text-navy-900 group-hover:text-brand-600 transition-colors leading-tight">{store.name}</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5 truncate">{store.cat}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* 3. Ready Stock in Bangladesh Spotlight Section */}
       <section className="space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <div>
@@ -304,43 +431,6 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
             })}
           </div>
         )}
-      </section>
-
-      {/* 3. Popular Pre-Order Stores & Brands */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-lg sm:text-xl font-extrabold text-navy-900">Supported Global Sourcing Stores</h2>
-            <p className="text-xs text-slate-500">Order from any official website or store in India, UAE, and Thailand</p>
-          </div>
-          <button onClick={onStartPreOrder} className="text-xs font-bold text-brand-600 hover:underline flex items-center gap-1">
-            <span>Custom Website Link</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            { name: 'Nike India', country: 'India', cat: 'Sneakers & Apparel' },
-            { name: 'Apple Dubai', country: 'Dubai', cat: 'iPhone, AirPods, Mac' },
-            { name: 'Zara Global', country: 'India', cat: 'Designer Fashion' },
-            { name: 'Amazon India', country: 'India', cat: 'Electronics & Books' },
-            { name: 'Noon Dubai', country: 'Dubai', cat: 'Perfumes & Watches' },
-            { name: 'Shopee Thailand', country: 'Thailand', cat: 'Skincare & Cosmetics' }
-          ].map((store, i) => (
-            <button
-              key={i}
-              onClick={onStartPreOrder}
-              className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-soft hover:shadow-card hover:border-brand-500 text-left transition-all group"
-            >
-              <div className="mb-3">
-                <StoreBrandBadge storeName={store.name} />
-              </div>
-              <h3 className="font-bold text-xs text-navy-900 group-hover:text-brand-600 transition-colors">{store.name}</h3>
-              <p className="text-[10px] text-slate-400 mt-0.5">{store.cat}</p>
-            </button>
-          ))}
-        </div>
       </section>
 
       {/* 3. How Pre-Order Works (4-Step Infographic) */}

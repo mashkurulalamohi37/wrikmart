@@ -53,7 +53,7 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
   });
 
   const [deliveryMethod, setDeliveryMethod] = useState('Standard Courier'); // 'Standard Courier' | 'Express Same-Day'
-  const [paymentMethod, setPaymentMethod] = useState('bKash'); // 'COD' | 'bKash' | 'Nagad' | 'Card'
+  const [paymentMethod, setPaymentMethod] = useState('EPS'); // 'EPS' | 'COD' | 'bKash' | 'Nagad' | 'Card'
   const [transactionId, setTransactionId] = useState('');
   const [couponInput, setCouponInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -137,9 +137,10 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
 
   // Auto-fill Sandbox Transaction ID
   const handleAutoFillSandboxTrx = () => {
-    const randomTrx = `TRX-${paymentMethod.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
+    const prefix = paymentMethod === 'EPS' ? 'EPS-TRX' : `TRX-${paymentMethod.toUpperCase()}`;
+    const randomTrx = `${prefix}-${Math.floor(100000 + Math.random() * 900000)}`;
     setTransactionId(randomTrx);
-    if (showToast) showToast(`Sandbox ${paymentMethod} TrxID generated!`, 'info');
+    if (showToast) showToast(`${paymentMethod === 'EPS' ? 'EPS Gateway' : paymentMethod} TrxID generated!`, 'info');
   };
 
   // Close & Clean State
@@ -170,16 +171,20 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
     setIsSubmitting(true);
 
     setTimeout(() => {
+      const defaultTrx = paymentMethod === 'EPS' 
+        ? `EPS-TRX-${Math.floor(100000 + Math.random() * 900000)}` 
+        : `TRX-${paymentMethod.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
       const genTrx = paymentMethod === 'COD' 
         ? null 
-        : (transactionId.trim() || `TRX-${paymentMethod.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`);
+        : (transactionId.trim() || defaultTrx);
 
       const order = createCustomerStockOrder({
         customerInfo,
         items: cart,
         deliveryMethod,
         deliveryFee: effectiveDeliveryFee,
-        paymentMethod,
+        paymentMethod: paymentMethod === 'EPS' ? 'EPS Payment Gateway' : paymentMethod,
+        epsStoreId: paymentMethod === 'EPS' ? 'f49c63f4-3c57-495c-ac00-b136093671d4' : undefined,
         transactionId: genTrx,
         subtotal,
         discountAmount,
@@ -624,62 +629,76 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
                   4. Payment Gateway & Options
                 </h3>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                  {/* EPS Payment Gateway */}
+                  <label
+                    onClick={() => setPaymentMethod('EPS')}
+                    className={`p-2.5 sm:p-3 rounded-2xl border cursor-pointer text-center transition-all flex flex-col items-center justify-center gap-1.5 relative overflow-hidden ${
+                      paymentMethod === 'EPS' 
+                        ? 'border-emerald-600 bg-emerald-50/80 text-emerald-950 shadow-2xs ring-2 ring-emerald-500/30 font-bold' 
+                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <span className="absolute top-1 right-1 px-1.5 py-0.2 bg-emerald-600 text-white text-[7px] font-black rounded uppercase">Fast</span>
+                    <img src="/eps/Group 93.png" alt="EPS Gateway" className="h-5 sm:h-6 w-auto object-contain" />
+                    <span className="text-[10px] sm:text-[11px] font-black text-emerald-900">EPS Gateway</span>
+                  </label>
+
                   {/* bKash */}
                   <label
                     onClick={() => setPaymentMethod('bKash')}
-                    className={`p-3 rounded-2xl border cursor-pointer text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
+                    className={`p-2.5 sm:p-3 rounded-2xl border cursor-pointer text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
                       paymentMethod === 'bKash' 
                         ? 'border-pink-500 bg-pink-50 text-pink-900 shadow-2xs ring-2 ring-pink-500/20 font-bold' 
                         : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                     }`}
                   >
-                    <BKashLogo className="h-6 w-auto" />
-                    <span className="text-[11px]">bKash Pay</span>
+                    <BKashLogo className="h-5 sm:h-6 w-auto" />
+                    <span className="text-[10px] sm:text-[11px]">bKash Pay</span>
                   </label>
 
                   {/* Nagad */}
                   <label
                     onClick={() => setPaymentMethod('Nagad')}
-                    className={`p-3 rounded-2xl border cursor-pointer text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
+                    className={`p-2.5 sm:p-3 rounded-2xl border cursor-pointer text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
                       paymentMethod === 'Nagad' 
                         ? 'border-orange-500 bg-orange-50 text-orange-900 shadow-2xs ring-2 ring-orange-500/20 font-bold' 
                         : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                     }`}
                   >
-                    <NagadLogo className="h-6 w-auto" />
-                    <span className="text-[11px]">Nagad</span>
+                    <NagadLogo className="h-5 sm:h-6 w-auto" />
+                    <span className="text-[10px] sm:text-[11px]">Nagad</span>
                   </label>
 
                   {/* Card */}
                   <label
                     onClick={() => setPaymentMethod('Card')}
-                    className={`p-3 rounded-2xl border cursor-pointer text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
+                    className={`p-2.5 sm:p-3 rounded-2xl border cursor-pointer text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
                       paymentMethod === 'Card' 
                         ? 'border-blue-500 bg-blue-50 text-blue-900 shadow-2xs ring-2 ring-blue-500/20 font-bold' 
                         : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                     }`}
                   >
                     <div className="flex items-center gap-1">
-                      <VisaLogo className="h-3.5 w-auto" />
-                      <MastercardLogo className="h-3.5 w-auto" />
+                      <VisaLogo className="h-3 sm:h-3.5 w-auto" />
+                      <MastercardLogo className="h-3 sm:h-3.5 w-auto" />
                     </div>
-                    <span className="text-[11px]">Cards</span>
+                    <span className="text-[10px] sm:text-[11px]">Cards</span>
                   </label>
 
                   {/* Cash on Delivery (COD) */}
                   <label
                     onClick={() => setPaymentMethod('COD')}
-                    className={`p-3 rounded-2xl border cursor-pointer text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
+                    className={`p-2.5 sm:p-3 rounded-2xl border cursor-pointer text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
                       paymentMethod === 'COD' 
                         ? 'border-emerald-500 bg-emerald-50 text-emerald-900 shadow-2xs ring-2 ring-emerald-500/20 font-bold' 
                         : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                     }`}
                   >
-                    <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                    <div className="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
                       💵
                     </div>
-                    <span className="text-[11px]">Cash on Del.</span>
+                    <span className="text-[10px] sm:text-[11px]">Cash on Del.</span>
                   </label>
                 </div>
 
@@ -689,25 +708,40 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
                     <div className="flex justify-between items-center text-[11px]">
                       <span className="font-bold text-slate-700 flex items-center gap-1.5">
                         <CreditCard className="w-3.5 h-3.5 text-brand-600" />
+                        {paymentMethod === 'EPS' && 'EPS Easy Payment System • Store ID: f49c63f4-3c57-495c-ac00-b136093671d4'}
                         {paymentMethod === 'bKash' && 'bKash Merchant Payment (01712-998877)'}
                         {paymentMethod === 'Nagad' && 'Nagad Merchant Payment (01912-334455)'}
                         {paymentMethod === 'Card' && 'SSLCommerz 256-bit Secure Card Checkout'}
                       </span>
                       <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 font-extrabold text-[10px]">
-                        Sandbox Active
+                        {paymentMethod === 'EPS' ? 'EPS Certified' : 'Sandbox Active'}
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-slate-500 leading-relaxed">
-                      {paymentMethod === 'bKash' && 'Send payment of ৳' + grandTotal.toLocaleString() + ' to Merchant: 01712-998877. Enter TrxID below or use the auto-fill button.'}
-                      {paymentMethod === 'Nagad' && 'Send payment of ৳' + grandTotal.toLocaleString() + ' to Merchant: 01912-334455. Enter TrxID below or use the auto-fill button.'}
-                      {paymentMethod === 'Card' && 'Instant card authorization simulation for Visa, Mastercard, and UnionPay.'}
-                    </p>
+                    {paymentMethod === 'EPS' ? (
+                      <div className="space-y-2">
+                        <p className="text-[11px] text-slate-600 leading-relaxed">
+                          Pay securely with <strong>Visa, Mastercard, bKash, Nagad, Rocket, Upay</strong> or Internet Banking via the certified EPS Payment Gateway.
+                        </p>
+                        <div className="p-2.5 rounded-xl bg-white border border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                          <img src="/eps/Group 93.png" alt="EPS Payment Gateway" className="h-6 w-auto object-contain" />
+                          <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            Store ID: f49c63f4-3c57-495c-ac00-b136093671d4
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-slate-500 leading-relaxed">
+                        {paymentMethod === 'bKash' && 'Send payment of ৳' + grandTotal.toLocaleString() + ' to Merchant: 01712-998877. Enter TrxID below or use the auto-fill button.'}
+                        {paymentMethod === 'Nagad' && 'Send payment of ৳' + grandTotal.toLocaleString() + ' to Merchant: 01912-334455. Enter TrxID below or use the auto-fill button.'}
+                        {paymentMethod === 'Card' && 'Instant card authorization simulation for Visa, Mastercard, and UnionPay.'}
+                      </p>
+                    )}
 
                     <div className="flex gap-2 items-center">
                       <input
                         type="text"
-                        placeholder={`Enter ${paymentMethod} TrxID (or leave blank to auto-verify)`}
+                        placeholder={`Enter ${paymentMethod === 'EPS' ? 'EPS' : paymentMethod} TrxID (or leave blank to auto-verify)`}
                         value={transactionId}
                         onChange={(e) => setTransactionId(e.target.value)}
                         className="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:outline-none font-mono text-xs"

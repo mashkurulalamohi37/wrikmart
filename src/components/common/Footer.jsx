@@ -74,8 +74,12 @@ export const Footer = () => {
           {/* Col 1: Brand & Overview (lg:col-span-2) */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 via-brand-500 to-cyan-400 flex items-center justify-center shadow-teal-glow">
-                <ShoppingBag className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-2xl bg-white p-0.5 shadow-teal-glow flex items-center justify-center border border-white/20">
+                <img 
+                  src="/wrikmart-logo.jpeg" 
+                  alt="WrikMart" 
+                  className="w-full h-full object-contain rounded-xl"
+                />
               </div>
               <span className="font-extrabold text-xl tracking-tight text-white font-sans">
                 Wrik<span className="text-brand-400">Mart</span>
@@ -172,11 +176,30 @@ export const Footer = () => {
                   <MastercardLogo className="w-5 h-3 flex-shrink-0" />
                   <span className="text-xs font-bold text-slate-200">Cards</span>
                 </div>
-
               </div>
             </div>
+
           </div>
 
+        </div>
+
+        {/* Official EPS PGW Payment Banner */}
+        <div className="mt-10 pt-6 border-t border-slate-800/80 flex flex-col items-center justify-center gap-3 text-center">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+              Official Payment Gateway Partner
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-extrabold">
+              EPS Certified Merchant • Store ID: f49c63f4-3c57-495c-ac00-b136093671d4
+            </span>
+          </div>
+          <div className="w-full max-w-4xl p-2 rounded-2xl bg-[#08132B]/60 border border-slate-800/80 shadow-md">
+            <img 
+              src="/eps/Group 106.png" 
+              alt="EPS Payment System - Visa, Mastercard, bKash, Nagad, Rocket, Nexus" 
+              className="w-full h-auto object-contain rounded-xl opacity-90 hover:opacity-100 transition-opacity"
+            />
+          </div>
         </div>
       </div>
 

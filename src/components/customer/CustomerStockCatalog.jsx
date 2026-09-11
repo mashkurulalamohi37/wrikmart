@@ -153,6 +153,9 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
     const success = addToCart(product, qty);
     if (success) {
       setQuantities(prev => ({ ...prev, [product.id]: 1 }));
+      if (selectedProduct) {
+        setSelectedProduct(null);
+      }
     }
   };
 
@@ -447,10 +450,6 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
                     >
                       {product.name}
                     </h3>
-
-                    <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                      {product.description}
-                    </p>
                   </div>
 
                   {/* Stock Level Meter */}

@@ -83,8 +83,12 @@ export const Header = () => {
           }}
           className="flex items-center gap-1.5 sm:gap-2.5 cursor-pointer group flex-shrink-0"
         >
-          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-brand-600 via-brand-500 to-cyan-400 flex items-center justify-center shadow-teal-glow group-hover:scale-105 transition-transform flex-shrink-0">
-            <ShoppingBag className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white p-0.5 shadow-teal-glow group-hover:scale-105 transition-transform flex-shrink-0 flex items-center justify-center border border-white/20">
+            <img 
+              src="/wrikmart-logo.jpeg" 
+              alt="WrikMart" 
+              className="w-full h-full object-contain rounded-lg"
+            />
           </div>
           <div>
             <div className="flex items-center gap-1">

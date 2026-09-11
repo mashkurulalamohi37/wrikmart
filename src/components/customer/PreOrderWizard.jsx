@@ -47,54 +47,83 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
   // Handle pre-filled Pre-Order data from Header Search or Home Hero
   useEffect(() => {
     if (prefilledPreOrder) {
-      if (prefilledPreOrder.url) {
-        const rawUrl = prefilledPreOrder.url;
+      if (prefilledPreOrder.url || prefilledPreOrder.name) {
+        const rawUrl = (prefilledPreOrder.url || '').trim();
         const lower = rawUrl.toLowerCase();
-        let detectedCountry = 'India';
-        if (lower.includes('.ae') || lower.includes('dubai') || lower.includes('noon.com') || lower.includes('apple.com/ae') || lower.includes('amazon.ae')) {
-          detectedCountry = 'Dubai';
-        } else if (lower.includes('.th') || lower.includes('thailand') || lower.includes('shopee.co.th') || lower.includes('central.co.th') || lower.includes('lazada.co.th')) {
-          detectedCountry = 'Thailand';
-        } else if (lower.includes('.in') || lower.includes('india') || lower.includes('flipkart') || lower.includes('amazon.in') || lower.includes('myntra')) {
-          detectedCountry = 'India';
+        let detectedCountry = prefilledPreOrder.country || 'India';
+        if (!prefilledPreOrder.country) {
+          if (lower.includes('.ae') || lower.includes('dubai') || lower.includes('noon.com') || lower.includes('apple.com/ae') || lower.includes('amazon.ae')) {
+            detectedCountry = 'Dubai';
+          } else if (lower.includes('.th') || lower.includes('thailand') || lower.includes('shopee.co.th') || lower.includes('central.co.th') || lower.includes('lazada')) {
+            detectedCountry = 'Thailand';
+          } else {
+            detectedCountry = 'India';
+          }
         }
         setCountry(detectedCountry);
 
-        // Try extracting readable product title from slug
-        let extractedName = '';
-        try {
-          const parsed = new URL(rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`);
-          const parts = parsed.pathname.split('/').filter(Boolean);
-          if (parts.length > 0) {
-            let slug = parts[parts.length - 1];
-            if (slug.length < 3 && parts.length > 1) slug = parts[parts.length - 2];
-            slug = slug.replace(/\.[a-zA-Z0-9]+$/, '').replace(/[-_+]/g, ' ');
-            const words = slug.split(' ').filter(w => w.length > 1 && !/^\d+$/.test(w) && w.length < 25);
-            if (words.length > 0) {
-              extractedName = words.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        let itemName = prefilledPreOrder.name || '';
+        if (!itemName && rawUrl) {
+          try {
+            const parsed = new URL(rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`);
+            const parts = decodeURIComponent(parsed.pathname).split('/').filter(Boolean);
+            const dpIdx = parts.indexOf('dp');
+            if (dpIdx > 0) {
+              itemName = parts[dpIdx - 1].replace(/[-_+]/g, ' ');
+            } else if (parts.length > 0) {
+              const candidates = parts.filter(p => p !== 'dp' && p !== 'gp' && p !== 'product' && p !== 'd' && !/^[A-Z0-9]{10}$/i.test(p));
+              if (candidates.length > 0) {
+                candidates.sort((a, b) => b.length - a.length);
+                itemName = candidates[0].replace(/[-_+]/g, ' ');
+              }
             }
+          } catch (e) {}
+
+          if (itemName) {
+            itemName = itemName.split(' ').filter(w => w.length > 1 && !/^\d+$/.test(w) && w.length < 30).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
           }
-        } catch (e) {}
+        }
 
-        setCurrentItem(prev => ({
-          ...prev,
+        if (!itemName) {
+          if (lower.includes('amazon') || lower.includes('amzn')) itemName = 'Amazon Imported Product';
+          else if (lower.includes('apple') || lower.includes('iphone')) itemName = 'Apple Device Import';
+          else if (lower.includes('nike')) itemName = 'Nike Footwear Import';
+          else itemName = 'Imported Global Product';
+        }
+
+        const isAppleOrExpensive = itemName.toLowerCase().includes('apple') || itemName.toLowerCase().includes('iphone');
+        const estPrice = prefilledPreOrder.expectedPrice || (isAppleOrExpensive ? 85000 : 4500);
+
+        const newCartItem = {
+          id: `item-${Date.now()}`,
+          name: itemName,
           url: rawUrl,
-          name: extractedName || (rawUrl.includes('apple') ? 'Apple Device Import' : rawUrl.includes('nike') ? 'Nike Product Import' : prev.name || 'Imported Product')
-        }));
-      } else if (prefilledPreOrder.name) {
-        setCurrentItem(prev => ({
-          ...prev,
-          name: prefilledPreOrder.name,
-          url: ''
-        }));
-      }
+          category: itemName.toLowerCase().includes('shoe') || itemName.toLowerCase().includes('nike') ? 'Footwear' : 'Electronics',
+          brand: itemName.toLowerCase().includes('apple') ? 'Apple' : itemName.toLowerCase().includes('nike') ? 'Nike' : (lower.includes('amazon') ? 'Amazon' : 'Global Brand'),
+          image: prefilledPreOrder.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80',
+          specs: { unit: 1, size: '', color: '' },
+          expectedPrice: estPrice,
+          notes: `Imported via ${detectedCountry} Agent`
+        };
 
-      if (prefilledPreOrder.country) {
-        setCountry(prefilledPreOrder.country);
-      }
+        setCurrentItem({
+          name: itemName,
+          url: rawUrl,
+          category: newCartItem.category,
+          expectedPrice: estPrice,
+          quantity: 1,
+          size: '',
+          color: '',
+          notes: '',
+          image: newCartItem.image
+        });
 
-      setStep(1);
-      setPrefilledPreOrder(null);
+        // Replace demo item with customer's pasted product
+        setItems([newCartItem]);
+        setStep(2); // Directly show specifications
+        setPrefilledPreOrder(null);
+        showToast(`Pre-order created for "${itemName}" from ${detectedCountry}!`, 'success');
+      }
     }
   }, [prefilledPreOrder, setPrefilledPreOrder]);
 
@@ -141,7 +170,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
   });
 
   // Payment Selection
-  const [paymentMethod, setPaymentMethod] = useState('bKash');
+  const [paymentMethod, setPaymentMethod] = useState('EPS');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
 
@@ -224,12 +253,16 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
     setIsProcessingPayment(true);
 
     setTimeout(() => {
-      const generatedTrxId = `TRX-${paymentMethod.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
+      const generatedTrxId = paymentMethod === 'EPS'
+        ? `EPS-TRX-${Math.floor(100000 + Math.random() * 900000)}`
+        : `TRX-${paymentMethod.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
+
       const newOrder = createCustomerPreOrder({
         country,
         items,
         customerInfo,
-        paymentMethod,
+        paymentMethod: paymentMethod === 'EPS' ? 'EPS Payment Gateway' : paymentMethod,
+        epsStoreId: paymentMethod === 'EPS' ? 'f49c63f4-3c57-495c-ac00-b136093671d4' : undefined,
         transactionId: generatedTrxId,
         advancePaid: advanceRequired
       });
@@ -331,10 +364,10 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                   <p className="text-xs text-slate-500 mb-2">Paste the web link from Nike, Amazon, Apple, Zara, Flipkart etc.</p>
                   <div className="relative">
                     <input
-                      type="url"
+                      type="text"
                       value={currentItem.url}
                       onChange={(e) => setCurrentItem({ ...currentItem, url: e.target.value })}
-                      placeholder="https://www.example.com/product/123"
+                      placeholder="Paste product link (Amazon, Nike, Apple, Zara, Flipkart)..."
                       className="w-full px-4 py-3.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 pr-24"
                     />
                     <button
@@ -348,7 +381,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                             .catch(() => showToast('Unable to read clipboard. Please paste manually.', 'info'));
                         }
                       }}
-                      className="absolute right-2 top-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors"
+                      className="absolute right-2 top-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                     >
                       Paste
                     </button>
@@ -373,7 +406,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                           <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Product Image Attached
                           </span>
-                          <p className="text-[11px] text-slate-500">Nike_AirMax_Black.jpg (450 KB)</p>
+                          <p className="text-[11px] text-slate-500">Image attached for purchasing agent</p>
                         </div>
                       </div>
                     ) : (
@@ -388,8 +421,46 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
 
                 <button
                   type="button"
-                  onClick={() => setStep(2)}
-                  className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm"
+                  onClick={() => {
+                    if (currentItem.url && (!currentItem.name || currentItem.name === 'Nike Air Max 270')) {
+                      const rawUrl = currentItem.url.trim();
+                      let detectedName = '';
+                      try {
+                        const parsed = new URL(rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`);
+                        const parts = decodeURIComponent(parsed.pathname).split('/').filter(Boolean);
+                        const dpIdx = parts.indexOf('dp');
+                        if (dpIdx > 0) {
+                          detectedName = parts[dpIdx - 1].replace(/[-_+]/g, ' ');
+                        } else if (parts.length > 0) {
+                          const candidates = parts.filter(p => p !== 'dp' && p !== 'gp' && p !== 'product' && p !== 'd' && !/^[A-Z0-9]{10}$/i.test(p));
+                          if (candidates.length > 0) {
+                            candidates.sort((a, b) => b.length - a.length);
+                            detectedName = candidates[0].replace(/[-_+]/g, ' ');
+                          }
+                        }
+                      } catch (e) {}
+
+                      if (detectedName) {
+                        detectedName = detectedName.split(' ').filter(w => w.length > 1 && !/^\d+$/.test(w) && w.length < 30).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                      }
+
+                      const lower = rawUrl.toLowerCase();
+                      if (!detectedName) {
+                        if (lower.includes('amazon') || lower.includes('amzn')) detectedName = 'Amazon Imported Item';
+                        else if (lower.includes('apple')) detectedName = 'Apple Official Import';
+                        else if (lower.includes('nike')) detectedName = 'Nike Authentic Footwear';
+                        else detectedName = 'Imported Global Product';
+                      }
+
+                      setCurrentItem(prev => ({
+                        ...prev,
+                        name: detectedName,
+                        brand: lower.includes('amazon') ? 'Amazon Store' : lower.includes('apple') ? 'Apple' : lower.includes('nike') ? 'Nike' : prev.brand || 'Global Brand'
+                      }));
+                    }
+                    setStep(2);
+                  }}
+                  className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
                 >
                   <span>Next: Product Specifications</span>
                   <ArrowRight className="w-4 h-4" />
@@ -669,34 +740,50 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
               <div className="space-y-6">
                 <div>
                   <label className="block text-xs font-bold text-navy-900 mb-2">Select Advance Payment Gateway</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     
+                    {/* EPS Gateway Option */}
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('EPS')}
+                      className={`p-3.5 sm:p-4 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-2 relative overflow-hidden ${
+                        paymentMethod === 'EPS'
+                          ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/30 font-bold shadow-sm'
+                          : 'border-slate-200 text-slate-700 hover:border-slate-300 bg-slate-50'
+                      }`}
+                    >
+                      <span className="absolute top-1.5 right-1.5 px-1.5 py-0.2 bg-emerald-600 text-white text-[7px] font-black rounded uppercase">Fast</span>
+                      <img src="/eps/Group 93.png" alt="EPS Gateway" className="h-6 sm:h-7 w-auto object-contain" />
+                      <span className="block text-xs font-black text-emerald-950">EPS Gateway</span>
+                      <span className="text-[10px] text-slate-500">Cards, MFS & Banking</span>
+                    </button>
+
                     {/* bKash Option */}
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('bKash')}
-                      className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-2 ${
+                      className={`p-3.5 sm:p-4 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-2 ${
                         paymentMethod === 'bKash'
                           ? 'border-[#E2136E] bg-pink-50/70 ring-2 ring-[#E2136E] font-bold shadow-sm'
                           : 'border-slate-200 text-slate-700 hover:border-slate-300 bg-slate-50'
                       }`}
                     >
-                      <BKashLogo className="w-8 h-8 flex-shrink-0" />
+                      <BKashLogo className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0" />
                       <span className="block text-xs font-bold text-[#D81B60]">bKash Payment</span>
-                      <span className="text-[10px] text-slate-400">Direct / App Checkout</span>
+                      <span className="text-[10px] text-slate-400">Direct Checkout</span>
                     </button>
 
                     {/* Nagad Option */}
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('Nagad')}
-                      className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-2 ${
+                      className={`p-3.5 sm:p-4 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-2 ${
                         paymentMethod === 'Nagad'
                           ? 'border-[#F7941D] bg-orange-50/70 ring-2 ring-[#F7941D] font-bold shadow-sm'
                           : 'border-slate-200 text-slate-700 hover:border-slate-300 bg-slate-50'
                       }`}
                     >
-                      <NagadLogo className="w-8 h-8 flex-shrink-0" />
+                      <NagadLogo className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0" />
                       <span className="block text-xs font-bold text-[#E64A19]">Nagad Direct</span>
                       <span className="text-[10px] text-slate-400">Postal Digital Cash</span>
                     </button>
@@ -705,22 +792,34 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('Card')}
-                      className={`p-4 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-2 ${
+                      className={`p-3.5 sm:p-4 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-2 ${
                         paymentMethod === 'Card'
                           ? 'border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-600 font-bold shadow-sm'
                           : 'border-slate-200 text-slate-700 hover:border-slate-300 bg-slate-50'
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <VisaLogo className="w-7 h-4 flex-shrink-0" />
-                        <MastercardLogo className="w-6 h-4 flex-shrink-0" />
+                      <div className="flex items-center gap-1.5">
+                        <VisaLogo className="w-6 h-3.5 sm:w-7 sm:h-4 flex-shrink-0" />
+                        <MastercardLogo className="w-5 h-3.5 sm:w-6 sm:h-4 flex-shrink-0" />
                       </div>
-                      <span className="block text-xs font-bold text-indigo-900">Cards / Banking</span>
+                      <span className="block text-xs font-bold text-indigo-900">Cards / Bank</span>
                       <span className="text-[10px] text-slate-400">Visa, Master, Amex</span>
                     </button>
 
                   </div>
                 </div>
+
+                {paymentMethod === 'EPS' && (
+                  <div className="p-3 bg-emerald-50/80 rounded-2xl border border-emerald-200 text-xs text-emerald-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <span>Certified EPS PGW Merchant Gateway • Instant Verification</span>
+                    </div>
+                    <span className="font-mono text-[10px] font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-300">
+                      Store ID: f49c63f4-3c57-495c-ac00-b136093671d4
+                    </span>
+                  </div>
+                )}
 
                 <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 text-xs text-emerald-900 flex items-center gap-3">
                   <ShieldCheck className="w-6 h-6 text-emerald-600 flex-shrink-0" />
