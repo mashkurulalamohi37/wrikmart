@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { CountryFlag } from '../common/CountryFlag';
 import { StoreBrandBadge } from '../common/BrandLogo';
 import { useApp } from '../../context/AppContext';
@@ -22,7 +22,9 @@ import {
   Plus,
   Gift,
   Cake,
-  Tag
+  Tag,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpenOrders }) => {
@@ -38,6 +40,14 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
     setPrefilledPreOrder
   } = useApp();
   const [quickUrl, setQuickUrl] = useState('');
+  const storesSliderRef = useRef(null);
+
+  const scrollStores = (direction) => {
+    if (storesSliderRef.current) {
+      const scrollAmount = direction === 'left' ? -320 : 320;
+      storesSliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   const handleQuickPaste = () => {
     let clean = (quickUrl || '').trim();
@@ -266,62 +276,91 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
         <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
       </section>
 
-      {/* 2. Supported Global Sourcing Stores (Placed right after Hero with 2 Rows as requested) */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
+      {/* 2. Supported Global Sourcing Stores (Horizontal Slider as shown in 2nd image) */}
+      <section className="space-y-4 relative">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse"></span>
-              <h2 className="text-lg sm:text-xl font-extrabold text-navy-900">Supported Global Sourcing Stores</h2>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">Order authentic products from any official website or store across 3 countries</p>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-[#0D1B3D] tracking-tight">
+              Supported Global Sourcing Stores
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+              Order from any official website or store in India, UAE, and Thailand
+            </p>
           </div>
           <button 
             onClick={onStartPreOrder} 
-            className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 transition-colors border border-brand-200"
+            className="self-start sm:self-auto text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-50 hover:bg-brand-100 transition-colors border border-brand-200 shadow-2xs cursor-pointer"
           >
             <span>Custom Website Link</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {/* 2 Rows of Global Sourcing Stores */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            // Row 1
-            { name: 'Nike India', country: 'India', cat: 'Sneakers & Apparel' },
-            { name: 'Apple Dubai', country: 'Dubai', cat: 'iPhone, AirPods, Mac' },
-            { name: 'Amazon India', country: 'India', cat: 'Electronics & Books' },
-            { name: 'Zara Global', country: 'India', cat: 'Designer Fashion' },
-            { name: 'Noon Dubai', country: 'Dubai', cat: 'Perfumes & Watches' },
-            { name: 'Shopee Thailand', country: 'Thailand', cat: 'Skincare & Cosmetics' },
-            // Row 2
-            { name: 'Flipkart India', country: 'India', cat: 'Smartphones & Tech' },
-            { name: 'Sephora Dubai', country: 'Dubai', cat: 'Luxury Cosmetics' },
-            { name: 'Amazon UAE', country: 'Dubai', cat: 'Dubai Lifestyle & Tech' },
-            { name: 'Central Thailand', country: 'Thailand', cat: 'Bangkok Mall Fashion' },
-            { name: 'Myntra India', country: 'India', cat: 'Trending Western Fashion' },
-            { name: 'Lazada Thailand', country: 'Thailand', cat: 'Thai Beauty & Tech' }
-          ].map((store, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                if (setPrefilledPreOrder) {
-                  setPrefilledPreOrder({ country: store.country, platform: store.name });
-                }
-                onStartPreOrder();
-              }}
-              className="p-3.5 sm:p-4 rounded-2xl bg-white border border-slate-200/80 shadow-soft hover:shadow-card hover:border-brand-500 text-left transition-all group flex flex-col justify-between"
-            >
-              <div className="mb-2.5">
-                <StoreBrandBadge storeName={store.name} />
-              </div>
-              <div>
-                <h3 className="font-bold text-xs text-navy-900 group-hover:text-brand-600 transition-colors leading-tight">{store.name}</h3>
-                <p className="text-[10px] text-slate-400 mt-0.5 truncate">{store.cat}</p>
-              </div>
-            </button>
-          ))}
+        {/* Slider Container with Left & Right Arrow Buttons */}
+        <div className="relative group">
+          {/* Left Arrow Button */}
+          <button
+            onClick={() => scrollStores('left')}
+            className="absolute left-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-[#0D1B3D]/85 hover:bg-[#0D1B3D] text-white flex items-center justify-center shadow-xl backdrop-blur-sm transition-all hover:scale-110 active:scale-95 cursor-pointer border border-white/20"
+            title="Scroll Left"
+            aria-label="Previous Stores"
+          >
+            <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+          </button>
+
+          {/* Right Arrow Button */}
+          <button
+            onClick={() => scrollStores('right')}
+            className="absolute right-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-[#0D1B3D]/85 hover:bg-[#0D1B3D] text-white flex items-center justify-center shadow-xl backdrop-blur-sm transition-all hover:scale-110 active:scale-95 cursor-pointer border border-white/20"
+            title="Scroll Right"
+            aria-label="Next Stores"
+          >
+            <ChevronRight className="w-5 h-5 stroke-[2.5]" />
+          </button>
+
+          {/* Horizontal Scrollable Row */}
+          <div 
+            ref={storesSliderRef}
+            className="flex items-stretch gap-3.5 sm:gap-4 overflow-x-auto scroll-smooth no-scrollbar py-2 px-1"
+          >
+            {[
+              { name: 'Nike India', country: 'India', cat: 'Sneakers & Apparel' },
+              { name: 'Apple Dubai', country: 'Dubai', cat: 'iPhone, AirPods, Mac' },
+              { name: 'Zara Global', country: 'India', cat: 'Designer Fashion' },
+              { name: 'Amazon India', country: 'India', cat: 'Electronics & Books' },
+              { name: 'Noon Dubai', country: 'Dubai', cat: 'Perfumes & Watches' },
+              { name: 'Shopee Thailand', country: 'Thailand', cat: 'Skincare & Cosmetics' },
+              { name: 'Flipkart India', country: 'India', cat: 'Smartphones & Tech' },
+              { name: 'Sephora Dubai', country: 'Dubai', cat: 'Luxury Cosmetics' },
+              { name: 'Amazon UAE', country: 'Dubai', cat: 'Dubai Lifestyle & Tech' },
+              { name: 'Central Thailand', country: 'Thailand', cat: 'Bangkok Mall Fashion' },
+              { name: 'Myntra India', country: 'India', cat: 'Trending Western Fashion' },
+              { name: 'Lazada Thailand', country: 'Thailand', cat: 'Thai Beauty & Tech' }
+            ].map((store, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  if (setPrefilledPreOrder) {
+                    setPrefilledPreOrder({ country: store.country, platform: store.name });
+                  }
+                  onStartPreOrder();
+                }}
+                className="w-[160px] sm:w-[185px] flex-shrink-0 p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/80 shadow-soft hover:shadow-card hover:border-brand-500 text-left transition-all group/card flex flex-col justify-between cursor-pointer"
+              >
+                <div className="mb-4">
+                  <StoreBrandBadge storeName={store.name} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-xs sm:text-sm text-navy-900 group-hover/card:text-brand-600 transition-colors leading-tight">
+                    {store.name}
+                  </h3>
+                  <p className="text-[11px] text-slate-400 mt-1 truncate">
+                    {store.cat}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
