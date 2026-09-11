@@ -1,11 +1,16 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   ShoppingBag, 
   Plus, 
-  LogIn,
-  LogOut,
-  KeyRound
+  LogIn, 
+  LogOut, 
+  KeyRound,
+  ChevronDown,
+  Shield,
+  Layers,
+  Store,
+  UserCheck
 } from 'lucide-react';
 import { HeaderSearchBar } from './HeaderSearchBar';
 
@@ -14,13 +19,26 @@ export const Header = () => {
     currentRole, 
     setCurrentRole, 
     setCustomerTab,
-    cart = [],
+    cart = [], 
     setIsCartOpen,
     currentUser,
     setIsAuthModalOpen,
     setAuthModalMode,
     logout
   } = useApp();
+
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
+  const roleMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (roleMenuRef.current && !roleMenuRef.current.contains(e.target)) {
+        setRoleMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleStartPreOrder = () => {
     setCurrentRole('customer');
@@ -78,13 +96,82 @@ export const Header = () => {
             <span>Pre-Order</span>
           </button>
 
-          {/* Quick Cart Button (Desktop / Tablet) */}
+          {/* Role Switcher Pill for Easy Mobile & Desktop Navigation */}
+          <div className="relative" ref={roleMenuRef}>
+            <button
+              onClick={() => setRoleMenuOpen(!roleMenuOpen)}
+              className="flex items-center gap-1 sm:gap-1.5 bg-[#14234B] hover:bg-[#1A2E63] border border-slate-700/80 rounded-xl sm:rounded-2xl px-2 sm:px-2.5 py-1.5 sm:py-2 text-xs font-bold text-slate-200 transition-all shadow-md active:scale-95"
+              title="Switch App View"
+            >
+              {currentRole === 'customer' && <Store className="w-3.5 h-3.5 text-brand-400" />}
+              {currentRole === 'admin' && <Shield className="w-3.5 h-3.5 text-amber-400" />}
+              {currentRole === 'agent' && <UserCheck className="w-3.5 h-3.5 text-emerald-400" />}
+              <span className="capitalize text-[11px] hidden xs:inline">{currentRole}</span>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </button>
+
+            {roleMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-[#0D1B3D] border border-slate-700 rounded-2xl shadow-2xl py-1.5 z-50 animate-scale-up">
+                <div className="px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-800">
+                  Switch App View
+                </div>
+                <button
+                  onClick={() => {
+                    setCurrentRole('customer');
+                    if (setCustomerTab) setCustomerTab('home');
+                    setRoleMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold transition-colors ${
+                    currentRole === 'customer' ? 'bg-brand-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <Store className="w-4 h-4 text-brand-400" />
+                  <div className="text-left">
+                    <span className="block leading-tight">Customer</span>
+                    <span className="text-[9px] font-normal text-slate-400">Storefront & Pre-Order</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentRole('admin');
+                    setRoleMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold transition-colors ${
+                    currentRole === 'admin' ? 'bg-brand-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <Shield className="w-4 h-4 text-amber-400" />
+                  <div className="text-left">
+                    <span className="block leading-tight">Admin HQ</span>
+                    <span className="text-[9px] font-normal text-slate-400">Operations & Settings</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentRole('agent');
+                    setRoleMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold transition-colors ${
+                    currentRole === 'agent' ? 'bg-brand-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  <UserCheck className="w-4 h-4 text-emerald-400" />
+                  <div className="text-left">
+                    <span className="block leading-tight">Overseas Agent</span>
+                    <span className="text-[9px] font-normal text-slate-400">Sourcing & Tasks</span>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Quick Cart Button: Visible on ALL screens including Mobile */}
           <button
             onClick={() => {
               setCurrentRole('customer');
               if (setIsCartOpen) setIsCartOpen(true);
             }}
-            className="hidden sm:flex items-center gap-1.5 bg-[#14234B] hover:bg-[#1A2E63] border border-slate-700/80 rounded-xl sm:rounded-2xl px-2.5 py-1.5 sm:px-3 sm:py-2 text-white font-bold text-xs shadow-md transition-all relative flex-shrink-0"
+            className="flex items-center gap-1.5 bg-[#14234B] hover:bg-[#1A2E63] border border-slate-700/80 rounded-xl sm:rounded-2xl px-2.5 py-1.5 sm:px-3 sm:py-2 text-white font-bold text-xs shadow-md transition-all relative flex-shrink-0 active:scale-95"
             title="Open Shopping Cart"
           >
             <ShoppingBag className="w-4 h-4 text-brand-400" />

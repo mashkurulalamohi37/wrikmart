@@ -333,7 +333,7 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
 
           {/* Footer & Checkout CTA */}
           {cart.length > 0 && (
-            <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50 space-y-3 sm:space-y-4">
+            <div className="p-4 sm:p-5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] border-t border-slate-100 bg-slate-50 space-y-3 sm:space-y-4">
               {/* Summary Rows */}
               <div className="space-y-1.5 text-xs text-slate-600">
                 <div className="flex justify-between items-center">

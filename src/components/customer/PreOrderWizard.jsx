@@ -491,19 +491,20 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
     <div className="space-y-6">
       
       {/* Top Breadcrumb & Progress Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-soft">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-soft">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           {step > 1 && step < 6 && (
             <button 
               onClick={() => setStep(step - 1)}
-              className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+              className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors flex-shrink-0"
+              aria-label="Previous step"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
           )}
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600">Cross-Border Pre-Order Wizard</span>
-            <h2 className="text-lg font-extrabold text-navy-900">
+          <div className="flex-1 min-w-0">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 block">Cross-Border Pre-Order Wizard</span>
+            <h2 className="text-base sm:text-lg font-extrabold text-navy-900 truncate sm:whitespace-normal">
               {step === 1 && '1. Sourcing Country & Product Link'}
               {step === 2 && '2. Product Specifications & Customization'}
               {step === 3 && '3. Review Multi-Product Order Cart'}
@@ -514,8 +515,8 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
           </div>
         </div>
 
-        {/* 5-Step Progress Indicators */}
-        <div className="flex items-center gap-2">
+        {/* Desktop/Tablet 5-Step Progress Indicators */}
+        <div className="hidden sm:flex items-center gap-2">
           {[1, 2, 3, 4, 5].map((s) => (
             <div key={s} className="flex items-center gap-1.5">
               <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
@@ -528,37 +529,51 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
             </div>
           ))}
         </div>
+
+        {/* Mobile Compact Progress Bar */}
+        <div className="w-full sm:hidden">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-600 mb-1.5">
+            <span className="text-brand-600">Step {step} of 5</span>
+            <span className="text-slate-400">{Math.round((step / 5) * 100)}%</span>
+          </div>
+          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-brand-500 to-emerald-500 transition-all duration-300 rounded-full"
+              style={{ width: `${(step / 5) * 100}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Main 2-Column Desktop Layout */}
       {step < 6 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           
           {/* Left Column: Interactive Wizard Forms (lg:col-span-8) */}
-          <div className="lg:col-span-8 bg-white rounded-3xl border border-slate-200 shadow-card p-6 sm:p-8 space-y-6">
+          <div className="lg:col-span-8 bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-card p-4 sm:p-8 space-y-6">
             
             {/* STEP 1: Country & Link */}
             {step === 1 && (
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-bold text-navy-900 mb-2">1. Select Sourcing Country *</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3">
                     {availableCountries.map((c) => (
                       <button
                         key={c.name}
                         type="button"
                         onClick={() => setCountry(c.name)}
-                        className={`p-4 rounded-2xl border text-left transition-all ${
+                        className={`p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border text-center sm:text-left transition-all ${
                           country === c.name 
                             ? 'border-brand-500 bg-brand-50/70 text-navy-900 shadow-sm ring-2 ring-brand-500/20' 
                             : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-slate-50/50'
                         }`}
                       >
-                        <div className="mb-2">
-                          <CountryFlag country={c.name} className="w-10 h-7 rounded shadow-xs" />
+                        <div className="flex justify-center sm:justify-start mb-1.5 sm:mb-2">
+                          <CountryFlag country={c.name} className="w-8 h-5 sm:w-10 sm:h-7 rounded shadow-xs" />
                         </div>
-                        <span className="font-extrabold text-sm block text-navy-900">{c.name}</span>
-                        <span className="text-[11px] text-slate-500 block leading-tight mt-0.5">{c.subtitle}</span>
+                        <span className="font-extrabold text-xs sm:text-sm block text-navy-900 truncate">{c.name}</span>
+                        <span className="text-[9px] sm:text-[11px] text-slate-500 block leading-tight mt-0.5 truncate">{c.subtitle}</span>
                       </button>
                     ))}
                   </div>
@@ -1181,8 +1196,8 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
           </div>
 
           {/* Right Column: Sticky Desktop Order Summary Card (lg:col-span-4) */}
-          <div className="lg:col-span-4 sticky top-36 space-y-4">
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-card p-6 space-y-4">
+          <div className={`lg:col-span-4 sticky top-36 space-y-4 ${items.length === 0 && step <= 2 ? 'hidden lg:block' : 'block'}`}>
+            <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-card p-5 sm:p-6 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 className="font-extrabold text-navy-900 text-sm">Order Summary</h3>
                 <span className="text-xs font-bold text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-full">

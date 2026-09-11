@@ -183,7 +183,7 @@ export const CustomerApp = () => {
       </div>
 
       {/* Main Full-Width Content Container */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-12">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 md:pb-12">
         <div key={activeTab} className="animate-fade-in-up">
           {activeTab === 'home' && (
             <CustomerHome 
@@ -534,65 +534,101 @@ export const CustomerApp = () => {
       {/* Customer Birthday Celebration Pop-Up Modal */}
       <CustomerBirthdayModal />
 
+      {/* Floating Mobile Cart Chip (Visible when cart has items) */}
+      {totalCartCount > 0 && (
+        <button
+          onClick={() => setIsCartOpen(true)}
+          className="fixed bottom-[72px] right-3.5 z-40 bg-gradient-to-r from-navy-900 to-[#14234B] text-white px-3.5 py-2 rounded-full shadow-2xl border border-brand-400/40 flex items-center gap-2 text-xs font-black md:hidden active:scale-95 animate-fade-in"
+          title="Open Cart Drawer"
+        >
+          <div className="relative">
+            <ShoppingBag className="w-4 h-4 text-brand-400" />
+            <span className="w-2 h-2 rounded-full bg-brand-400 absolute -top-0.5 -right-0.5 animate-pulse"></span>
+          </div>
+          <span className="text-[11px] font-bold">Cart</span>
+          <span className="px-1.5 py-0.2 rounded-full bg-brand-500 text-white text-[10px] font-extrabold min-w-[18px] text-center">
+            {totalCartCount}
+          </span>
+        </button>
+      )}
+
       {/* Fixed Bottom Mobile-Only Navigation Bar (Auto hidden on Desktop) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl py-2 px-3 md:hidden">
-        <div className="flex items-center justify-around">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-2xl py-1.5 px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] md:hidden">
+        <div className="flex items-center justify-around max-w-md mx-auto">
+          {/* 1. Home */}
           <button
             onClick={() => setActiveTab('home')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-bold transition-all ${
-              activeTab === 'home' ? 'text-brand-600' : 'text-slate-400 hover:text-slate-600'
+            className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition-all min-w-[54px] active:scale-95 ${
+              activeTab === 'home' ? 'text-brand-600 font-extrabold' : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            <Home className="w-4 h-4" />
+            <Home className={`w-5 h-5 transition-transform ${activeTab === 'home' ? 'scale-110 text-brand-600 stroke-[2.5]' : ''}`} />
             <span>Home</span>
+            {activeTab === 'home' && <span className="w-1.5 h-1 rounded-full bg-brand-600 -mt-0.5"></span>}
           </button>
 
+          {/* 2. Ready Stock */}
           <button
             onClick={() => setActiveTab('stock')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-bold transition-all ${
-              activeTab === 'stock' ? 'text-brand-600' : 'text-slate-400 hover:text-slate-600'
+            className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition-all min-w-[54px] active:scale-95 relative ${
+              activeTab === 'stock' ? 'text-brand-600 font-extrabold' : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            <Zap className="w-4 h-4 text-amber-500 fill-amber-400" />
+            <div className="relative">
+              <Zap className={`w-5 h-5 transition-transform ${activeTab === 'stock' ? 'scale-110 text-amber-500 fill-amber-400' : 'text-slate-400 fill-slate-200'}`} />
+              <span className="absolute -top-1 -right-2 px-1 py-0.2 rounded-full bg-emerald-500 text-white font-black text-[7px] leading-tight">
+                24h
+              </span>
+            </div>
             <span>Stock</span>
+            {activeTab === 'stock' && <span className="w-1.5 h-1 rounded-full bg-brand-600 -mt-0.5"></span>}
           </button>
 
+          {/* 3. Center Highlight Pre-Order CTA */}
           <button
             onClick={() => setActiveTab('preorder')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-bold transition-all ${
-              activeTab === 'preorder' ? 'text-brand-600' : 'text-slate-400 hover:text-slate-600'
-            }`}
+            className="flex flex-col items-center -mt-3.5 group active:scale-95 transition-transform min-w-[64px]"
+            title="Create New Pre-Order"
           >
-            <div className="relative">
-              <ShoppingBag className="w-4 h-4" />
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-500 absolute -top-0.5 -right-0.5"></span>
+            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg transition-all ${
+              activeTab === 'preorder'
+                ? 'bg-gradient-to-tr from-brand-600 to-cyan-500 text-white shadow-brand-500/40 ring-4 ring-brand-100 scale-105'
+                : 'bg-gradient-to-tr from-brand-500 to-cyan-600 text-white shadow-brand-500/25 hover:shadow-brand-500/40'
+            }`}>
+              <ShoppingBag className="w-5 h-5 stroke-[2.5]" />
             </div>
-            <span>Pre-Order</span>
+            <span className={`text-[10px] font-black mt-0.5 ${
+              activeTab === 'preorder' ? 'text-brand-600 font-extrabold' : 'text-slate-700 font-bold'
+            }`}>
+              Pre-Order
+            </span>
           </button>
 
-          <button
-            onClick={() => setIsCartOpen(true)}
-            className="flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-bold text-slate-600 hover:text-brand-600 relative transition-all"
-          >
-            <div className="relative">
-              <ShoppingBag className="w-4 h-4 text-brand-600" />
-              {totalCartCount > 0 && (
-                <span className="px-1 rounded-full bg-rose-500 text-white font-extrabold text-[8px] absolute -top-1 -right-2">
-                  {totalCartCount}
-                </span>
-              )}
-            </div>
-            <span>Cart</span>
-          </button>
-
+          {/* 4. Track Orders */}
           <button
             onClick={() => setActiveTab('orders')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-lg text-[10px] font-bold transition-all ${
-              activeTab === 'orders' ? 'text-brand-600' : 'text-slate-400 hover:text-slate-600'
+            className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition-all min-w-[54px] active:scale-95 ${
+              activeTab === 'orders' ? 'text-brand-600 font-extrabold' : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            <Package className="w-4 h-4" />
+            <Package className={`w-5 h-5 transition-transform ${activeTab === 'orders' ? 'scale-110 text-brand-600 stroke-[2.5]' : ''}`} />
             <span>Orders</span>
+            {activeTab === 'orders' && <span className="w-1.5 h-1 rounded-full bg-brand-600 -mt-0.5"></span>}
+          </button>
+
+          {/* 5. Support & Chat */}
+          <button
+            onClick={() => setActiveTab('chat')}
+            className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition-all min-w-[54px] active:scale-95 relative ${
+              activeTab === 'chat' ? 'text-brand-600 font-extrabold' : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <div className="relative">
+              <MessageSquare className={`w-5 h-5 transition-transform ${activeTab === 'chat' ? 'scale-110 text-brand-600 stroke-[2.5]' : ''}`} />
+              <span className="w-2 h-2 rounded-full bg-emerald-500 absolute -top-0.5 -right-1 border border-white"></span>
+            </div>
+            <span>Support</span>
+            {activeTab === 'chat' && <span className="w-1.5 h-1 rounded-full bg-brand-600 -mt-0.5"></span>}
           </button>
         </div>
       </nav>

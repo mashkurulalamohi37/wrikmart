@@ -8,7 +8,19 @@
     max-width: 100vw;
     overflow-x: clip;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
   }
+}
+
+/* Mobile Safe Area Insets & Touch Optimizations */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.touch-callout-none {
+  -webkit-touch-callout: none;
 }
 
 /* Custom Scrollbars */

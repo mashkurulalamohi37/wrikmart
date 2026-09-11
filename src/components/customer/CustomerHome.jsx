@@ -185,28 +185,28 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
       })()}
 
       {/* 1. Full-Width Hero Section with Rich Visuals */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0AA79D] via-[#08867E] to-[#0D1B3D] text-white p-5 sm:p-10 lg:p-14 shadow-card">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center relative z-10">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0AA79D] via-[#08867E] to-[#0D1B3D] text-white p-4 sm:p-8 lg:p-12 shadow-card">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center relative z-10">
           
           {/* Left Text & CTA */}
-          <div className="lg:col-span-7 space-y-4 sm:space-y-5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/15 text-[11px] sm:text-xs font-semibold backdrop-blur-md border border-white/20">
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" />
+          <div className="lg:col-span-7 space-y-3.5 sm:space-y-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/15 text-[10px] sm:text-xs font-semibold backdrop-blur-md border border-white/20">
+              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-amber-300 flex-shrink-0" />
               <span>Cross-Border Pre-Order & Ready Stock Commerce</span>
             </div>
 
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.2] sm:leading-[1.15]">
-              Shop Global Brands from <br />
+            <h1 className="text-xl sm:text-3xl lg:text-5xl font-black tracking-tight leading-[1.2] sm:leading-[1.15]">
+              Shop Global Brands from <br className="hidden xs:inline" />
               <span className="text-amber-300 underline decoration-amber-400">India, Dubai & Thailand</span>
             </h1>
 
-            <p className="text-sm sm:text-base text-cyan-100 max-w-xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-cyan-100 max-w-xl leading-relaxed">
               Found something on <strong>Amazon, Nike, Apple, Zara, Flipkart or Noon</strong>? 
               Paste the product URL or image. Our local purchasing agents buy directly from authentic stores and deliver to your doorstep in Bangladesh. Or order from our <strong>Dhaka Ready Stock</strong> for 24-48h delivery!
             </p>
 
             {/* Quick URL Input Bar inside Hero */}
-            <div className="bg-white/10 backdrop-blur-md p-2 rounded-2xl border border-white/30 max-w-xl flex flex-col sm:flex-row gap-2">
+            <div className="bg-white/10 backdrop-blur-md p-1.5 sm:p-2 rounded-2xl border border-white/30 max-w-xl flex flex-col sm:flex-row gap-2">
               <div className="relative flex-1">
                 <input
                   type="text"
@@ -216,12 +216,12 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
                     if (e.key === 'Enter') handleQuickPaste();
                   }}
                   placeholder="Paste product link (Amazon, Nike, Zara, Apple)..."
-                  className="w-full pl-4 pr-3 py-3 rounded-xl bg-white text-navy-900 text-xs font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  className="w-full pl-3.5 pr-3 py-2.5 sm:py-3 rounded-xl bg-white text-navy-900 text-xs font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
                 />
               </div>
               <button
                 onClick={handleQuickPaste}
-                className="bg-amber-400 hover:bg-amber-300 text-navy-950 font-extrabold px-6 py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md transform active:scale-95 cursor-pointer flex-shrink-0"
+                className="bg-amber-400 hover:bg-amber-300 text-navy-950 font-extrabold px-5 py-2.5 sm:py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md transform active:scale-95 cursor-pointer flex-shrink-0"
               >
                 <span>Start Pre-Order</span>
                 <ArrowRight className="w-4 h-4 text-navy-950" />
@@ -229,15 +229,15 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
             </div>
 
             {/* Key Trust Micro Badges */}
-            <div className="flex flex-wrap items-center gap-4 text-xs text-cyan-100/90 pt-2 font-medium">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-amber-300" /> 25% Advance on Pre-Order</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-amber-300" /> Cash on Delivery for Stock</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-amber-300" /> Doorstep Courier in BD</span>
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 text-[11px] sm:text-xs text-cyan-100/90 pt-1 font-medium">
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" /> 25% Advance</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" /> Cash on Delivery for Stock</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" /> Doorstep Courier</span>
             </div>
           </div>
 
-          {/* Right Highlights: Country Cards */}
-          <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
+          {/* Right Highlights: Country Cards (Swipeable Carousel on Mobile) */}
+          <div className="lg:col-span-5 flex sm:grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-visible pb-1 sm:pb-0 no-scrollbar scrollbar-none snap-x">
             {[
               {
                 country: 'India',
@@ -261,16 +261,19 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
                 time: '6-8 Days Air Freight'
               }
             ].map((c, i) => (
-              <div key={i} className="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-all">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CountryFlag country={c.code} className="w-6 h-4 shadow-sm rounded-[3px]" />
-                    <h3 className="font-extrabold text-sm text-white">{c.country}</h3>
+              <div 
+                key={i} 
+                className="min-w-[210px] sm:min-w-0 flex-shrink-0 sm:flex-shrink snap-start p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/15 transition-all"
+              >
+                <div className="flex items-center justify-between gap-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <CountryFlag country={c.code} className="w-5 h-3.5 shadow-sm rounded-xs flex-shrink-0" />
+                    <h3 className="font-extrabold text-xs sm:text-sm text-white truncate">{c.country}</h3>
                   </div>
-                  <span className="text-[10px] font-bold bg-white/20 px-2.5 py-0.5 rounded-full text-cyan-200">{c.time}</span>
+                  <span className="text-[9px] font-bold bg-white/20 px-2 py-0.5 rounded-full text-cyan-200 whitespace-nowrap flex-shrink-0">{c.time}</span>
                 </div>
-                <p className="text-xs text-amber-200 mt-1.5 font-semibold">{c.hubs}</p>
-                <p className="text-[11px] text-cyan-100/80 mt-0.5">{c.stores}</p>
+                <p className="text-[11px] text-amber-200 mt-1 font-semibold">{c.hubs}</p>
+                <p className="text-[10px] text-cyan-100/80 mt-0.5 truncate">{c.stores}</p>
               </div>
             ))}
           </div>
@@ -413,7 +416,7 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {featuredStock.map(prod => {
               const price = Number(prod.sellingPrice ?? prod.price ?? 0);
               const discountPercent = prod.originalMrp 
@@ -423,9 +426,9 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
               return (
                 <div
                   key={prod.id}
-                  className="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-soft hover:shadow-card hover:border-brand-400 transition-all flex flex-col justify-between group"
+                  className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-2.5 sm:p-3.5 shadow-soft hover:shadow-card hover:border-brand-400 transition-all flex flex-col justify-between group"
                 >
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 cursor-pointer" onClick={onBrowseStock}>
                       <img
                         src={prod.image}
@@ -439,17 +442,17 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
                         }}
                       />
                       {discountPercent > 0 && (
-                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-rose-600 text-white font-extrabold text-[9px] shadow-sm">
+                        <span className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 px-1.5 py-0.5 rounded-md bg-rose-600 text-white font-extrabold text-[8px] sm:text-[9px] shadow-sm">
                           -{discountPercent}% OFF
                         </span>
                       )}
-                      <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-slate-800 font-bold text-[9px] shadow-sm">
+                      <span className="absolute bottom-1.5 left-1.5 sm:bottom-2 sm:left-2 px-1.5 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-slate-800 font-bold text-[8px] sm:text-[9px] shadow-sm">
                         ⚡ 24h Dhaka
                       </span>
                     </div>
 
                     <div>
-                      <span className="text-[10px] font-bold text-brand-600 uppercase tracking-wider block">{prod.brand}</span>
+                      <span className="text-[9px] sm:text-[10px] font-bold text-brand-600 uppercase tracking-wider block">{prod.brand}</span>
                       <h3 
                         onClick={onBrowseStock}
                         className="font-bold text-xs text-navy-900 line-clamp-2 cursor-pointer hover:text-brand-600 transition-colors mt-0.5"
@@ -459,13 +462,13 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
                     </div>
                   </div>
 
-                  <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="pt-2.5 mt-2.5 border-t border-slate-100 flex items-center justify-between">
                     <div>
-                      <span className="font-extrabold text-sm text-navy-900 block">
+                      <span className="font-extrabold text-xs sm:text-sm text-navy-900 block">
                         ৳{price.toLocaleString()}
                       </span>
                       {prod.originalMrp && prod.originalMrp > price && (
-                        <span className="text-[10px] text-slate-400 line-through">
+                        <span className="text-[9px] sm:text-[10px] text-slate-400 line-through block">
                           ৳{prod.originalMrp.toLocaleString()}
                         </span>
                       )}
@@ -473,7 +476,7 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
 
                     <button
                       onClick={() => addToCart(prod, 1)}
-                      className="p-2 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white shadow-sm transition-all"
+                      className="p-1.5 sm:p-2 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white shadow-sm transition-all"
                       title="Add to Cart"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -487,90 +490,90 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
       </section>
 
       {/* 3. How Pre-Order Works (4-Step Infographic) */}
-      <section className="bg-white rounded-3xl border border-slate-200/80 p-8 shadow-soft space-y-6">
+      <section className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-8 shadow-soft space-y-4 sm:space-y-6">
         <div className="text-center max-w-xl mx-auto">
-          <span className="text-xs font-bold text-brand-600 uppercase tracking-wider">Simple & Transparent</span>
-          <h2 className="text-2xl font-extrabold text-navy-900 mt-1">How WrikMart Pre-Order Works</h2>
+          <span className="text-[11px] sm:text-xs font-bold text-brand-600 uppercase tracking-wider">Simple & Transparent</span>
+          <h2 className="text-xl sm:text-2xl font-black text-navy-900 mt-1">How WrikMart Pre-Order Works</h2>
           <p className="text-xs text-slate-500 mt-1">From international store shelves to your home in Bangladesh</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 relative">
           {[
             {
               step: '01',
               title: 'Paste Link & Specs',
               desc: 'Select country (India, Dubai, or Thailand) and submit product link, size, color and quantity.',
-              icon: <ShoppingBag className="w-5 h-5 text-brand-600" />,
+              icon: <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-brand-600" />,
               color: 'text-brand-600'
             },
             {
               step: '02',
               title: 'Pay 25% Advance',
               desc: 'Confirm your order by paying 25% advance safely through bKash, Nagad, or Debit/Credit Card.',
-              icon: <ShieldCheck className="w-5 h-5 text-emerald-600" />,
+              icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />,
               color: 'text-emerald-600'
             },
             {
               step: '03',
               title: 'Agent Buys & Receipts',
               desc: 'Our local on-ground agent purchases the product, records the exact store MRP, and sends it to our cargo hub.',
-              icon: <Zap className="w-5 h-5 text-purple-600" />,
+              icon: <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />,
               color: 'text-purple-600'
             },
             {
               step: '04',
               title: 'Doorstep Delivery',
               desc: 'Air shipped to Dhaka, cleared through customs, and delivered to your home with live tracking.',
-              icon: <Truck className="w-5 h-5 text-cyan-600" />,
+              icon: <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-600" />,
               color: 'text-cyan-600'
             }
           ].map((st, i) => (
-            <div key={i} className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 relative space-y-2 hover:shadow-card hover:border-slate-300 transition-all">
-              <span className={`font-black text-2xl font-mono block tracking-tight ${st.color}`}>
+            <div key={i} className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/80 relative space-y-1.5 sm:space-y-2 hover:shadow-card hover:border-slate-300 transition-all">
+              <span className={`font-black text-xl sm:text-2xl font-mono block tracking-tight ${st.color}`}>
                 {st.step}
               </span>
-              <div className="w-10 h-10 rounded-xl bg-white shadow-xs border border-slate-200/60 flex items-center justify-center mb-2">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white shadow-xs border border-slate-200/60 flex items-center justify-center mb-1.5 sm:mb-2">
                 {st.icon}
               </div>
-              <h3 className="font-bold text-sm text-navy-900">{st.title}</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">{st.desc}</p>
+              <h3 className="font-bold text-xs sm:text-sm text-navy-900">{st.title}</h3>
+              <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">{st.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* 4. Why Choose WrikMart Trust Pillars */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 text-center shadow-soft space-y-2">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <ShieldCheck className="w-6 h-6" />
+      <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 text-center shadow-soft space-y-1.5 sm:space-y-2">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <h3 className="font-bold text-sm text-navy-900">100% Secure Payment</h3>
-          <p className="text-xs text-slate-500">Advance held in escrow with automated refund guarantee</p>
+          <h3 className="font-bold text-xs sm:text-sm text-navy-900">100% Secure Payment</h3>
+          <p className="text-[10px] sm:text-xs text-slate-500">Advance held in escrow with automated refund</p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 text-center shadow-soft space-y-2">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center">
-            <BadgePercent className="w-6 h-6" />
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 text-center shadow-soft space-y-1.5 sm:space-y-2">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center">
+            <BadgePercent className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <h3 className="font-bold text-sm text-navy-900">Original MRP & Receipts</h3>
-          <p className="text-xs text-slate-500">Exact store invoice provided with zero hidden markups</p>
+          <h3 className="font-bold text-xs sm:text-sm text-navy-900">Original MRP & Receipts</h3>
+          <p className="text-[10px] sm:text-xs text-slate-500">Exact store invoice provided with zero hidden markups</p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 text-center shadow-soft space-y-2">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
-            <Globe2 className="w-6 h-6" />
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 text-center shadow-soft space-y-1.5 sm:space-y-2">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
+            <Globe2 className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <h3 className="font-bold text-sm text-navy-900">3 Global Sourcing Hubs</h3>
-          <p className="text-xs text-slate-500">Dedicated agents in New Delhi, Dubai, and Bangkok</p>
+          <h3 className="font-bold text-xs sm:text-sm text-navy-900">3 Global Sourcing Hubs</h3>
+          <p className="text-[10px] sm:text-xs text-slate-500">Dedicated agents in Delhi, Dubai, & Bangkok</p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 text-center shadow-soft space-y-2">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
-            <Truck className="w-6 h-6" />
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 text-center shadow-soft space-y-1.5 sm:space-y-2">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <Truck className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
-          <h3 className="font-bold text-sm text-navy-900">64 District Delivery</h3>
-          <p className="text-xs text-slate-500">Last-mile doorstep courier with Steadfast & Pathao</p>
+          <h3 className="font-bold text-xs sm:text-sm text-navy-900">64 District Delivery</h3>
+          <p className="text-[10px] sm:text-xs text-slate-500">Last-mile doorstep courier with Steadfast & Pathao</p>
         </div>
       </section>
 
