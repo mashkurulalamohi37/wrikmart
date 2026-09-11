@@ -1,5 +1,10 @@
-node_modules
-dist
+﻿node_modules
 .git
 .gitignore
 *.tar.gz
+*.mp4
+*.zip
+*.pdf
+*.docx
+EPS/
+dist
