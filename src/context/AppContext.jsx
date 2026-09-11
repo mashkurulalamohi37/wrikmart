@@ -1287,23 +1287,53 @@ export const AppProvider = ({ children }) => {
     },
     {
       id: 'usr-agent-in',
-      name: 'Rajesh Sharma',
-      email: 'agent.india@wrikmart.com',
+      name: 'Arafat Khan',
+      email: 'arafat.india@wrikmart.com',
       password: 'password123',
       role: 'agent',
       agentId: 'agent-1',
       country: 'India',
-      phone: '+91 98765-43210',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80'
+      phone: '+91 98765 43210',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+    },
+    {
+      id: 'usr-agent-ae',
+      name: 'Sabbir Hossain',
+      email: 'sabbir.dubai@wrikmart.com',
+      password: 'password123',
+      role: 'agent',
+      agentId: 'agent-2',
+      country: 'Dubai',
+      phone: '+971 50 123 4567',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+    },
+    {
+      id: 'usr-agent-th',
+      name: 'Mehedi Hasan',
+      email: 'mehedi.thai@wrikmart.com',
+      password: 'password123',
+      role: 'agent',
+      agentId: 'agent-3',
+      country: 'Thailand',
+      phone: '+66 81 234 5678',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80'
     }
   ];
 
   const [registeredUsers, setRegisteredUsers] = useState(() => {
     const saved = localStorage.getItem('wrikmart_registered_users');
+    let list = DEFAULT_USERS;
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const existingIds = new Set(parsed.map(u => u.id));
+          const missing = DEFAULT_USERS.filter(u => !existingIds.has(u.id));
+          list = [...parsed, ...missing];
+        }
+      } catch (e) {}
     }
-    return DEFAULT_USERS;
+    return list;
   });
 
   useEffect(() => {
@@ -1338,7 +1368,28 @@ export const AppProvider = ({ children }) => {
     );
 
     if (!user) {
-      if (cleanEmail.includes('admin')) {
+      // Check if matches any agent by email, country or alias
+      const matchingAgent = agents.find(a => 
+        a.email?.toLowerCase() === cleanEmail ||
+        a.phone === email?.trim() ||
+        a.id === cleanEmail ||
+        (cleanEmail.includes('india') && a.country === 'India') ||
+        (cleanEmail.includes('dubai') && a.country === 'Dubai') ||
+        (cleanEmail.includes('thai') && a.country === 'Thailand')
+      );
+
+      if (matchingAgent) {
+        user = {
+          id: `usr-${matchingAgent.id}`,
+          name: matchingAgent.name,
+          email: matchingAgent.email,
+          password: 'password123',
+          role: 'agent',
+          agentId: matchingAgent.id,
+          country: matchingAgent.country,
+          avatar: matchingAgent.avatar
+        };
+      } else if (cleanEmail.includes('admin')) {
         user = DEFAULT_USERS.find(u => u.role === 'admin');
       } else if (cleanEmail.includes('agent')) {
         user = DEFAULT_USERS.find(u => u.role === 'agent');
