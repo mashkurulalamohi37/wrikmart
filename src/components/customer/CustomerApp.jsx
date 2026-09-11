@@ -24,7 +24,9 @@ import {
   Gift,
   Edit3,
   Save,
-  Calendar
+  Calendar,
+  KeyRound,
+  Lock
 } from 'lucide-react';
 
 import { useApp } from '../../context/AppContext';
@@ -43,6 +45,8 @@ export const CustomerApp = () => {
     birthdaySettings,
     generateBirthdayCoupon,
     setAppliedCoupon,
+    setIsAuthModalOpen,
+    setAuthModalMode,
     showToast
   } = useApp();
   const activeTab = customerTab;
@@ -479,6 +483,30 @@ export const CustomerApp = () => {
                 </div>
               </div>
             )}
+
+            {/* Security & Password Card */}
+            <div className="p-4 sm:p-5 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs sm:text-sm text-navy-900">Account Password & Security</h4>
+                  <p className="text-[11px] text-slate-500">Update your account password or recover lost access credentials</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (setAuthModalMode) setAuthModalMode('changePassword');
+                  if (setIsAuthModalOpen) setIsAuthModalOpen(true);
+                }}
+                className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 rounded-xl font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-1.5 self-start sm:self-auto cursor-pointer"
+              >
+                <Lock className="w-3.5 h-3.5 text-slate-500" />
+                <span>Change Password</span>
+              </button>
+            </div>
 
             <div className="p-4 bg-brand-50 rounded-xl border border-brand-200 text-xs text-brand-900 flex items-center gap-3">
               <ShieldCheck className="w-6 h-6 text-brand-600 flex-shrink-0" />

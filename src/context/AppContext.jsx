@@ -1326,10 +1326,16 @@ export const AppProvider = ({ children }) => {
           id: `usr-${Date.now()}`,
           name: cleanEmail.split('@')[0] || 'Customer Member',
           email: cleanEmail,
+          password: password || 'password123',
           role: role || 'customer',
           avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80'
         };
       }
+    }
+
+    if (user?.password && password && user.password !== password) {
+      showToast('Incorrect password. Please verify your credentials or reset your password.', 'error');
+      return { success: false, message: 'Invalid password' };
     }
 
     setCurrentUser(user);
@@ -1344,12 +1350,64 @@ export const AppProvider = ({ children }) => {
     return { success: true, user };
   };
 
+  const changeUserPassword = ({ identifier, currentPassword, newPassword, confirmPassword }) => {
+    if (!newPassword || newPassword.length < 6) {
+      showToast('New password must be at least 6 characters long', 'warning');
+      return { success: false, message: 'Password too short' };
+    }
+    if (confirmPassword && newPassword !== confirmPassword) {
+      showToast('New password and confirmation do not match', 'warning');
+      return { success: false, message: 'Passwords do not match' };
+    }
+
+    const cleanId = (identifier || currentUser?.email || currentUser?.phone || '').trim().toLowerCase();
+    if (!cleanId) {
+      showToast('Please specify your registered email or phone', 'error');
+      return { success: false, message: 'User identifier required' };
+    }
+
+    let found = false;
+    setRegisteredUsers(prev => {
+      const updated = prev.map(u => {
+        const matchEmail = u.email?.toLowerCase() === cleanId;
+        const matchPhone = u.phone?.trim() === cleanId;
+        const matchAdmin = cleanId.includes('admin') && u.role === 'admin';
+        const matchAgent = cleanId.includes('agent') && u.role === 'agent';
+        
+        if (matchEmail || matchPhone || matchAdmin || matchAgent) {
+          found = true;
+          return { ...u, password: newPassword };
+        }
+        return u;
+      });
+
+      if (!found) {
+        updated.push({
+          id: `usr-${Date.now()}`,
+          name: cleanId.split('@')[0] || 'User',
+          email: cleanId,
+          password: newPassword,
+          role: currentUser?.role || 'customer'
+        });
+      }
+      return updated;
+    });
+
+    if (currentUser) {
+      setCurrentUser(prev => prev ? { ...prev, password: newPassword } : prev);
+    }
+
+    showToast('Password updated successfully! Your new password is now active.', 'success');
+    return { success: true };
+  };
+
   const registerUser = (userData) => {
     const newUser = {
       id: `usr-${Date.now()}`,
       name: userData.name?.trim() || 'New User',
       email: userData.email?.trim() || `${Date.now()}@customer.wrikmart.com`,
       phone: userData.phone?.trim() || '',
+      password: userData.password || 'password123',
       district: userData.district || 'Dhaka',
       address: userData.address || '',
       dateOfBirth: userData.dateOfBirth || '',
@@ -2119,7 +2177,8 @@ export const AppProvider = ({ children }) => {
     setAuthModalMode,
     login,
     logout,
-    registerUser
+    registerUser,
+    changeUserPassword
   }), [
     currentRole, customerTab, adminNav, agentTab, activeAgentId, activeAgent,
     orders, agents, hubs, inventory, exchangeRates, expenses, hqExpenses,

@@ -4,7 +4,8 @@ import {
   ShoppingBag, 
   Plus, 
   LogIn,
-  LogOut
+  LogOut,
+  KeyRound
 } from 'lucide-react';
 import { HeaderSearchBar } from './HeaderSearchBar';
 
@@ -118,9 +119,19 @@ export const Header = () => {
                 </span>
               </div>
               <button 
+                onClick={() => {
+                  if (setAuthModalMode) setAuthModalMode('changePassword');
+                  if (setIsAuthModalOpen) setIsAuthModalOpen(true);
+                }}
+                title="Change Password"
+                className="p-1 text-slate-400 hover:text-emerald-400 rounded-lg hover:bg-slate-800 transition-colors flex-shrink-0 cursor-pointer"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+              </button>
+              <button 
                 onClick={logout}
                 title="Sign Out"
-                className="p-1 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition-colors flex-shrink-0"
+                className="p-1 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition-colors flex-shrink-0 cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
