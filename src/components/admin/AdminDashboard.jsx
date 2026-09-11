@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   ShoppingBag, 
@@ -12,7 +12,9 @@ import {
   CheckCircle, 
   ChevronRight,
   Sparkles,
-  Plus
+  Plus,
+  PackageX,
+  Inbox
 } from 'lucide-react';
 import { CountryFlag } from '../common/CountryFlag';
 
@@ -23,6 +25,52 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
   const totalRevenue = orders.reduce((sum, o) => sum + (o.financials?.estimatedTotal || o.financials?.finalSellingPrice || 0), 0);
   const totalCustomerCount = (registeredUsers.filter(u => u.role === 'customer').length) + customers.length;
   const totalAgentsCount = agents.length;
+
+  // Dynamic Status Breakdown
+  const processingCount = orders.filter(o => ['Submitted', 'Assigned', 'Purchased', 'In Sourcing', 'Processing'].includes(o.status)).length;
+  const inTransitCount = orders.filter(o => ['At Hub', 'Air Freight', 'Received in BD', 'Customs Cleared', 'At Delivery House'].includes(o.status)).length;
+  const deliveredCount = orders.filter(o => o.status === 'Delivered').length;
+
+  // Dynamic Country Share
+  const indiaOrders = orders.filter(o => (o.country || '').toLowerCase().includes('india') || o.assignedAgentId === 'agent-1').length;
+  const dubaiOrders = orders.filter(o => (o.country || '').toLowerCase().includes('dubai') || (o.country || '').toLowerCase().includes('uae') || o.assignedAgentId === 'agent-2').length;
+  const thaiOrders = orders.filter(o => (o.country || '').toLowerCase().includes('thailand') || o.assignedAgentId === 'agent-3').length;
+
+  const indiaPct = totalOrdersCount > 0 ? Math.round((indiaOrders / totalOrdersCount) * 100) : 0;
+  const dubaiPct = totalOrdersCount > 0 ? Math.round((dubaiOrders / totalOrdersCount) * 100) : 0;
+  const thaiPct = totalOrdersCount > 0 ? Math.round((thaiOrders / totalOrdersCount) * 100) : 0;
+
+  // Dynamic 7-Day Trend
+  const last7Days = useMemo(() => {
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dayLabel = d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+      const isoDate = d.toISOString().split('T')[0];
+      
+      const dayOrders = orders.filter(o => {
+        const orderDate = (o.orderDate || o.createdAt || '').split('T')[0];
+        return orderDate === isoDate;
+      }).length;
+
+      days.push({
+        day: dayLabel,
+        val: dayOrders,
+        color: dayOrders > 0 ? 'bg-brand-500' : 'bg-slate-200'
+      });
+    }
+    return days;
+  }, [orders]);
+
+  const maxVal = Math.max(...last7Days.map(d => d.val), 5);
+
+  const dateRangeLabel = useMemo(() => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 6);
+    return `${start.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} - ${end.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -49,7 +97,7 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
         </div>
       </div>
 
-      {/* 4 Metric Top Stat Cards matching Visual Board 1 */}
+      {/* 4 Metric Top Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Orders */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft relative overflow-hidden">
@@ -115,7 +163,7 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
       {/* Visual Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Left 2 Cols: Order & Revenue Trend Charts (Visual Representation) */}
+        {/* Left 2 Cols: Order & Revenue Trend Charts */}
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-soft space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -123,27 +171,27 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
               <p className="text-xs text-slate-400">Monthly cross-border demand breakdown</p>
             </div>
             <span className="text-xs bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg font-semibold">
-              Date Range: 12 May - 12 Jun 2026
+              Date Range: {dateRangeLabel}
             </span>
           </div>
 
           {/* Graphical Bars representation */}
-          <div className="h-48 flex items-end justify-between gap-3 pt-6 px-2 border-b border-slate-100">
-            {[
-              { day: '06 May', val: 65, color: 'bg-brand-400' },
-              { day: '07 May', val: 82, color: 'bg-brand-500' },
-              { day: '08 May', val: 45, color: 'bg-brand-400' },
-              { day: '09 May', val: 95, color: 'bg-brand-600' },
-              { day: '10 May', val: 70, color: 'bg-brand-500' },
-              { day: '11 May', val: 110, color: 'bg-brand-500' },
-              { day: '12 May', val: 130, color: 'bg-brand-600' }
-            ].map((col, idx) => (
+          <div className="h-48 flex items-end justify-between gap-3 pt-6 px-2 border-b border-slate-100 relative">
+            {totalOrdersCount === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center text-center bg-white/70 backdrop-blur-[1px] rounded-xl z-10">
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-slate-600">No Order Volume Trends Yet</p>
+                  <p className="text-[11px] text-slate-400">Live order activity will automatically generate daily bars</p>
+                </div>
+              </div>
+            )}
+            {last7Days.map((col, idx) => (
               <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
                 <div className="text-[10px] text-slate-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
                   {col.val}
                 </div>
                 <div 
-                  style={{ height: `${(col.val / 140) * 100}%` }}
+                  style={{ height: `${col.val > 0 ? (col.val / maxVal) * 100 : 4}%` }}
                   className={`w-full max-w-[36px] ${col.color} rounded-t-lg transition-all group-hover:brightness-110 shadow-sm`}
                 />
                 <span className="text-[11px] font-semibold text-slate-500">{col.day}</span>
@@ -155,19 +203,25 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
           <div className="pt-2">
             <h4 className="text-xs font-bold text-slate-600 mb-2">Orders by Country Share</h4>
             <div className="h-3 rounded-full overflow-hidden flex bg-slate-100">
-              <div style={{ width: '42%' }} className="bg-orange-500" title="India (42%)" />
-              <div style={{ width: '38%' }} className="bg-cyan-500" title="Dubai (38%)" />
-              <div style={{ width: '20%' }} className="bg-emerald-500" title="Thailand (20%)" />
+              {totalOrdersCount > 0 ? (
+                <>
+                  <div style={{ width: `${indiaPct}%` }} className="bg-orange-500 transition-all" title={`India (${indiaPct}%)`} />
+                  <div style={{ width: `${dubaiPct}%` }} className="bg-cyan-500 transition-all" title={`Dubai (${dubaiPct}%)`} />
+                  <div style={{ width: `${thaiPct}%` }} className="bg-emerald-500 transition-all" title={`Thailand (${thaiPct}%)`} />
+                </>
+              ) : (
+                <div style={{ width: '100%' }} className="bg-slate-200" title="0 Orders" />
+              )}
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 mt-2 font-medium">
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span> India: 42% (1,070 orders)</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-cyan-500"></span> Dubai: 38% (968 orders)</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Thailand: 20% (510 orders)</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span> India: {indiaPct}% ({indiaOrders} orders)</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-cyan-500"></span> Dubai: {dubaiPct}% ({dubaiOrders} orders)</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Thailand: {thaiPct}% ({thaiOrders} orders)</span>
             </div>
           </div>
         </div>
 
-        {/* Right Col: Orders by Status Donut & Agent Snapshot */}
+        {/* Right Col: Orders by Status Donut & Snapshot */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-soft space-y-6">
           <div>
             <h3 className="font-bold text-navy-900 text-base">Orders by Status</h3>
@@ -175,9 +229,9 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
           </div>
 
           {/* Donut representation */}
-          <div className="relative w-40 h-40 mx-auto rounded-full border-8 border-brand-500 flex items-center justify-center shadow-inner">
+          <div className={`relative w-40 h-40 mx-auto rounded-full border-8 ${totalOrdersCount > 0 ? 'border-brand-500' : 'border-slate-200'} flex items-center justify-center shadow-inner transition-colors`}>
             <div className="text-center">
-              <span className="text-2xl font-extrabold text-navy-900">2,548</span>
+              <span className="text-2xl font-extrabold text-navy-900">{totalOrdersCount}</span>
               <span className="text-[10px] text-slate-400 block">Total Active</span>
             </div>
           </div>
@@ -187,28 +241,28 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
               <span className="flex items-center gap-2 text-slate-700">
                 <span className="w-2 h-2 rounded-full bg-amber-500"></span> Processing / Purchasing
               </span>
-              <strong className="text-navy-900">342</strong>
+              <strong className="text-navy-900">{processingCount}</strong>
             </div>
 
             <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50">
               <span className="flex items-center gap-2 text-slate-700">
                 <span className="w-2 h-2 rounded-full bg-purple-500"></span> At Hub / Air Freight
               </span>
-              <strong className="text-navy-900">624</strong>
+              <strong className="text-navy-900">{inTransitCount}</strong>
             </div>
 
             <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50">
               <span className="flex items-center gap-2 text-slate-700">
                 <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Delivered to Customers
               </span>
-              <strong className="text-navy-900">1,582</strong>
+              <strong className="text-navy-900">{deliveredCount}</strong>
             </div>
           </div>
         </div>
 
       </div>
 
-      {/* Recent Pre-Orders Table matching Visual Board 1 */}
+      {/* Recent Pre-Orders Table */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-soft overflow-hidden">
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <div>
@@ -217,7 +271,7 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
           </div>
           <button
             onClick={() => onNavigateToTab('orders')}
-            className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1"
+            className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1 cursor-pointer"
           >
             <span>View All Orders</span>
             <ChevronRight className="w-4 h-4" />
@@ -238,45 +292,55 @@ export const AdminDashboard = ({ onNavigateToOrder, onNavigateToTab, onCreateOrd
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              {orders.slice(0, 5).map((order) => (
-                <tr key={order.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-mono font-bold text-navy-900">{order.orderNumber}</td>
-                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
-                    <span className="font-bold text-slate-900 block">{order.customer.name}</span>
-                    <span className="text-[11px] text-slate-400">{order.customer.phone}</span>
-                  </td>
-                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-semibold">
-                    <span className="inline-flex items-center gap-1.5">
-                      <CountryFlag country={order.country || order.countryFlag} className="w-4 h-3 rounded-[2px]" />
-                      <span>{order.country}</span>
-                    </span>
-                  </td>
-                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-semibold text-brand-700">
-                    {order.assignedAgentName}
-                  </td>
-                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-bold text-emerald-600">
-                    ৳{order.financials.advancePaid.toLocaleString()}
-                  </td>
-                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
-                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
-                      order.status === 'Purchased' ? 'bg-cyan-100 text-cyan-700' :
-                      order.status === 'At Delivery House' ? 'bg-purple-100 text-purple-700' :
-                      'bg-amber-100 text-amber-700'
-                    }`}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 text-right">
-                    <button
-                      onClick={() => onNavigateToOrder(order)}
-                      className="text-xs font-bold text-brand-600 hover:bg-brand-50 px-2.5 py-1 rounded-lg transition-colors"
-                    >
-                      360° View
-                    </button>
+              {orders.length > 0 ? (
+                orders.slice(0, 5).map((order) => (
+                  <tr key={order.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-mono font-bold text-navy-900">{order.orderNumber}</td>
+                    <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
+                      <span className="font-bold text-slate-900 block">{order.customer?.name}</span>
+                      <span className="text-[11px] text-slate-400">{order.customer?.phone}</span>
+                    </td>
+                    <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-semibold">
+                      <span className="inline-flex items-center gap-1.5">
+                        <CountryFlag country={order.country || order.countryFlag} className="w-4 h-3 rounded-[2px]" />
+                        <span>{order.country}</span>
+                      </span>
+                    </td>
+                    <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-semibold text-brand-700">
+                      {order.assignedAgentName || 'Unassigned'}
+                    </td>
+                    <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 font-bold text-emerald-600">
+                      ৳{(order.financials?.advancePaid || 0).toLocaleString()}
+                    </td>
+                    <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
+                        order.status === 'Purchased' ? 'bg-cyan-100 text-cyan-700' :
+                        order.status === 'At Delivery House' ? 'bg-purple-100 text-purple-700' :
+                        'bg-amber-100 text-amber-700'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 text-right">
+                      <button
+                        onClick={() => onNavigateToOrder(order)}
+                        className="text-xs font-bold text-brand-600 hover:bg-brand-50 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                      >
+                        360° View
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-slate-400">
+                    <Inbox className="w-8 h-8 mx-auto mb-2 text-slate-300 stroke-1" />
+                    <p className="font-bold text-xs text-slate-600">No Orders in System Yet</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Customer pre-orders and manual admin orders will appear here in real time.</p>
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
