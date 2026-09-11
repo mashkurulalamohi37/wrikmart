@@ -74,7 +74,7 @@ export const AdminPanel = () => {
       icon: <Cake className="w-4 h-4 text-rose-500" />,
       badge: todayBirthdaysCount > 0 ? `🎂 ${todayBirthdaysCount}` : null
     },
-    { id: 'preorder_settings', label: 'Pre Order Form Settings', icon: <FileEdit className="w-4 h-4" /> },
+    { id: 'preorder_settings', label: 'Pre-Order & Home Stores', icon: <FileEdit className="w-4 h-4" /> },
     { id: 'agents', label: 'Agent Management', icon: <UserCheck className="w-4 h-4" /> },
     { 
       id: 'balance', 

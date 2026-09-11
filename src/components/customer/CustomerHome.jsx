@@ -24,7 +24,8 @@ import {
   Cake,
   Tag,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Settings
 } from 'lucide-react';
 
 export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpenOrders }) => {
@@ -37,7 +38,11 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
     generateBirthdayCoupon,
     setAppliedCoupon,
     showToast,
-    setPrefilledPreOrder
+    setPrefilledPreOrder,
+    sourcingStores = [],
+    currentRole,
+    setAdminNav,
+    setCurrentRole
   } = useApp();
   const [quickUrl, setQuickUrl] = useState('');
   const storesSliderRef = useRef(null);
@@ -287,57 +292,90 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
               Order from any official website or store in India, UAE, and Thailand
             </p>
           </div>
-          <button 
-            onClick={onStartPreOrder} 
-            className="self-start sm:self-auto text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-50 hover:bg-brand-100 transition-colors border border-brand-200 shadow-2xs cursor-pointer"
-          >
-            <span>Custom Website Link</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {currentRole === 'admin' && (
+              <button 
+                onClick={() => {
+                  if (setAdminNav) setAdminNav('preorder_settings');
+                  if (setCurrentRole) setCurrentRole('admin');
+                }}
+                className="self-start sm:self-auto text-xs font-bold text-slate-700 hover:text-navy-900 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors border border-slate-300 shadow-2xs cursor-pointer"
+                title="Manage Supported Global Stores in Admin Panel"
+              >
+                <Settings className="w-3.5 h-3.5 text-slate-600" />
+                <span>Manage Stores (Admin)</span>
+              </button>
+            )}
+            <button 
+              onClick={onStartPreOrder} 
+              className="self-start sm:self-auto text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-50 hover:bg-brand-100 transition-colors border border-brand-200 shadow-2xs cursor-pointer"
+            >
+              <span>Custom Website Link</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
-        {/* 2 Rows of 6 Global Sourcing Stores (Total 12 Stores) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-3.5">
-          {[
-            // Row 1 (6 Stores)
-            { name: 'Nike India', country: 'India', cat: 'Sneakers & Apparel' },
-            { name: 'Apple Dubai', country: 'Dubai', cat: 'iPhone, AirPods, Mac' },
-            { name: 'Zara Global', country: 'India', cat: 'Designer Fashion' },
-            { name: 'Amazon India', country: 'India', cat: 'Electronics & Books' },
-            { name: 'Noon Dubai', country: 'Dubai', cat: 'Perfumes & Watches' },
-            { name: 'Shopee Thailand', country: 'Thailand', cat: 'Skincare & Cosmetics' },
-            // Row 2 (6 Stores)
-            { name: 'Flipkart India', country: 'India', cat: 'Smartphones & Tech' },
-            { name: 'Sephora Dubai', country: 'Dubai', cat: 'Luxury Cosmetics' },
-            { name: 'Amazon UAE', country: 'Dubai', cat: 'Dubai Lifestyle & Tech' },
-            { name: 'Central Thailand', country: 'Thailand', cat: 'Bangkok Mall Fashion' },
-            { name: 'Myntra India', country: 'India', cat: 'Trending Western Fashion' },
-            { name: 'Lazada Thailand', country: 'Thailand', cat: 'Thai Beauty & Tech' }
-          ].map((store, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                if (setPrefilledPreOrder) {
-                  setPrefilledPreOrder({ country: store.country, platform: store.name });
-                }
-                onStartPreOrder();
-              }}
-              className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/80 shadow-soft hover:shadow-card hover:border-brand-500 text-left transition-all group flex flex-col justify-between cursor-pointer"
-            >
-              <div className="mb-3.5">
-                <StoreBrandBadge storeName={store.name} />
-              </div>
-              <div>
-                <h3 className="font-bold text-xs sm:text-sm text-navy-900 group-hover:text-brand-600 transition-colors leading-tight">
-                  {store.name}
-                </h3>
-                <p className="text-[11px] text-slate-400 mt-1 truncate">
-                  {store.cat}
-                </p>
-              </div>
-            </button>
-          ))}
-        </div>
+        {/* Global Sourcing Stores Grid */}
+        {sourcingStores.filter(s => s.isActive !== false).length === 0 ? (
+          <div className="p-8 rounded-3xl bg-white border border-slate-200/80 text-center text-slate-500 shadow-soft">
+            <p className="text-sm font-semibold">No global stores currently active.</p>
+            {currentRole === 'admin' && (
+              <button
+                onClick={() => {
+                  if (setAdminNav) setAdminNav('preorder_settings');
+                  if (setCurrentRole) setCurrentRole('admin');
+                }}
+                className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-600 text-white font-bold text-xs shadow hover:bg-brand-500 transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Configure Stores in Admin Panel</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-3.5">
+            {sourcingStores
+              .filter(store => store.isActive !== false)
+              .map((store, i) => (
+                <button
+                  key={store.id || i}
+                  onClick={() => {
+                    if (setPrefilledPreOrder) {
+                      setPrefilledPreOrder({ 
+                        country: store.country || 'Global', 
+                        platform: store.name,
+                        url: store.url || ''
+                      });
+                    }
+                    onStartPreOrder();
+                  }}
+                  className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/80 shadow-soft hover:shadow-card hover:border-brand-500 text-left transition-all group flex flex-col justify-between cursor-pointer"
+                >
+                  <div className="mb-3.5">
+                    <StoreBrandBadge 
+                      storeName={store.name} 
+                      brand={store.brand} 
+                      logoUrl={store.logoUrl} 
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        {store.country}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-xs sm:text-sm text-navy-900 group-hover:text-brand-600 transition-colors leading-tight">
+                      {store.name}
+                    </h3>
+                    <p className="text-[11px] text-slate-400 mt-1 truncate">
+                      {store.cat}
+                    </p>
+                  </div>
+                </button>
+              ))}
+          </div>
+        )}
       </section>
 
       {/* 3. Ready Stock in Bangladesh Spotlight Section */}

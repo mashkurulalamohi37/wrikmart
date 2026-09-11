@@ -117,12 +117,28 @@ export const LazadaLogo = ({ className = "w-6 h-6" }) => (
 );
 
 // Unified Store Brand Badge Component
-export const StoreBrandBadge = ({ storeName = '' }) => {
-  const norm = String(storeName).toLowerCase();
+export const StoreBrandBadge = ({ storeName = '', logoUrl = '', brand = '', className = "w-10 h-10" }) => {
+  // If a custom image/logo URL is provided, display it directly
+  if (logoUrl) {
+    return (
+      <div className={`${className} rounded-2xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center p-1.5 shadow-xs group-hover:scale-105 transition-transform`}>
+        <img
+          src={logoUrl}
+          alt={storeName || 'Store logo'}
+          className="w-full h-full object-contain"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+      </div>
+    );
+  }
+
+  const norm = `${brand} ${storeName}`.toLowerCase();
 
   if (norm.includes('nike')) {
     return (
-      <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+      <div className={`${className} rounded-2xl bg-black text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform`}>
         <NikeLogo className="w-6 h-6" />
       </div>
     );
@@ -130,7 +146,7 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('apple')) {
     return (
-      <div className="w-10 h-10 rounded-2xl bg-slate-950 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+      <div className={`${className} rounded-2xl bg-slate-950 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform`}>
         <AppleLogo className="w-5 h-5 text-white" />
       </div>
     );
@@ -138,7 +154,7 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('zara')) {
     return (
-      <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 text-black flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform">
+      <div className={`${className} rounded-2xl bg-white border border-slate-200 text-black flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform`}>
         <ZaraLogo className="w-7 h-auto text-black" />
       </div>
     );
@@ -146,7 +162,7 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('amazon')) {
     return (
-      <div className="w-10 h-10 rounded-2xl bg-[#131921] text-white flex items-center justify-center shadow-xs p-1.5 group-hover:scale-105 transition-transform">
+      <div className={`${className} rounded-2xl bg-[#131921] text-white flex items-center justify-center shadow-xs p-1.5 group-hover:scale-105 transition-transform`}>
         <AmazonLogo className="w-6 h-6 text-[#FF9900]" />
       </div>
     );
@@ -154,7 +170,7 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('noon')) {
     return (
-      <div className="w-10 h-10 rounded-2xl bg-[#FEE000] border border-yellow-300 text-black flex items-center justify-center shadow-xs p-1.5 group-hover:scale-105 transition-transform">
+      <div className={`${className} rounded-2xl bg-[#FEE000] border border-yellow-300 text-black flex items-center justify-center shadow-xs p-1.5 group-hover:scale-105 transition-transform`}>
         <NoonLogo className="w-7 h-7 text-black" />
       </div>
     );
@@ -162,7 +178,7 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('shopee')) {
     return (
-      <div className="w-10 h-10 rounded-2xl bg-[#EE4D2D] text-white flex items-center justify-center shadow-xs p-1.5 group-hover:scale-105 transition-transform">
+      <div className={`${className} rounded-2xl bg-[#EE4D2D] text-white flex items-center justify-center shadow-xs p-1.5 group-hover:scale-105 transition-transform`}>
         <ShopeeLogo className="w-6 h-6 text-white" />
       </div>
     );
@@ -170,7 +186,7 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('flipkart')) {
     return (
-      <div className="w-10 h-10 rounded-2xl bg-[#2874F0] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform">
+      <div className={`${className} rounded-2xl bg-[#2874F0] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform`}>
         <FlipkartLogo className="w-7 h-7" />
       </div>
     );
@@ -178,7 +194,7 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('sephora')) {
     return (
-      <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform">
+      <div className={`${className} rounded-2xl bg-black text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform`}>
         <SephoraLogo className="w-7 h-7" />
       </div>
     );
@@ -186,7 +202,7 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('myntra')) {
     return (
-      <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform">
+      <div className={`${className} rounded-2xl bg-white border border-slate-200 text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform`}>
         <MyntraLogo className="w-7 h-7" />
       </div>
     );
@@ -194,7 +210,7 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('central')) {
     return (
-      <div className="w-10 h-10 rounded-2xl bg-[#E31837] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform">
+      <div className={`${className} rounded-2xl bg-[#E31837] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform`}>
         <CentralLogo className="w-7 h-7" />
       </div>
     );
@@ -202,15 +218,23 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('lazada')) {
     return (
-      <div className="w-10 h-10 rounded-2xl bg-[#0F146D] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform">
+      <div className={`${className} rounded-2xl bg-[#0F146D] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform`}>
         <LazadaLogo className="w-7 h-7" />
       </div>
     );
   }
 
+  const initials = (storeName || 'Store')
+    .split(' ')
+    .filter(Boolean)
+    .map(w => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
-    <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs border border-slate-200">
-      {storeName.slice(0, 2).toUpperCase()}
+    <div className={`${className} rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs border border-slate-200 shadow-xs group-hover:scale-105 transition-transform`}>
+      {initials || 'ST'}
     </div>
   );
 };

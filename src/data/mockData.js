@@ -343,3 +343,17 @@ export const DEFAULT_BIRTHDAY_SETTINGS = {
 
 export const INITIAL_CUSTOMERS = [];
 
+export const DEFAULT_SOURCING_STORES = [
+  { id: 'store-1', name: 'Nike India', country: 'India', cat: 'Sneakers & Apparel', url: 'https://www.nike.com/in', brand: 'nike', isActive: true },
+  { id: 'store-2', name: 'Apple Dubai', country: 'Dubai', cat: 'iPhone, AirPods, Mac', url: 'https://www.apple.com/ae', brand: 'apple', isActive: true },
+  { id: 'store-3', name: 'Zara Global', country: 'India', cat: 'Designer Fashion', url: 'https://www.zara.com/in', brand: 'zara', isActive: true },
+  { id: 'store-4', name: 'Amazon India', country: 'India', cat: 'Electronics & Books', url: 'https://www.amazon.in', brand: 'amazon', isActive: true },
+  { id: 'store-5', name: 'Noon Dubai', country: 'Dubai', cat: 'Perfumes & Watches', url: 'https://www.noon.com/uae-en', brand: 'noon', isActive: true },
+  { id: 'store-6', name: 'Shopee Thailand', country: 'Thailand', cat: 'Skincare & Cosmetics', url: 'https://shopee.co.th', brand: 'shopee', isActive: true },
+  { id: 'store-7', name: 'Flipkart India', country: 'India', cat: 'Smartphones & Tech', url: 'https://www.flipkart.com', brand: 'flipkart', isActive: true },
+  { id: 'store-8', name: 'Sephora Dubai', country: 'Dubai', cat: 'Luxury Cosmetics', url: 'https://www.sephora.ae', brand: 'sephora', isActive: true },
+  { id: 'store-9', name: 'Amazon UAE', country: 'Dubai', cat: 'Dubai Lifestyle & Tech', url: 'https://www.amazon.ae', brand: 'amazon', isActive: true },
+  { id: 'store-10', name: 'Central Thailand', country: 'Thailand', cat: 'Bangkok Mall Fashion', url: 'https://www.central.co.th', brand: 'central', isActive: true },
+  { id: 'store-11', name: 'Myntra India', country: 'India', cat: 'Trending Western Fashion', url: 'https://www.myntra.com', brand: 'myntra', isActive: true },
+  { id: 'store-12', name: 'Lazada Thailand', country: 'Thailand', cat: 'Thai Beauty & Tech', url: 'https://www.lazada.co.th', brand: 'lazada', isActive: true },
+];

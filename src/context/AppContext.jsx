@@ -12,7 +12,8 @@ import {
   INITIAL_STOCK_INVENTORY,
   INITIAL_COUPONS,
   INITIAL_CUSTOMERS,
-  DEFAULT_BIRTHDAY_SETTINGS
+  DEFAULT_BIRTHDAY_SETTINGS,
+  DEFAULT_SOURCING_STORES
 } from '../data/mockData';
 
 const AppContext = createContext();
@@ -388,6 +389,20 @@ export const AppProvider = ({ children }) => {
     };
   });
 
+  // Supported Global Sourcing Stores (Home Page & Pre-Order)
+  const [sourcingStores, setSourcingStores] = useState(() => {
+    try {
+      const saved = localStorage.getItem('wrikmart_sourcing_stores');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Failed to parse wrikmart_sourcing_stores:', e);
+    }
+    return DEFAULT_SOURCING_STORES;
+  });
+
   // Sync to local storage safely protected against quota / private mode exceptions
   useEffect(() => {
     safeLocalStorageSet('wrikmart_orders_v2', orders);
@@ -460,6 +475,10 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     safeLocalStorageSet('wrikmart_preorder_settings', preOrderFormSettings);
   }, [preOrderFormSettings]);
+
+  useEffect(() => {
+    safeLocalStorageSet('wrikmart_sourcing_stores', sourcingStores);
+  }, [sourcingStores]);
 
   // Current active agent profile
   const activeAgent = agents.find(a => a.id === activeAgentId) || agents[0];
@@ -2138,6 +2157,59 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Supported Global Sourcing Stores Management (Admin)
+  const addSourcingStore = (newStore) => {
+    const storeObj = {
+      id: `store-${Date.now()}`,
+      name: newStore.name?.trim() || 'Global Store',
+      country: newStore.country || 'Global',
+      cat: newStore.cat?.trim() || 'Imported Goods',
+      url: newStore.url?.trim() || '',
+      brand: (newStore.brand || (newStore.name ? newStore.name.toLowerCase().split(' ')[0] : 'custom')).toLowerCase(),
+      logoUrl: newStore.logoUrl?.trim() || '',
+      isActive: newStore.isActive !== false
+    };
+    setSourcingStores(prev => [storeObj, ...prev]);
+    showToast(`Added store "${storeObj.name}" successfully!`, 'success');
+    return storeObj;
+  };
+
+  const updateSourcingStore = (storeId, updatedData) => {
+    setSourcingStores(prev => prev.map(s => {
+      if (s.id === storeId) {
+        return {
+          ...s,
+          ...updatedData,
+          brand: updatedData.brand !== undefined ? updatedData.brand.toLowerCase() : s.brand
+        };
+      }
+      return s;
+    }));
+    showToast('Store details updated successfully!', 'success');
+  };
+
+  const deleteSourcingStore = (storeId) => {
+    setSourcingStores(prev => prev.filter(s => s.id !== storeId));
+    showToast('Store removed successfully!', 'success');
+  };
+
+  const toggleSourcingStoreStatus = (storeId) => {
+    setSourcingStores(prev => prev.map(s => {
+      if (s.id === storeId) {
+        const next = !s.isActive;
+        showToast(`Store "${s.name}" is now ${next ? 'visible on' : 'hidden from'} homepage!`, 'info');
+        return { ...s, isActive: next };
+      }
+      return s;
+    }));
+  };
+
+  const resetSourcingStores = () => {
+    setSourcingStores(DEFAULT_SOURCING_STORES);
+    safeLocalStorageSet('wrikmart_sourcing_stores', DEFAULT_SOURCING_STORES);
+    showToast('Reset stores to default 12 official stores!', 'success');
+  };
+
   const contextValue = useMemo(() => ({
     currentRole,
     setCurrentRole,
@@ -2225,6 +2297,14 @@ export const AppProvider = ({ children }) => {
     setSelectedDistrict,
     preOrderFormSettings,
     setPreOrderFormSettings,
+    // Global Sourcing Stores (Home Page & Pre-Order)
+    sourcingStores,
+    setSourcingStores,
+    addSourcingStore,
+    updateSourcingStore,
+    deleteSourcingStore,
+    toggleSourcingStoreStatus,
+    resetSourcingStores,
     // Ready Stock Inventory Management (Admin)
     addInventoryProduct,
     updateInventoryProduct,
@@ -2248,7 +2328,7 @@ export const AppProvider = ({ children }) => {
     orders, agents, hubs, inventory, exchangeRates, expenses, hqExpenses,
     balanceTransfers, chatMessages, toast, cart, isCartOpen, coupons, appliedCoupon,
     customers, customerProfile, birthdaySettings, stockSearchQuery, prefilledPreOrder,
-    selectedDistrict, preOrderFormSettings, currentUser, isAuthModalOpen, authModalMode,
+    selectedDistrict, preOrderFormSettings, sourcingStores, currentUser, isAuthModalOpen, authModalMode,
     registeredUsers
   ]);
 
