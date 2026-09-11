@@ -35,9 +35,9 @@ export const AuthModal = () => {
 
   // Login form
   const [loginForm, setLoginForm] = useState({
-    identifier: 'admin@wrikmart.com',
-    password: '••••••••',
-    role: 'admin',
+    identifier: '',
+    password: '',
+    role: 'customer',
     rememberMe: true
   });
 
@@ -85,21 +85,6 @@ export const AuthModal = () => {
       return;
     }
     registerUser(registerForm);
-  };
-
-  // Quick 1-Click Credentials
-  const handleQuickLogin = (role) => {
-    let identifier = 'customer@wrikmart.com';
-    if (role === 'admin') identifier = 'admin@wrikmart.com';
-    if (role === 'agent') identifier = 'agent.india@wrikmart.com';
-
-    setLoginForm({
-      identifier,
-      password: 'password123',
-      role,
-      rememberMe: true
-    });
-    login({ email: identifier, password: 'password123', role });
   };
 
   if (!isAuthModalOpen) return null;
@@ -161,43 +146,6 @@ export const AuthModal = () => {
           </button>
         </div>
 
-        {/* 1-Click Fast Role Sign-in Pills */}
-        {mode === 'login' && (
-          <div className="space-y-1.5 bg-slate-50 p-3 rounded-2xl border border-slate-200">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block text-center">
-              ⚡ 1-Click Fast Demo Login
-            </span>
-            <div className="grid grid-cols-3 gap-2 text-[11px] font-bold">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin')}
-                className="p-2 rounded-xl bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100 flex flex-col items-center gap-0.5 transition-colors"
-              >
-                <ShieldCheck className="w-4 h-4 text-purple-600" />
-                <span>Admin</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('agent')}
-                className="p-2 rounded-xl bg-brand-50 text-brand-800 border border-brand-200 hover:bg-brand-100 flex flex-col items-center gap-0.5 transition-colors"
-              >
-                <Globe2 className="w-4 h-4 text-brand-600" />
-                <span>Agent</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('customer')}
-                className="p-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 flex flex-col items-center gap-0.5 transition-colors"
-              >
-                <User className="w-4 h-4 text-emerald-600" />
-                <span>Customer</span>
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Login Form */}
         {mode === 'login' ? (
           <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
@@ -223,7 +171,7 @@ export const AuthModal = () => {
                   required
                   value={loginForm.identifier}
                   onChange={(e) => setLoginForm({ ...loginForm, identifier: e.target.value })}
-                  placeholder="admin@wrikmart.com or 017xxxxxxxx"
+                  placeholder="name@example.com or 017xxxxxxxx"
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 font-medium"
                 />
               </div>

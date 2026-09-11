@@ -189,6 +189,14 @@ export const AppProvider = ({ children }) => {
 
   // Data States with automatic migration for fresh schema
   const [orders, setOrders] = useState(() => {
+    try {
+      if (!localStorage.getItem('wrikmart_orders_wiped_v2')) {
+        localStorage.removeItem('wrikmart_orders');
+        localStorage.removeItem('wrikmart_orders_v2');
+        localStorage.setItem('wrikmart_orders_wiped_v2', '1');
+        return [];
+      }
+    } catch (e) {}
     const saved = localStorage.getItem('wrikmart_orders_v2');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
