@@ -14,9 +14,11 @@ import { AdminReportsAnalytics } from './AdminReportsAnalytics';
 import { AdminSystemSettings } from './AdminSystemSettings';
 import { AdminCreateOrderModal } from './AdminCreateOrderModal';
 import { AdminCustomerManagement } from './AdminCustomerManagement';
+import { AdminStockInventory } from './AdminStockInventory';
 import { 
   LayoutDashboard, 
   ShoppingBag, 
+  Package,
   FileEdit, 
   Users, 
   UserCheck, 
@@ -61,6 +63,11 @@ export const AdminPanel = () => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { id: 'orders', label: 'Order Management', icon: <ShoppingBag className="w-4 h-4" /> },
+    { 
+      id: 'stock_inventory', 
+      label: 'Stock Products & Uploader', 
+      icon: <Package className="w-4 h-4 text-emerald-400" /> 
+    },
     { 
       id: 'customers', 
       label: 'Customers & Birthday Club', 
@@ -210,6 +217,10 @@ export const AdminPanel = () => {
             <AdminOrderList 
               onSelectOrder={(order) => setSelectedOrder360(order)}
             />
+          )}
+
+          {activeNav === 'stock_inventory' && (
+            <AdminStockInventory />
           )}
 
           {activeNav === 'customers' && (

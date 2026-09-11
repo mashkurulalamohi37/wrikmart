@@ -47,7 +47,7 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
   };
 
   // Top 4 in-stock showcase items
-  const featuredStock = inventory.filter(i => i.currentStock > 0).slice(0, 4);
+  const featuredStock = inventory.filter(i => (Number(i.currentStock || i.stock || 0) > 0)).slice(0, 4);
 
   return (
     <div className="space-y-10 pb-12">
@@ -222,75 +222,88 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {featuredStock.map(prod => {
-            const discountPercent = prod.originalMrp 
-              ? Math.round(((prod.originalMrp - prod.sellingPrice) / prod.originalMrp) * 100) 
-              : 0;
+        {featuredStock.length === 0 ? (
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-8 sm:p-12 text-center shadow-soft flex flex-col items-center justify-center">
+            <div className="w-14 h-14 rounded-2xl bg-brand-50 text-brand-500 border border-brand-100 flex items-center justify-center mb-3.5 shadow-xs">
+              <Package className="w-7 h-7" />
+            </div>
+            <h4 className="font-extrabold text-base text-navy-900">Stock Catalog is Ready for Upload</h4>
+            <p className="text-xs text-slate-500 max-w-md mt-1.5 leading-relaxed">
+              No ready-stock products are currently listed. Log into the Admin Console to upload real ready-stock inventory with images, prices, and warehouse locations.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {featuredStock.map(prod => {
+              const price = Number(prod.sellingPrice ?? prod.price ?? 0);
+              const discountPercent = prod.originalMrp 
+                ? Math.round(((prod.originalMrp - price) / prod.originalMrp) * 100) 
+                : 0;
 
-            return (
-              <div
-                key={prod.id}
-                className="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-soft hover:shadow-card hover:border-brand-400 transition-all flex flex-col justify-between group"
-              >
-                <div className="space-y-3">
-                  <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 cursor-pointer" onClick={onBrowseStock}>
-                    <img
-                      src={prod.image}
-                      alt={prod.name}
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
-                      }}
-                    />
-                    {discountPercent > 0 && (
-                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-rose-600 text-white font-extrabold text-[9px] shadow-sm">
-                        -{discountPercent}% OFF
+              return (
+                <div
+                  key={prod.id}
+                  className="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-soft hover:shadow-card hover:border-brand-400 transition-all flex flex-col justify-between group"
+                >
+                  <div className="space-y-3">
+                    <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 cursor-pointer" onClick={onBrowseStock}>
+                      <img
+                        src={prod.image}
+                        alt={prod.name}
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
+                        }}
+                      />
+                      {discountPercent > 0 && (
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-rose-600 text-white font-extrabold text-[9px] shadow-sm">
+                          -{discountPercent}% OFF
+                        </span>
+                      )}
+                      <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-slate-800 font-bold text-[9px] shadow-sm">
+                        ⚡ 24h Dhaka
                       </span>
-                    )}
-                    <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-slate-800 font-bold text-[9px] shadow-sm">
-                      ⚡ 24h Dhaka
-                    </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-bold text-brand-600 uppercase tracking-wider block">{prod.brand}</span>
+                      <h3 
+                        onClick={onBrowseStock}
+                        className="font-bold text-xs text-navy-900 line-clamp-2 cursor-pointer hover:text-brand-600 transition-colors mt-0.5"
+                      >
+                        {prod.name}
+                      </h3>
+                    </div>
                   </div>
 
-                  <div>
-                    <span className="text-[10px] font-bold text-brand-600 uppercase tracking-wider block">{prod.brand}</span>
-                    <h3 
-                      onClick={onBrowseStock}
-                      className="font-bold text-xs text-navy-900 line-clamp-2 cursor-pointer hover:text-brand-600 transition-colors mt-0.5"
+                  <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
+                    <div>
+                      <span className="font-extrabold text-sm text-navy-900 block">
+                        ৳{price.toLocaleString()}
+                      </span>
+                      {prod.originalMrp && prod.originalMrp > price && (
+                        <span className="text-[10px] text-slate-400 line-through">
+                          ৳{prod.originalMrp.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => addToCart(prod, 1)}
+                      className="p-2 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white shadow-sm transition-all"
+                      title="Add to Cart"
                     >
-                      {prod.name}
-                    </h3>
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
-
-                <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between">
-                  <div>
-                    <span className="font-extrabold text-sm text-navy-900 block">
-                      ৳{prod.sellingPrice.toLocaleString()}
-                    </span>
-                    {prod.originalMrp && (
-                      <span className="text-[10px] text-slate-400 line-through">
-                        ৳{prod.originalMrp.toLocaleString()}
-                      </span>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => addToCart(prod, 1)}
-                    className="p-2 rounded-xl bg-brand-600 hover:bg-brand-500 active:scale-95 text-white shadow-sm transition-all"
-                    title="Add to Cart"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* 3. Popular Pre-Order Stores & Brands */}

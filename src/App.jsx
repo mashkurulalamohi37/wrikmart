@@ -3,6 +3,7 @@ import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
 import { Toast } from './components/common/Toast';
+import { AuthModal } from './components/common/AuthModal';
 
 const AdminPanel = lazy(() => import('./components/admin/AdminPanel').then(m => ({ default: m.AdminPanel })));
 const AgentApp = lazy(() => import('./components/agent/AgentApp').then(m => ({ default: m.AgentApp })));
@@ -40,6 +41,7 @@ const AppContent = () => {
 
       {currentRole === 'customer' && <Footer />}
       <Toast />
+      <AuthModal />
     </div>
   );
 };

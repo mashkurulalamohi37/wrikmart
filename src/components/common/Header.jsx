@@ -16,6 +16,8 @@ import {
   Truck,
   ExternalLink,
   Lock,
+  LogIn,
+  LogOut,
   Layers
 } from 'lucide-react';
 import { CountryFlag } from './CountryFlag';
@@ -34,7 +36,11 @@ export const Header = () => {
     balanceTransfers,
     exchangeRates,
     cart = [],
-    setIsCartOpen
+    setIsCartOpen,
+    currentUser,
+    setIsAuthModalOpen,
+    setAuthModalMode,
+    logout
   } = useApp();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -128,6 +134,50 @@ export const Header = () => {
             )}
           </button>
 
+          {/* User Account / Original Login CTA */}
+          {currentUser ? (
+            <div className="flex items-center gap-1 sm:gap-2 bg-[#14234B] hover:bg-[#1A2E63] border border-slate-700/80 rounded-xl sm:rounded-2xl px-2 py-1 sm:px-2.5 sm:py-1.5 text-white transition-all shadow-md flex-shrink-0">
+              {currentUser.avatar ? (
+                <img 
+                  src={currentUser.avatar} 
+                  alt={currentUser.name} 
+                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover border border-brand-400"
+                />
+              ) : (
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-brand-500/30 text-brand-300 flex items-center justify-center font-bold text-[10px] sm:text-xs">
+                  {currentUser.name?.charAt(0) || 'U'}
+                </div>
+              )}
+              <div className="text-left hidden lg:block">
+                <span className="text-[11px] font-bold text-white block max-w-[85px] truncate leading-tight">
+                  {currentUser.name.split(' ')[0]}
+                </span>
+                <span className="text-[9px] text-brand-300 uppercase font-bold block leading-tight">
+                  {currentUser.role}
+                </span>
+              </div>
+              <button 
+                onClick={logout}
+                title="Sign Out"
+                className="p-1 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                if (setAuthModalMode) setAuthModalMode('login');
+                if (setIsAuthModalOpen) setIsAuthModalOpen(true);
+              }}
+              className="flex items-center gap-1 sm:gap-1.5 bg-gradient-to-r from-cyan-600 to-brand-600 hover:from-cyan-500 hover:to-brand-500 active:scale-95 text-white font-bold text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl shadow-md transition-all whitespace-nowrap flex-shrink-0 border border-brand-400/30"
+              title="Original Login System"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Login</span>
+            </button>
+          )}
+
           {/* Main Portal Switcher Dropdown Button */}
           <div className="relative flex-shrink-0">
             <button
@@ -173,12 +223,31 @@ export const Header = () => {
             {dropdownOpen && (
               <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] bg-[#0D1B3D] border border-slate-700 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden z-50 animate-fade-in divide-y divide-slate-800">
                 
-                {/* Dropdown Header */}
-                <div className="p-4 bg-[#08132B]">
-                  <span className="text-[10px] uppercase font-extrabold tracking-wider text-brand-400 block">
-                    Select Portal Workspace
-                  </span>
-                  <p className="text-xs text-slate-400 mt-0.5">Switch between Admin, Agent Stations, and Customer View</p>
+                {/* Dropdown Header & Active Account */}
+                <div className="p-3.5 bg-[#08132B]">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-[10px] uppercase font-extrabold tracking-wider text-brand-400 block">
+                      Portal Workspace
+                    </span>
+                    {currentUser ? (
+                      <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        {currentUser.name.split(' ')[0]} ({currentUser.role})
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (setAuthModalMode) setAuthModalMode('login');
+                          if (setIsAuthModalOpen) setIsAuthModalOpen(true);
+                          setDropdownOpen(false);
+                        }}
+                        className="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold underline"
+                      >
+                        Sign In / Register
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400">Switch between Admin, Agent Stations, and Customer View</p>
                 </div>
 
                 {/* 1. Admin Control Option */}

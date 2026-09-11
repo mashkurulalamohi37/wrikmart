@@ -211,45 +211,22 @@ export const AppProvider = ({ children }) => {
   });
 
   const [inventory, setInventory] = useState(() => {
-    const saved = localStorage.getItem('wrikmart_inventory');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Merge with INITIAL_STOCK_INVENTORY so newly added items, updated images and fields are present
-        const existingIds = new Set(parsed.map(p => p.id));
-        const enriched = parsed.map(item => {
-          const initial = INITIAL_STOCK_INVENTORY.find(i => i.id === item.id);
-          // Prefer initial.image so updated/fixed product images always propagate over stale broken localStorage strings
-          return initial ? { 
-            ...initial, 
-            ...item, 
-            image: initial.image || item.image, 
-            description: item.description || initial.description, 
-            originalMrp: item.originalMrp || initial.originalMrp 
-          } : item;
-        });
-        INITIAL_STOCK_INVENTORY.forEach(initialItem => {
-          if (!existingIds.has(initialItem.id)) {
-            enriched.push(initialItem);
-          }
-        });
-        return enriched;
-      } catch (e) {}
+    try {
+      localStorage.removeItem('wrikmart_inventory');
+    } catch (e) {}
+    const saved = localStorage.getItem('wrikmart_inventory_v3');
+    if (saved !== null) {
+      try { return JSON.parse(saved); } catch (e) {}
     }
-    return INITIAL_STOCK_INVENTORY;
+    // Clean initial slate: all mock products deleted, ready for real stock upload
+    return [];
   });
 
   // Ready Stock Cart State
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem('wrikmart_cart');
     if (saved) {
-      try { 
-        const parsed = JSON.parse(saved); 
-        return parsed.map(cItem => {
-          const invMatch = INITIAL_STOCK_INVENTORY.find(i => i.id === cItem.id);
-          return invMatch ? { ...cItem, image: invMatch.image || cItem.image } : cItem;
-        });
-      } catch (e) {}
+      try { return JSON.parse(saved); } catch (e) {}
     }
     return [];
   });
@@ -384,7 +361,7 @@ export const AppProvider = ({ children }) => {
   }, [agents]);
 
   useEffect(() => {
-    safeLocalStorageSet('wrikmart_inventory', inventory);
+    safeLocalStorageSet('wrikmart_inventory_v3', inventory);
   }, [inventory]);
 
   useEffect(() => {
@@ -1157,6 +1134,215 @@ export const AppProvider = ({ children }) => {
   };
 
   // ==========================================
+  // READY STOCK INVENTORY MANAGEMENT (ADMIN)
+  // ==========================================
+  const addInventoryProduct = (productData) => {
+    const newProduct = {
+      id: `prod-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+      name: productData.name || 'Untitled Stock Item',
+      brand: productData.brand || 'Original Brand',
+      category: productData.category || 'General',
+      sku: productData.sku || `WM-${Date.now().toString().slice(-6)}`,
+      warehouse: productData.warehouse || 'Dhaka Main Hub (Tejgaon)',
+      costPrice: Number(productData.costPrice || (Number(productData.sellingPrice || 0) * 0.75)),
+      sellingPrice: Number(productData.sellingPrice || productData.price || 0),
+      price: Number(productData.sellingPrice || productData.price || 0),
+      originalMrp: productData.originalMrp ? Number(productData.originalMrp) : null,
+      currentStock: Number(productData.currentStock ?? productData.stock ?? 0),
+      stock: Number(productData.currentStock ?? productData.stock ?? 0),
+      reorderLevel: Number(productData.reorderLevel || 5),
+      image: productData.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80',
+      description: productData.description || 'Authentic imported stock with official warranty.',
+      badge: productData.badge || 'New Arrival',
+      specs: productData.specs || { Color: 'Standard', Warranty: 'Official 1 Year' },
+      rating: 5.0,
+      reviewsCount: 1,
+      createdAt: new Date().toISOString()
+    };
+
+    setInventory(prev => [newProduct, ...prev]);
+    showToast(`Product "${newProduct.name}" added to stock inventory!`, 'success');
+    return newProduct;
+  };
+
+  const updateInventoryProduct = (id, updatedFields) => {
+    setInventory(prev => prev.map(item => {
+      if (item.id === id) {
+        const next = { ...item, ...updatedFields };
+        if (updatedFields.sellingPrice !== undefined) {
+          next.price = Number(updatedFields.sellingPrice);
+          next.sellingPrice = Number(updatedFields.sellingPrice);
+        }
+        if (updatedFields.currentStock !== undefined) {
+          next.stock = Number(updatedFields.currentStock);
+          next.currentStock = Number(updatedFields.currentStock);
+        }
+        return next;
+      }
+      return item;
+    }));
+    showToast('Product inventory updated successfully!', 'success');
+  };
+
+  const deleteInventoryProduct = (id) => {
+    setInventory(prev => prev.filter(item => item.id !== id));
+    showToast('Product removed from inventory.', 'info');
+  };
+
+  const clearAllInventory = () => {
+    setInventory([]);
+    safeLocalStorageSet('wrikmart_inventory_v3', []);
+    showToast('All stock inventory products deleted permanently.', 'warning');
+  };
+
+  const restoreDemoInventory = () => {
+    setInventory(INITIAL_STOCK_INVENTORY);
+    safeLocalStorageSet('wrikmart_inventory_v3', INITIAL_STOCK_INVENTORY);
+    showToast('Demo stock products restored successfully!', 'success');
+  };
+
+  // ==========================================
+  // AUTHENTICATION & USER MANAGEMENT
+  // ==========================================
+  const DEFAULT_USERS = [
+    {
+      id: 'usr-admin-1',
+      name: 'Super Admin',
+      email: 'admin@wrikmart.com',
+      password: 'password123',
+      role: 'admin',
+      phone: '+880 1800-000000',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80'
+    },
+    {
+      id: 'usr-customer-1',
+      name: 'Rafiqul Islam',
+      email: 'customer@wrikmart.com',
+      password: 'password123',
+      role: 'customer',
+      phone: '+880 1712-345678',
+      district: 'Dhaka',
+      address: 'House 42, Road 11, Banani, Dhaka',
+      dateOfBirth: '1995-09-06',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80'
+    },
+    {
+      id: 'usr-agent-in',
+      name: 'Rajesh Sharma',
+      email: 'agent.india@wrikmart.com',
+      password: 'password123',
+      role: 'agent',
+      agentId: 'agent-1',
+      country: 'India',
+      phone: '+91 98765-43210',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80'
+    }
+  ];
+
+  const [registeredUsers, setRegisteredUsers] = useState(() => {
+    const saved = localStorage.getItem('wrikmart_registered_users');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return DEFAULT_USERS;
+  });
+
+  useEffect(() => {
+    safeLocalStorageSet('wrikmart_registered_users', registeredUsers);
+  }, [registeredUsers]);
+
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('wrikmart_current_user');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (currentUser) {
+      safeLocalStorageSet('wrikmart_current_user', currentUser);
+    } else {
+      safeLocalStorageRemove('wrikmart_current_user');
+    }
+  }, [currentUser]);
+
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState('login'); // 'login' | 'register'
+
+  const login = ({ email, password, role }) => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    
+    // Find matching user or fallback to demo role user
+    let user = registeredUsers.find(u => 
+      (u.email?.toLowerCase() === cleanEmail || u.phone === email?.trim())
+    );
+
+    if (!user) {
+      if (cleanEmail.includes('admin')) {
+        user = DEFAULT_USERS.find(u => u.role === 'admin');
+      } else if (cleanEmail.includes('agent')) {
+        user = DEFAULT_USERS.find(u => u.role === 'agent');
+      } else {
+        user = {
+          id: `usr-${Date.now()}`,
+          name: cleanEmail.split('@')[0] || 'Customer Member',
+          email: cleanEmail,
+          role: role || 'customer',
+          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80'
+        };
+      }
+    }
+
+    setCurrentUser(user);
+    if (user.role) {
+      setCurrentRole(user.role);
+      if (user.role === 'agent' && user.agentId) {
+        setActiveAgentId(user.agentId);
+      }
+    }
+    setIsAuthModalOpen(false);
+    showToast(`Welcome back, ${user.name}! Logged in as ${user.role}.`, 'success');
+    return { success: true, user };
+  };
+
+  const registerUser = (userData) => {
+    const newUser = {
+      id: `usr-${Date.now()}`,
+      name: userData.name?.trim() || 'New User',
+      email: userData.email?.trim() || `${Date.now()}@customer.wrikmart.com`,
+      phone: userData.phone?.trim() || '',
+      district: userData.district || 'Dhaka',
+      address: userData.address || '',
+      dateOfBirth: userData.dateOfBirth || '',
+      role: 'customer',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
+      createdAt: new Date().toISOString()
+    };
+
+    setRegisteredUsers(prev => [newUser, ...prev]);
+    setCurrentUser(newUser);
+    setCurrentRole('customer');
+    setCustomerTab('home');
+
+    // Also sync to customerProfile and customers CRM
+    setCustomerProfile(newUser);
+    setCustomers(prev => [newUser, ...prev.filter(c => c.phone !== newUser.phone)]);
+
+    setIsAuthModalOpen(false);
+    showToast(`Account created successfully! Welcome, ${newUser.name}.`, 'success');
+    return { success: true, user: newUser };
+  };
+
+  const logout = () => {
+    const prevName = currentUser?.name;
+    setCurrentUser(null);
+    setCurrentRole('customer');
+    setCustomerTab('home');
+    showToast(prevName ? `Goodbye, ${prevName}! You have been signed out.` : 'Logged out successfully.', 'info');
+  };
+
+  // ==========================================
   // ACTIONS: ADMIN MANUAL ORDER CREATION
   // ==========================================
 
@@ -1751,13 +1937,31 @@ export const AppProvider = ({ children }) => {
     selectedDistrict,
     setSelectedDistrict,
     preOrderFormSettings,
-    setPreOrderFormSettings
+    setPreOrderFormSettings,
+    // Ready Stock Inventory Management (Admin)
+    addInventoryProduct,
+    updateInventoryProduct,
+    deleteInventoryProduct,
+    clearAllInventory,
+    restoreDemoInventory,
+    // Authentication & Users
+    currentUser,
+    setCurrentUser,
+    registeredUsers,
+    isAuthModalOpen,
+    setIsAuthModalOpen,
+    authModalMode,
+    setAuthModalMode,
+    login,
+    logout,
+    registerUser
   }), [
     currentRole, customerTab, adminNav, agentTab, activeAgentId, activeAgent,
     orders, agents, hubs, inventory, exchangeRates, expenses, hqExpenses,
     balanceTransfers, chatMessages, toast, cart, isCartOpen, coupons, appliedCoupon,
     customers, customerProfile, birthdaySettings, stockSearchQuery, prefilledPreOrder,
-    selectedDistrict, preOrderFormSettings
+    selectedDistrict, preOrderFormSettings, currentUser, isAuthModalOpen, authModalMode,
+    registeredUsers
   ]);
 
   return (
