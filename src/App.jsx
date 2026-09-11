@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
@@ -25,7 +25,11 @@ const LoadingFallback = () => (
 );
 
 const AppContent = () => {
-  const { currentRole } = useApp();
+  const { currentRole, customerTab, adminNav, agentTab } = useApp();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [currentRole, customerTab, adminNav, agentTab]);
 
   return (
     <div className="min-h-screen w-full bg-[#F2F7FB] flex flex-col font-sans">

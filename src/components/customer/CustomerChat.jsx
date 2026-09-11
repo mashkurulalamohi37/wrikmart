@@ -5,10 +5,12 @@ import { Send, PhoneCall } from 'lucide-react';
 export const CustomerChat = () => {
   const { chatMessages, sendChatMessage } = useApp();
   const [inputText, setInputText] = useState('');
-  const messagesEndRef = useRef(null);
+  const chatScrollRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export const CustomerChat = () => {
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50">
+      <div ref={chatScrollRef} className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50">
         {chatMessages.map((msg) => (
           <div
             key={msg.id}
@@ -71,7 +73,6 @@ export const CustomerChat = () => {
             </div>
           </div>
         ))}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Message Input Box */}
