@@ -53,13 +53,76 @@ export const ShopeeLogo = ({ className = "w-6 h-6" }) => (
   </svg>
 );
 
+// 7. Flipkart Official SVG Logo
+export const FlipkartLogo = ({ className = "w-6 h-6" }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" aria-label="Flipkart Logo">
+    {/* Yellow shopping bag */}
+    <rect x="22" y="32" width="56" height="56" rx="10" fill="#FFE500" />
+    {/* Bag handle */}
+    <path d="M38 32V24C38 17.37 43.37 12 50 12C56.63 12 62 17.37 62 24V32" stroke="#FFE500" strokeWidth="6" strokeLinecap="round" />
+    {/* Blue 'f' with speed trails */}
+    <path d="M44 48H32M44 42H36M58 42C58 42 56 36 48 36C40 36 40 44 40 50V76H48V54C48 50 51 46 55 46H58" stroke="#2874F0" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+// 8. Sephora Official Flame Logo
+export const SephoraLogo = ({ className = "w-6 h-6" }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" aria-label="Sephora Logo">
+    {/* Sephora iconic undulating white flame / S-curve */}
+    <path 
+      d="M58 10C58 10 38 28 38 48C38 68 62 60 62 76C62 86 52 90 44 88C36 86 32 78 32 78C32 78 36 90 50 90C64 90 74 78 74 64C74 46 50 52 50 36C50 24 58 10 58 10Z" 
+      fill="white" 
+    />
+  </svg>
+);
+
+// 9. Myntra Official Overlapping Multi-Color Ribbon Logo
+export const MyntraLogo = ({ className = "w-6 h-6" }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" aria-label="Myntra Logo">
+    <path d="M12 78L36 32L50 58L26 78H12Z" fill="#FF3F6C" />
+    <path d="M26 78L50 32L64 58L40 78H26Z" fill="#F26A10" />
+    <path d="M64 58L50 32L64 78H50L64 58Z" fill="#FF1744" opacity="0.4" />
+    <path d="M50 78L74 32L88 78H74L64 58L60 78H50Z" fill="#FF3F6C" />
+    <path d="M60 78L74 52L88 78H60Z" fill="#F26A10" />
+  </svg>
+);
+
+// 10. Central Thailand (Central Department Store) Official Logo
+export const CentralLogo = ({ className = "w-7 h-7" }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" aria-label="Central Thailand Logo">
+    <path 
+      d="M74 32C68 22 58 18 48 18C28 18 16 32 16 50C16 68 28 82 48 82C60 82 70 76 76 66L64 58C60 64 54 68 48 68C36 68 30 58 30 50C30 42 36 32 48 32C54 32 60 36 64 42L74 32Z" 
+      fill="white" 
+    />
+    <rect x="70" y="44" width="16" height="12" rx="2" fill="white" />
+  </svg>
+);
+
+// 11. Lazada Official Heart / Box 3D Logo
+export const LazadaLogo = ({ className = "w-6 h-6" }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" aria-label="Lazada Logo">
+    {/* Left Heart Loop (Blue) */}
+    <path 
+      d="M50 82C30 70 14 54 14 36C14 22 24 14 36 14C43 14 48 18 50 22C52 18 57 14 64 14C76 14 86 22 86 36C86 54 70 70 50 82Z" 
+      fill="#0F146D" 
+    />
+    {/* Inner dynamic ribbon (Orange/Coral gradient effect) */}
+    <path 
+      d="M50 72C35 60 24 48 24 36C24 26 31 20 40 20C45 20 48 23 50 26C52 23 55 20 60 20C69 20 76 26 76 36C76 48 65 60 50 72Z" 
+      fill="#F85606" 
+    />
+    {/* Center 3D Box facet */}
+    <path d="M50 36L62 48L50 60L38 48L50 36Z" fill="white" />
+  </svg>
+);
+
 // Unified Store Brand Badge Component
 export const StoreBrandBadge = ({ storeName = '' }) => {
   const norm = String(storeName).toLowerCase();
 
   if (norm.includes('nike')) {
     return (
-      <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+      <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
         <NikeLogo className="w-6 h-6" />
       </div>
     );
@@ -67,7 +130,7 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('apple')) {
     return (
-      <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+      <div className="w-10 h-10 rounded-2xl bg-slate-950 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
         <AppleLogo className="w-5 h-5 text-white" />
       </div>
     );
@@ -75,7 +138,7 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('zara')) {
     return (
-      <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-black flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform">
+      <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 text-black flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform">
         <ZaraLogo className="w-7 h-auto text-black" />
       </div>
     );
@@ -83,7 +146,7 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('amazon')) {
     return (
-      <div className="w-10 h-10 rounded-xl bg-[#232F3E] text-white flex items-center justify-center shadow-xs p-1.5 group-hover:scale-105 transition-transform">
+      <div className="w-10 h-10 rounded-2xl bg-[#131921] text-white flex items-center justify-center shadow-xs p-1.5 group-hover:scale-105 transition-transform">
         <AmazonLogo className="w-6 h-6 text-[#FF9900]" />
       </div>
     );
@@ -91,7 +154,7 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('noon')) {
     return (
-      <div className="w-10 h-10 rounded-xl bg-[#FEE000] border border-yellow-300 text-black flex items-center justify-center shadow-xs p-1.5 group-hover:scale-105 transition-transform">
+      <div className="w-10 h-10 rounded-2xl bg-[#FEE000] border border-yellow-300 text-black flex items-center justify-center shadow-xs p-1.5 group-hover:scale-105 transition-transform">
         <NoonLogo className="w-7 h-7 text-black" />
       </div>
     );
@@ -99,48 +162,48 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
 
   if (norm.includes('shopee')) {
     return (
-      <div className="w-10 h-10 rounded-xl bg-[#EE4D2D] text-white flex items-center justify-center shadow-xs p-1.5 group-hover:scale-105 transition-transform">
-        <ShopeeLogo className="w-5 h-5 text-white" />
+      <div className="w-10 h-10 rounded-2xl bg-[#EE4D2D] text-white flex items-center justify-center shadow-xs p-1.5 group-hover:scale-105 transition-transform">
+        <ShopeeLogo className="w-6 h-6 text-white" />
       </div>
     );
   }
 
   if (norm.includes('flipkart')) {
     return (
-      <div className="w-10 h-10 rounded-xl bg-[#2874F0] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform font-black text-sm italic">
-        <span className="text-yellow-300 font-extrabold tracking-tight">fk</span>
+      <div className="w-10 h-10 rounded-2xl bg-[#2874F0] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform">
+        <FlipkartLogo className="w-7 h-7" />
       </div>
     );
   }
 
   if (norm.includes('sephora')) {
     return (
-      <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform font-serif font-black text-xs tracking-widest">
-        <span>SE</span>
+      <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform">
+        <SephoraLogo className="w-7 h-7" />
       </div>
     );
   }
 
   if (norm.includes('myntra')) {
     return (
-      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#FF3F6C] via-[#FF527B] to-[#F26A10] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform font-black text-sm">
-        <span>M</span>
+      <div className="w-10 h-10 rounded-2xl bg-white border border-slate-200 text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform">
+        <MyntraLogo className="w-7 h-7" />
       </div>
     );
   }
 
   if (norm.includes('central')) {
     return (
-      <div className="w-10 h-10 rounded-xl bg-[#ED1C24] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform font-extrabold text-xs tracking-tighter">
-        <span>C</span>
+      <div className="w-10 h-10 rounded-2xl bg-[#E31837] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform">
+        <CentralLogo className="w-7 h-7" />
       </div>
     );
   }
 
   if (norm.includes('lazada')) {
     return (
-      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F146D] to-[#F85606] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform font-black text-sm">
-        <span>L</span>
+      <div className="w-10 h-10 rounded-2xl bg-[#0F146D] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform">
+        <LazadaLogo className="w-7 h-7" />
       </div>
     );
   }
