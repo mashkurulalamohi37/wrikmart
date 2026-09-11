@@ -126,22 +126,23 @@ export const parseProductFromUrl = (rawUrl) => {
   let suggestedPrice = 3500;
   const lowerName = detectedName.toLowerCase();
   const lowerUrl = lower;
-  if (lowerName.includes('beauty') || lowerName.includes('lipstick') || lowerName.includes('serum') || lowerName.includes('cream') || lowerName.includes('cosmetic') || lowerUrl.includes('beauty') || lowerUrl.includes('skincare')) {
+
+  if (lowerName.includes('beauty') || lowerName.includes('lipstick') || lowerName.includes('serum') || lowerName.includes('cream') || lowerName.includes('cosmetic') || lowerUrl.includes('beauty') || lowerUrl.includes('skincare') || lowerUrl.includes('sephora')) {
     category = 'Beauty & Cosmetics';
     suggestedPrice = 1850;
-  } else if (lowerName.includes('shoe') || lowerName.includes('sneaker') || lowerName.includes('nike') || lowerName.includes('running') || lowerName.includes('air max') || lowerUrl.includes('footwear') || lowerUrl.includes('shoes')) {
+  } else if (lowerName.includes('shoe') || lowerName.includes('sneaker') || lowerName.includes('nike') || lowerName.includes('running') || lowerName.includes('air max') || lowerName.includes('jordan') || lowerName.includes('adidas') || lowerUrl.includes('footwear') || lowerUrl.includes('shoes')) {
     category = 'Footwear';
     suggestedPrice = 8500;
   } else if (lowerName.includes('iphone') || lowerName.includes('macbook') || lowerName.includes('airpods') || lowerName.includes('apple') || lowerName.includes('laptop') || lowerName.includes('camera') || lowerName.includes('electronics') || lowerUrl.includes('electronics') || lowerUrl.includes('laptop') || lowerUrl.includes('phone') || lowerUrl.includes('headphone') || lowerUrl.includes('tablet')) {
     category = 'Electronics';
     suggestedPrice = 45000;
+  } else if (lowerName.includes('book') || lowerName.includes('stories') || lowerName.includes('story') || lowerName.includes('princess') || lowerName.includes('disney') || lowerName.includes('novel') || lowerName.includes('manga') || lowerName.includes('comic') || lowerUrl.includes('book') || lowerUrl.includes('stories')) {
+    category = 'Books & Stories';
+    suggestedPrice = 1200;
   } else if (lowerName.includes('dress') || lowerName.includes('shirt') || lowerName.includes('jacket') || lowerName.includes('zara') || lowerName.includes('hoodie') || lowerUrl.includes('fashion') || lowerUrl.includes('clothing') || lowerUrl.includes('apparel')) {
     category = 'Fashion';
     suggestedPrice = 4200;
-  } else if (lowerName.includes('book') || lowerName.includes('stories') || lowerName.includes('novel') || lowerUrl.includes('books')) {
-    category = 'Books';
-    suggestedPrice = 900;
-  } else if (lowerName.includes('toy') || lowerName.includes('game') || lowerName.includes('lego') || lowerName.includes('kids') || lowerName.includes('princess') || lowerName.includes('barbie') || lowerUrl.includes('toys')) {
+  } else if (lowerName.includes('toy') || lowerName.includes('game') || lowerName.includes('lego') || lowerName.includes('kids') || lowerName.includes('barbie') || lowerUrl.includes('toys')) {
     category = 'Toys & Kids';
     suggestedPrice = 2500;
   } else if (lowerName.includes('watch') || lowerUrl.includes('watch')) {
@@ -152,23 +153,23 @@ export const parseProductFromUrl = (rawUrl) => {
     suggestedPrice = 5500;
   }
 
-  // 6. Best image to show
-  // For Amazon: use ASIN-based CDN image (publicly accessible, no CORS)
-  // For others: curated high-quality Unsplash by category
+  // 6. Category curated Unsplash images
   const categoryFallbacks = {
     'Beauty & Cosmetics': 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&auto=format&fit=crop&q=80',
     'Footwear': 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
     'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=600&auto=format&fit=crop&q=80',
+    'Books & Stories': 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop&q=80',
+    'Books': 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop&q=80',
     'Fashion': 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=600&auto=format&fit=crop&q=80',
-    'Books': 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&auto=format&fit=crop&q=80',
-    'Toys & Kids': 'https://images.unsplash.com/photo-1558060370-d6752b65f7f9?w=600&auto=format&fit=crop&q=80',
-    'Watches': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80',
+    'Toys & Kids': 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=600&auto=format&fit=crop&q=80',
+    'Watches': 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=600&auto=format&fit=crop&q=80',
     'Perfumes': 'https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&auto=format&fit=crop&q=80',
+    'General': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80'
   };
-  const fallbackImage = categoryFallbacks[category] || FALLBACK_PRODUCT_IMAGE;
+  const fallbackImage = categoryFallbacks[category] || categoryFallbacks['General'];
 
-  // Try Amazon image CDN first (ASIN-based), else use category fallback
-  const amazonImg = asin ? `https://images-na.ssl-images-amazon.com/images/I/${asin}._AC_SL500_.jpg` : null;
+  // Amazon ASIN Image CDN
+  const amazonImg = asin ? `https://images-na.ssl-images-amazon.com/images/P/${asin}.01._SCLZZZZZZZ_.jpg` : null;
 
   return {
     name: detectedName,
@@ -177,9 +178,7 @@ export const parseProductFromUrl = (rawUrl) => {
     category,
     suggestedPrice,
     asin,
-    // Primary: real Amazon CDN image if ASIN found, else category Unsplash
     image: amazonImg || fallbackImage,
-    // Kept as fallback if Amazon CDN 403s (used via onError in <img>)
     fallbackImage,
   };
 };
@@ -193,11 +192,12 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
   
-  // Current Item in Builder (starts clean and dynamically updates)
+  // Current Item in Builder
   const [currentItem, setCurrentItem] = useState({
     name: '',
     url: '',
     image: '',
+    fallbackImage: '',
     imageName: '',
     imageSize: '',
     hasUserCustomImage: false,
@@ -212,83 +212,52 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
   // Handle pre-filled Pre-Order data from Header Search or Home Hero
   useEffect(() => {
     if (prefilledPreOrder) {
-      if (prefilledPreOrder.url || prefilledPreOrder.name) {
-        const rawUrl = (prefilledPreOrder.url || '').trim();
-        const lower = rawUrl.toLowerCase();
-        let detectedCountry = prefilledPreOrder.country || 'India';
-        if (!prefilledPreOrder.country) {
-          if (lower.includes('.ae') || lower.includes('dubai') || lower.includes('noon.com') || lower.includes('apple.com/ae') || lower.includes('amazon.ae')) {
-            detectedCountry = 'Dubai';
-          } else if (lower.includes('.th') || lower.includes('thailand') || lower.includes('shopee.co.th') || lower.includes('central.co.th') || lower.includes('lazada')) {
-            detectedCountry = 'Thailand';
-          } else {
-            detectedCountry = 'India';
-          }
-        }
-        setCountry(detectedCountry);
+      const rawUrl = (prefilledPreOrder.url || '').trim();
+      const rawName = (prefilledPreOrder.name || '').trim();
+      
+      const parsed = parseProductFromUrl(rawUrl || rawName);
+      
+      const itemName = rawName || parsed?.name || 'Imported Product';
+      const detectedCountry = prefilledPreOrder.country || parsed?.country || 'India';
+      const detectedCategory = parsed?.category || 'General';
+      const detectedBrand = prefilledPreOrder.platform || parsed?.platform || 'Global Online Store';
+      const detectedImage = prefilledPreOrder.image || parsed?.image || parsed?.fallbackImage || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80';
+      const detectedFallback = parsed?.fallbackImage || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80';
+      const estPrice = prefilledPreOrder.expectedPrice || parsed?.suggestedPrice || 4500;
 
-        let itemName = prefilledPreOrder.name || '';
-        if (!itemName && rawUrl) {
-          try {
-            const parsed = new URL(rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`);
-            const parts = decodeURIComponent(parsed.pathname).split('/').filter(Boolean);
-            const dpIdx = parts.indexOf('dp');
-            if (dpIdx > 0) {
-              itemName = parts[dpIdx - 1].replace(/[-_+]/g, ' ');
-            } else if (parts.length > 0) {
-              const candidates = parts.filter(p => p !== 'dp' && p !== 'gp' && p !== 'product' && p !== 'd' && !/^[A-Z0-9]{10}$/i.test(p));
-              if (candidates.length > 0) {
-                candidates.sort((a, b) => b.length - a.length);
-                itemName = candidates[0].replace(/[-_+]/g, ' ');
-              }
-            }
-          } catch (e) {}
+      setCountry(detectedCountry);
 
-          if (itemName) {
-            itemName = itemName.split(' ').filter(w => w.length > 1 && !/^\d+$/.test(w) && w.length < 30).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-          }
-        }
+      const newCartItem = {
+        id: `item-${Date.now()}`,
+        name: itemName,
+        url: rawUrl,
+        category: detectedCategory,
+        brand: detectedBrand,
+        image: detectedImage,
+        fallbackImage: detectedFallback,
+        specs: { unit: 1, size: '', color: '' },
+        expectedPrice: estPrice,
+        notes: `Imported via ${detectedCountry} Agent`
+      };
 
-        if (!itemName) {
-          if (lower.includes('amazon') || lower.includes('amzn')) itemName = 'Amazon Imported Product';
-          else if (lower.includes('apple') || lower.includes('iphone')) itemName = 'Apple Device Import';
-          else if (lower.includes('nike')) itemName = 'Nike Footwear Import';
-          else itemName = 'Imported Global Product';
-        }
+      setCurrentItem({
+        name: itemName,
+        url: rawUrl,
+        category: detectedCategory,
+        brand: detectedBrand,
+        expectedPrice: estPrice,
+        quantity: 1,
+        size: '',
+        color: '',
+        notes: '',
+        image: detectedImage,
+        fallbackImage: detectedFallback
+      });
 
-        const isAppleOrExpensive = itemName.toLowerCase().includes('apple') || itemName.toLowerCase().includes('iphone');
-        const estPrice = prefilledPreOrder.expectedPrice || (isAppleOrExpensive ? 85000 : 4500);
-
-        const newCartItem = {
-          id: `item-${Date.now()}`,
-          name: itemName,
-          url: rawUrl,
-          category: itemName.toLowerCase().includes('shoe') || itemName.toLowerCase().includes('nike') ? 'Footwear' : 'Electronics',
-          brand: itemName.toLowerCase().includes('apple') ? 'Apple' : itemName.toLowerCase().includes('nike') ? 'Nike' : (lower.includes('amazon') ? 'Amazon' : 'Global Brand'),
-          image: prefilledPreOrder.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80',
-          specs: { unit: 1, size: '', color: '' },
-          expectedPrice: estPrice,
-          notes: `Imported via ${detectedCountry} Agent`
-        };
-
-        setCurrentItem({
-          name: itemName,
-          url: rawUrl,
-          category: newCartItem.category,
-          expectedPrice: estPrice,
-          quantity: 1,
-          size: '',
-          color: '',
-          notes: '',
-          image: newCartItem.image
-        });
-
-        // Replace demo item with customer's pasted product
-        setItems([newCartItem]);
-        setStep(2); // Directly show specifications
-        setPrefilledPreOrder(null);
-        showToast(`Pre-order created for "${itemName}" from ${detectedCountry}!`, 'success');
-      }
+      setItems([newCartItem]);
+      setStep(2); // Directly show specifications
+      setPrefilledPreOrder(null);
+      showToast(`Analyzed ${detectedBrand}: "${itemName}"!`, 'success');
     }
   }, [prefilledPreOrder, setPrefilledPreOrder]);
 
@@ -814,12 +783,12 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
               <div className="space-y-5">
                 <div className="bg-brand-50/60 p-4 rounded-2xl border border-brand-200 flex items-center gap-4">
                   <img 
-                    src={currentItem.image || FALLBACK_PRODUCT_IMAGE} 
+                    src={currentItem.image || currentItem.fallbackImage || FALLBACK_PRODUCT_IMAGE} 
                     alt="Preview" 
                     className="w-16 h-16 object-cover rounded-xl border bg-white shadow-2xs" 
                     onError={(e) => {
                       e.currentTarget.onerror = null;
-                      e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                      e.currentTarget.src = currentItem.fallbackImage || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop&q=80';
                     }}
                   />
                   <div className="flex-1">
@@ -961,12 +930,12 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                     {items.map((it) => (
                       <div key={it.id} className="flex items-center gap-4 p-4 rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
                         <img 
-                          src={it.image || FALLBACK_PRODUCT_IMAGE} 
+                          src={it.image || it.fallbackImage || FALLBACK_PRODUCT_IMAGE} 
                           alt={it.name} 
                           className="w-16 h-16 object-cover rounded-xl border flex-shrink-0 bg-white" 
                           onError={(e) => {
                             e.currentTarget.onerror = null;
-                            e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                            e.currentTarget.src = it.fallbackImage || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop&q=80';
                           }}
                         />
                         <div className="flex-1 min-w-0">
