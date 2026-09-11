@@ -233,12 +233,14 @@ export const AppProvider = ({ children }) => {
 
   const [inventory, setInventory] = useState(() => {
     try {
-      // One-time migration v5: wipe all demo products on first load after this deploy
-      if (!localStorage.getItem('wrikmart_inv_wiped_v5')) {
+      // One-time migration v7: wipe all old demo products on first load after this deploy
+      if (!localStorage.getItem('wrikmart_inv_wiped_v7')) {
         localStorage.removeItem('wrikmart_inventory');
         localStorage.removeItem('wrikmart_inventory_v3');
         localStorage.removeItem('wrikmart_inv_wiped_v4');
-        localStorage.setItem('wrikmart_inv_wiped_v5', '1');
+        localStorage.removeItem('wrikmart_inv_wiped_v5');
+        localStorage.removeItem('wrikmart_inv_wiped_v6');
+        localStorage.setItem('wrikmart_inv_wiped_v7', '1');
         return [];
       }
     } catch (e) {}
@@ -1234,9 +1236,9 @@ export const AppProvider = ({ children }) => {
   };
 
   const restoreDemoInventory = () => {
-    setInventory(INITIAL_STOCK_INVENTORY);
-    safeLocalStorageSet('wrikmart_inventory_v3', INITIAL_STOCK_INVENTORY);
-    showToast('Demo stock products restored successfully!', 'success');
+    setInventory([]);
+    safeLocalStorageSet('wrikmart_inventory_v3', []);
+    showToast('Stock inventory reset to clean state.', 'info');
   };
 
   // ==========================================

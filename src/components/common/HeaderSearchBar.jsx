@@ -110,6 +110,15 @@ export const HeaderSearchBar = ({ isMobile = false }) => {
     }).slice(0, 5);
   }, [inventory, searchTerm, isLikelyUrl]);
 
+  // Dynamic keywords derived only from actual inventory uploaded by admin
+  const popularStockKeywords = useMemo(() => {
+    if (!Array.isArray(inventory) || inventory.length === 0) return [];
+    return inventory
+      .filter(item => item && item.name)
+      .slice(0, 8)
+      .map(item => item.name);
+  }, [inventory]);
+
   // Execute Search or Pre-Order Link
   const handleExecuteSearch = (targetQuery) => {
     const q = (typeof targetQuery === 'string' ? targetQuery : searchTerm).trim();
@@ -188,8 +197,8 @@ export const HeaderSearchBar = ({ isMobile = false }) => {
           onKeyDown={handleKeyDown}
           placeholder={
             isMobile 
-              ? "Search stock or paste product link..." 
-              : "Search ready stock products or paste link (Nike, Apple, Zara, Amazon)..."
+              ? "Search ready stock or paste product link..." 
+              : "Search ready stock or paste international product link..."
           }
           className="w-full bg-[#14234B]/90 hover:bg-[#14234B] focus:bg-[#0B1530] text-xs text-white placeholder:text-slate-400 pl-10 pr-24 py-2 sm:py-2.5 rounded-2xl border border-slate-700/80 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400/30 transition-all select-text shadow-inner"
         />
@@ -392,7 +401,7 @@ export const HeaderSearchBar = ({ isMobile = false }) => {
                       No ready stock in Dhaka for "{searchTerm}"
                     </h4>
                     <p className="text-xs text-slate-300 mt-1 max-w-sm mx-auto">
-                      Great news! You can pre-order it directly from <strong>Nike India, Apple Dubai, Zara, Amazon or Noon</strong>.
+                      Great news! You can pre-order it directly from international stores in India, Dubai, Thailand or worldwide.
                     </p>
                   </div>
 
@@ -409,73 +418,63 @@ export const HeaderSearchBar = ({ isMobile = false }) => {
               )}
             </div>
           ) : (
-            /* CASE 3: Empty Search Input (Trending & Popular Suggestions) */
+            /* CASE 3: Empty Search Input (Dynamic Stock & Pre-Order Guidance) */
             <div className="p-4 space-y-4">
-              {/* Popular Ready Stock Search Queries */}
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2 flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                  Popular in Dhaka Ready Stock
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    'AirPods Pro',
-                    'Nike Pegasus',
-                    'Sony WH-1000XM5',
-                    'Zara Jacket',
-                    'Casio Vintage',
-                    'Anker 65W',
-                    'Dior Sauvage'
-                  ].map((keyword) => (
+              {/* Popular Ready Stock Search Queries - only render if real inventory exists */}
+              {popularStockKeywords.length > 0 && (
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2 flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                    Available in Dhaka Ready Stock
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {popularStockKeywords.map((keyword) => (
+                      <button
+                        key={keyword}
+                        type="button"
+                        onClick={() => {
+                          setSearchTerm(keyword);
+                          handleExecuteSearch(keyword);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-brand-500/20 text-slate-300 hover:text-brand-300 text-xs font-medium border border-slate-700/60 transition-colors"
+                      >
+                        {keyword}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Clean Pre-Order Guidance Banner */}
+              <div className={`p-4 rounded-2xl bg-gradient-to-br from-brand-900/40 via-slate-900/60 to-slate-900/40 border border-brand-500/20 ${popularStockKeywords.length > 0 ? 'pt-3 border-t border-slate-800/80' : ''}`}>
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center flex-shrink-0 text-brand-300 mt-0.5">
+                    <Globe2 className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xs font-bold text-white mb-1 flex items-center gap-1.5">
+                      <span>Global Store Pre-Order</span>
+                      <span className="px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[9px] font-extrabold uppercase">
+                        25% Advance
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-300 leading-relaxed mb-3">
+                      Paste any product link or search any item from India, Dubai, Thailand, or any international website. Our on-ground agents will purchase and deliver it directly to your address in Bangladesh.
+                    </p>
                     <button
-                      key={keyword}
                       type="button"
                       onClick={() => {
-                        setSearchTerm(keyword);
-                        handleExecuteSearch(keyword);
+                        setIsOpen(false);
+                        setCurrentRole('customer');
+                        if (setCustomerTab) setCustomerTab('preorder');
                       }}
-                      className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-brand-500/20 text-slate-300 hover:text-brand-300 text-xs font-medium border border-slate-700/60 transition-colors"
+                      className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-brand-500 to-indigo-600 hover:from-brand-400 hover:to-indigo-500 text-white font-bold text-xs shadow-md transition-all active:scale-95"
                     >
-                      {keyword}
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                      <span>Start Pre-Order Request</span>
+                      <ArrowRight className="w-3 h-3" />
                     </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Supported Stores for Link Pasting */}
-              <div className="pt-3 border-t border-slate-800/80">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                  Supported Global Stores for Pre-Order
-                </span>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {[
-                    { name: 'Nike India', domain: 'nike.com/in', country: 'India' },
-                    { name: 'Apple Dubai', domain: 'apple.com/ae', country: 'Dubai' },
-                    { name: 'Amazon India', domain: 'amazon.in', country: 'India' },
-                    { name: 'Noon UAE', domain: 'noon.com', country: 'Dubai' },
-                    { name: 'Zara UAE', domain: 'zara.com', country: 'Dubai' },
-                    { name: 'Shopee Thai', domain: 'shopee.co.th', country: 'Thailand' }
-                  ].map((store) => (
-                    <div
-                      key={store.name}
-                      onClick={() => {
-                        setSearchTerm(`https://www.${store.domain}`);
-                        if (inputRef.current) inputRef.current.focus();
-                      }}
-                      className="flex items-center gap-2 p-2 rounded-xl bg-slate-800/40 hover:bg-slate-800 cursor-pointer border border-slate-700/40 transition-colors group"
-                    >
-                      <CountryFlag country={store.country} className="w-5 h-3.5 rounded shadow-2xs flex-shrink-0" />
-                      <div className="min-w-0">
-                        <span className="font-bold text-white group-hover:text-brand-300 text-[11px] block truncate">
-                          {store.name}
-                        </span>
-                        <span className="text-[10px] text-slate-400 block truncate font-mono">
-                          {store.domain}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                  </div>
                 </div>
               </div>
             </div>
