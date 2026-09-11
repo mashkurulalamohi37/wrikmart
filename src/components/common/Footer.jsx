@@ -74,16 +74,21 @@ export const Footer = () => {
           {/* Col 1: Brand & Overview (lg:col-span-2) */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-white p-0.5 shadow-teal-glow flex items-center justify-center border border-white/20">
+              <div className="h-11 w-auto bg-white px-2 py-1 rounded-xl shadow-teal-glow flex items-center justify-center border border-white/20 flex-shrink-0">
                 <img 
                   src="/wrikmart-logo.jpeg" 
                   alt="WrikMart" 
-                  className="w-full h-full object-contain rounded-xl"
+                  className="h-full w-auto object-contain rounded-lg"
                 />
               </div>
-              <span className="font-extrabold text-xl tracking-tight text-white font-sans">
-                Wrik<span className="text-brand-400">Mart</span>
-              </span>
+              <div>
+                <span className="font-extrabold text-xl tracking-tight text-white font-sans block leading-none">
+                  Wrik<span className="text-brand-400">Mart</span>
+                </span>
+                <span className="text-[10px] text-slate-400 font-medium tracking-wide mt-1 block">
+                  Global Logistics & Sourcing
+                </span>
+              </div>
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
@@ -157,6 +162,12 @@ export const Footer = () => {
               <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-2">Supported Payment Gateways</span>
               <div className="flex flex-wrap items-center gap-2">
                 
+                {/* EPS Easy Payment System Badge */}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 transition-colors shadow-sm">
+                  <img src="/eps/Group 93.png" alt="EPS Payment Gateway" className="h-4 w-auto object-contain" />
+                  <span className="text-xs font-bold text-emerald-400">EPS Gateway</span>
+                </div>
+
                 {/* bKash Badge with Origami Bird Logo */}
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#E2136E]/10 border border-[#E2136E]/40 hover:bg-[#E2136E]/20 transition-colors shadow-sm">
                   <BKashLogo className="w-4 h-4 flex-shrink-0" />

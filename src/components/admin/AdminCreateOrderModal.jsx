@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   X, 
@@ -14,8 +14,164 @@ import {
   Globe2, 
   Calendar,
   Layers,
-  Sparkles
+  Sparkles,
+  Search,
+  ChevronDown,
+  Check
 } from 'lucide-react';
+
+const SearchableStockSelector = ({ inventory = [], onSelect, currentItemName }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const dropdownRef = useRef(null);
+
+  // Filter inventory based on search query
+  const filtered = useMemo(() => {
+    if (!searchQuery.trim()) return inventory;
+    const q = searchQuery.toLowerCase().trim();
+    return inventory.filter(inv => 
+      (inv.name && inv.name.toLowerCase().includes(q)) ||
+      (inv.sku && inv.sku.toLowerCase().includes(q)) ||
+      (inv.brand && inv.brand.toLowerCase().includes(q)) ||
+      (inv.category && inv.category.toLowerCase().includes(q))
+    );
+  }, [inventory, searchQuery]);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  const selectedItem = inventory.find(inv => inv.name === currentItemName);
+
+  return (
+    <div className="relative flex items-center gap-1.5" ref={dropdownRef}>
+      <span className="text-[10px] text-slate-500 font-bold whitespace-nowrap">Load from Stock:</span>
+      
+      {/* Trigger Button */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-[11px] font-bold text-navy-900 shadow-2xs transition-all max-w-[280px] sm:max-w-[340px]"
+        title="Search and select from warehouse stock"
+      >
+        <div className="flex items-center gap-1.5 truncate">
+          <Search className="w-3 h-3 text-brand-600 flex-shrink-0" />
+          <span className="truncate">
+            {selectedItem 
+              ? `${selectedItem.name} (৳${selectedItem.sellingPrice?.toLocaleString()})`
+              : '-- Search & Choose Stock Item --'}
+          </span>
+        </div>
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* Dropdown Menu with Search Input */}
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-1 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-200 z-50 overflow-hidden animate-fade-in">
+          {/* Search Header */}
+          <div className="p-2.5 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
+            <Search className="w-3.5 h-3.5 text-slate-400 ml-1" />
+            <input
+              type="text"
+              autoFocus
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search stock by name, SKU, brand..."
+              className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-navy-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-md"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
+          {/* Results List */}
+          <div className="max-h-60 overflow-y-auto divide-y divide-slate-100 text-xs">
+            {filtered.length === 0 ? (
+              <div className="p-4 text-center text-slate-400 text-xs">
+                No stock product found matching "{searchQuery}"
+              </div>
+            ) : (
+              filtered.map(inv => {
+                const isSelected = inv.name === currentItemName;
+                return (
+                  <button
+                    key={inv.id}
+                    type="button"
+                    onClick={() => {
+                      onSelect(inv);
+                      setIsOpen(false);
+                      setSearchQuery('');
+                    }}
+                    className={`w-full text-left p-2.5 hover:bg-brand-50/70 flex items-center justify-between gap-3 transition-colors ${
+                      isSelected ? 'bg-brand-50 text-brand-900 font-bold' : 'text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <img
+                        src={inv.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&auto=format&fit=crop&q=80'}
+                        alt={inv.name}
+                        className="w-9 h-9 object-cover rounded-lg border border-slate-200 bg-white flex-shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <span className="font-extrabold text-navy-900 text-[11px] block truncate">
+                          {inv.name}
+                        </span>
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                          <span>{inv.brand || 'Store Item'}</span>
+                          {inv.sku && (
+                            <>
+                              <span>•</span>
+                              <span className="font-mono">{inv.sku}</span>
+                            </>
+                          )}
+                          <span>•</span>
+                          <span className={inv.currentStock > 0 ? 'text-emerald-600 font-semibold' : 'text-rose-600 font-semibold'}>
+                            Stock: {inv.currentStock}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-right flex-shrink-0">
+                      <span className="font-black text-brand-600 text-xs block">
+                        ৳{inv.sellingPrice?.toLocaleString()}
+                      </span>
+                      {isSelected && (
+                        <span className="text-[9px] font-bold text-emerald-600 uppercase flex items-center justify-end gap-0.5">
+                          <Check className="w-2.5 h-2.5" /> Selected
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+
+          {/* Footer count */}
+          <div className="p-2 bg-slate-50 border-t border-slate-100 text-[10px] text-slate-400 text-center">
+            Showing {filtered.length} of {inventory.length} warehouse items
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const AdminCreateOrderModal = ({ onClose }) => {
   const { agents, inventory, createAdminOrder, showToast } = useApp();
@@ -347,21 +503,11 @@ export const AdminCreateOrderModal = ({ onClose }) => {
                   <span className="font-extrabold text-navy-900 text-xs">Item #{idx + 1}</span>
                   
                   {orderType === 'Stock Product' && inventory && inventory.length > 0 && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-slate-400 font-semibold">Load from Stock:</span>
-                      <select
-                        onChange={(e) => {
-                          const matched = inventory.find(i => i.id === e.target.value);
-                          if (matched) handleSelectFromStock(matched, idx);
-                        }}
-                        className="px-2 py-1 rounded-lg border border-slate-300 text-[10px] font-bold bg-white"
-                      >
-                        <option value="">-- Choose Stock Item --</option>
-                        {inventory.map(inv => (
-                          <option key={inv.id} value={inv.id}>{inv.name} (৳{inv.sellingPrice})</option>
-                        ))}
-                      </select>
-                    </div>
+                    <SearchableStockSelector
+                      inventory={inventory}
+                      currentItemName={item.name}
+                      onSelect={(matched) => handleSelectFromStock(matched, idx)}
+                    />
                   )}
                 </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import confetti from 'canvas-confetti';
 import { 
@@ -11,19 +11,124 @@ import {
   CreditCard, 
   ShieldCheck, 
   FileText, 
-  ExternalLink,
+  ExternalLink, 
   Sparkles,
   ShoppingBag,
   Info,
   Globe2,
   Lock,
   RotateCcw,
-  Cake
+  Cake,
+  Image as ImageIcon
 } from 'lucide-react';
 import { BKashLogo, NagadLogo, VisaLogo, MastercardLogo } from '../common/PaymentLogos';
 import { CountryFlag } from '../common/CountryFlag';
 
 const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
+
+export const parseProductFromUrl = (rawUrl) => {
+  if (!rawUrl || !rawUrl.trim()) return null;
+  const urlStr = rawUrl.trim();
+  const lower = urlStr.toLowerCase();
+
+  // 1. Detect Country
+  let detectedCountry = 'India';
+  if (lower.includes('.ae') || lower.includes('dubai') || lower.includes('noon.com') || lower.includes('amazon.ae') || lower.includes('apple.com/ae')) {
+    detectedCountry = 'Dubai';
+  } else if (lower.includes('.th') || lower.includes('thailand') || lower.includes('shopee.co.th') || lower.includes('central.co.th') || lower.includes('lazada.co.th')) {
+    detectedCountry = 'Thailand';
+  } else if (lower.includes('.in') || lower.includes('flipkart') || lower.includes('amazon.in') || lower.includes('myntra') || lower.includes('ajio')) {
+    detectedCountry = 'India';
+  }
+
+  // 2. Identify Platform
+  let detectedPlatform = 'Global Online Store';
+  if (lower.includes('amazon') || lower.includes('amzn')) detectedPlatform = `Amazon ${detectedCountry}`;
+  else if (lower.includes('flipkart')) detectedPlatform = 'Flipkart India';
+  else if (lower.includes('nike')) detectedPlatform = 'Nike Official';
+  else if (lower.includes('apple')) detectedPlatform = 'Apple Store';
+  else if (lower.includes('noon')) detectedPlatform = 'Noon UAE';
+  else if (lower.includes('zara')) detectedPlatform = 'Zara Official';
+  else if (lower.includes('sephora')) detectedPlatform = 'Sephora';
+
+  // 3. Extract Name from URL path
+  let detectedName = '';
+  try {
+    const parsed = new URL(urlStr.startsWith('http') ? urlStr : `https://${urlStr}`);
+    const pathname = decodeURIComponent(parsed.pathname);
+    const parts = pathname.split('/').filter(Boolean);
+
+    const dpIdx = parts.indexOf('dp');
+    if (dpIdx > 0) {
+      detectedName = parts[dpIdx - 1].replace(/[-_+]/g, ' ');
+    } else if (parts.length > 0) {
+      const candidates = parts.filter(p => 
+        p !== 'dp' && p !== 'gp' && p !== 'product' && p !== 'd' && 
+        p !== 'p' && p !== 'item' && !/^[A-Z0-9]{10}$/i.test(p) && p.length > 2
+      );
+      if (candidates.length > 0) {
+        candidates.sort((a, b) => b.length - a.length);
+        detectedName = candidates[0].replace(/[-_+]/g, ' ');
+      }
+    }
+  } catch (e) {}
+
+  if (detectedName) {
+    detectedName = detectedName
+      .split(' ')
+      .filter(w => w.length > 0 && !/^\d{5,}$/.test(w) && w.length < 35)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  if (!detectedName) {
+    if (lower.includes('amazon') || lower.includes('amzn')) detectedName = 'Amazon Verified Product';
+    else if (lower.includes('apple')) detectedName = 'Apple Product Import';
+    else if (lower.includes('nike')) detectedName = 'Nike Authentic Footwear';
+    else detectedName = 'Imported Global Product';
+  }
+
+  // 4. Detect Category & Price
+  let category = 'General';
+  let suggestedPrice = 3500;
+  const lowerName = detectedName.toLowerCase();
+  if (lowerName.includes('beauty') || lowerName.includes('lipstick') || lowerName.includes('serum') || lowerName.includes('cream') || lowerName.includes('smudgeproof') || lowerName.includes('fae') || lowerName.includes('cosmetic')) {
+    category = 'Beauty & Cosmetics';
+    suggestedPrice = 1850;
+  } else if (lowerName.includes('shoe') || lowerName.includes('sneaker') || lowerName.includes('nike') || lowerName.includes('running') || lowerName.includes('air max')) {
+    category = 'Footwear';
+    suggestedPrice = 8500;
+  } else if (lowerName.includes('iphone') || lowerName.includes('macbook') || lowerName.includes('airpods') || lowerName.includes('apple') || lowerName.includes('laptop') || lowerName.includes('camera') || lowerName.includes('electronics')) {
+    category = 'Electronics';
+    suggestedPrice = 45000;
+  } else if (lowerName.includes('dress') || lowerName.includes('shirt') || lowerName.includes('jacket') || lowerName.includes('zara') || lowerName.includes('hoodie')) {
+    category = 'Fashion';
+    suggestedPrice = 4200;
+  }
+
+  // 5. Category Image
+  let sampleImage = '';
+  if (category === 'Beauty & Cosmetics') {
+    sampleImage = 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&auto=format&fit=crop&q=80';
+  } else if (category === 'Footwear') {
+    sampleImage = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80';
+  } else if (category === 'Electronics') {
+    sampleImage = 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=600&auto=format&fit=crop&q=80';
+  } else if (category === 'Fashion') {
+    sampleImage = 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=600&auto=format&fit=crop&q=80';
+  } else {
+    sampleImage = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80';
+  }
+
+  return {
+    name: detectedName,
+    platform: detectedPlatform,
+    country: detectedCountry,
+    category,
+    suggestedPrice,
+    image: sampleImage
+  };
+};
 
 export const PreOrderWizard = ({ onComplete, onCancel }) => {
   const { createCustomerPreOrder, customerProfile, prefilledPreOrder, setPrefilledPreOrder, showToast, preOrderFormSettings } = useApp();
@@ -31,17 +136,23 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
   // Wizard Steps: 1 (Country & Link), 2 (Product Details), 3 (Cart), 4 (Customer Info), 5 (Review & Pay), 6 (Confirmed)
   const [step, setStep] = useState(1);
   const [country, setCountry] = useState('India');
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
   
-  // Current Item in Builder
+  // Current Item in Builder (starts clean and dynamically updates)
   const [currentItem, setCurrentItem] = useState({
-    name: 'Nike Air Max 270',
-    url: 'https://www.nike.com/in/t/air-max-270-mens-shoes',
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format&fit=crop&q=80',
-    size: '42',
-    color: 'Black/Red',
+    name: '',
+    url: '',
+    image: '',
+    imageName: '',
+    imageSize: '',
+    hasUserCustomImage: false,
+    category: 'General',
+    size: 'Standard',
+    color: 'Default',
     quantity: 1,
-    expectedPrice: 8000,
-    notes: 'Please check original tags and box condition.'
+    expectedPrice: '',
+    notes: ''
   });
 
   // Handle pre-filled Pre-Order data from Header Search or Home Hero
@@ -143,20 +254,86 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
     }
   }, [preOrderFormSettings, country]);
 
-  // Items in Order Cart
-  const [items, setItems] = useState([
-    {
-      id: 'item-demo-1',
-      name: 'Nike Air Max 270',
-      category: 'Footwear',
-      brand: 'Nike',
-      url: 'https://www.nike.com/in/t/air-max-270-mens-shoes-K2NzSd',
-      image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format&fit=crop&q=80',
-      specs: { size: '42', color: 'Black/Red', unit: 1 },
-      expectedPrice: 8000,
-      notes: 'Black/Red edition'
+  // Items in Order Cart (starts empty for clean user pre-orders)
+  const [items, setItems] = useState([]);
+
+  // Live URL Change Handler - Parses product title, platform, country, and category instantly
+  const handleUrlChange = (newUrl) => {
+    setCurrentItem(prev => {
+      const updated = { ...prev, url: newUrl };
+      if (!newUrl || !newUrl.trim()) {
+        if (!prev.hasUserCustomImage) {
+          updated.image = '';
+          updated.name = '';
+        }
+        return updated;
+      }
+
+      const parsed = parseProductFromUrl(newUrl);
+      if (parsed) {
+        if (parsed.country && availableCountries.some(c => c.name === parsed.country)) {
+          setCountry(parsed.country);
+        }
+        updated.name = parsed.name;
+        updated.category = parsed.category;
+        updated.brand = parsed.platform;
+        if (!prev.hasUserCustomImage && parsed.image) {
+          updated.image = parsed.image;
+        }
+        if (!prev.expectedPrice || prev.expectedPrice === 8000) {
+          updated.expectedPrice = parsed.suggestedPrice;
+        }
+      }
+      return updated;
+    });
+  };
+
+  // Real Image Upload Handlers (File Picker & Drag-and-Drop)
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('Image file size must be less than 8MB', 'warning');
+      return;
     }
-  ]);
+    const reader = new FileReader();
+    reader.onload = (uploadEvt) => {
+      const dataUrl = uploadEvt.target.result;
+      setCurrentItem(prev => ({
+        ...prev,
+        image: dataUrl,
+        imageName: file.name,
+        imageSize: `${Math.round(file.size / 1024)} KB`,
+        hasUserCustomImage: true
+      }));
+      showToast(`Uploaded ${file.name} successfully!`, 'success');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('Image file size must be less than 8MB', 'warning');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (uploadEvt) => {
+      const dataUrl = uploadEvt.target.result;
+      setCurrentItem(prev => ({
+        ...prev,
+        image: dataUrl,
+        imageName: file.name,
+        imageSize: `${Math.round(file.size / 1024)} KB`,
+        hasUserCustomImage: true
+      }));
+      showToast(`Attached ${file.name}!`, 'success');
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Customer Information
   const [customerInfo, setCustomerInfo] = useState({
@@ -359,16 +536,23 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                   </div>
                 </div>
 
+                {/* 2. Product Website Link (URL) */}
                 <div>
-                  <label className="block text-sm font-bold text-navy-900 mb-1">2. Product Website Link (URL)</label>
-                  <p className="text-xs text-slate-500 mb-2">Paste the web link from Nike, Amazon, Apple, Zara, Flipkart etc.</p>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-bold text-navy-900">2. Product Website Link (URL)</label>
+                    <span className="text-[10px] font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-md">
+                      Auto-Detects Product Info
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mb-2">Paste any product web link from Amazon, Flipkart, Nike, Apple, Sephora, Noon etc.</p>
+                  
                   <div className="relative">
                     <input
                       type="text"
                       value={currentItem.url}
-                      onChange={(e) => setCurrentItem({ ...currentItem, url: e.target.value })}
-                      placeholder="Paste product link (Amazon, Nike, Apple, Zara, Flipkart)..."
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 pr-24"
+                      onChange={(e) => handleUrlChange(e.target.value)}
+                      placeholder="Paste product link (e.g. https://www.amazon.in/...)..."
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 pr-24 font-medium"
                     />
                     <button
                       type="button"
@@ -376,45 +560,159 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                         if (navigator.clipboard?.readText) {
                           navigator.clipboard.readText()
                             .then(text => {
-                              if (text) setCurrentItem(prev => ({ ...prev, url: text }));
+                              if (text) {
+                                handleUrlChange(text);
+                                showToast('Link pasted & product analyzed!', 'success');
+                              }
                             })
                             .catch(() => showToast('Unable to read clipboard. Please paste manually.', 'info'));
                         }
                       }}
-                      className="absolute right-2 top-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                      className="absolute right-2 top-2 px-3 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 text-xs font-bold rounded-lg transition-colors cursor-pointer border border-brand-200"
                     >
-                      Paste
+                      Paste Link
                     </button>
                   </div>
+
+                  {/* Live Detected Product Feedback Card */}
+                  {currentItem.url && (
+                    <div className="mt-2.5 p-3.5 bg-brand-50/70 border border-brand-200/80 rounded-2xl flex items-center gap-3.5 animate-fade-in shadow-2xs">
+                      <img 
+                        src={currentItem.image || FALLBACK_PRODUCT_IMAGE} 
+                        alt={currentItem.name || 'Detected Product'}
+                        className="w-14 h-14 object-cover rounded-xl border border-brand-200 bg-white flex-shrink-0 shadow-2xs"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-2 py-0.5 rounded-md bg-brand-600 text-white font-extrabold text-[9px] uppercase tracking-wider">
+                            {currentItem.brand || 'Online Store'}
+                          </span>
+                          <span className="text-[10px] text-slate-600 font-bold flex items-center gap-1">
+                            <CountryFlag country={country} className="w-3.5 h-2.5 rounded-xs" />
+                            {country} Hub
+                          </span>
+                          {currentItem.category && (
+                            <span className="text-[10px] text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                              {currentItem.category}
+                            </span>
+                          )}
+                        </div>
+
+                        <h4 className="font-extrabold text-xs sm:text-sm text-navy-900 truncate mt-1" title={currentItem.name || currentItem.url}>
+                          {currentItem.name || 'Analyzing product link...'}
+                        </h4>
+
+                        <p className="text-[10px] text-emerald-700 font-bold flex items-center gap-1 mt-0.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Link verified for agent procurement</span>
+                          {currentItem.expectedPrice > 0 && (
+                            <span className="text-slate-400 font-normal ml-1">
+                              • Est. ৳{Number(currentItem.expectedPrice).toLocaleString()}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
+                {/* 3. Or Upload Product Image / Screenshot */}
                 <div>
                   <label className="block text-sm font-bold text-navy-900 mb-1">3. Or Upload Product Image / Screenshot</label>
-                  <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-brand-500 transition-colors bg-slate-50">
-                    {currentItem.image ? (
-                      <div className="flex items-center justify-center gap-4">
-                        <img 
-                          src={currentItem.image} 
-                          alt="Preview" 
-                          className="w-16 h-16 object-cover rounded-xl border shadow-sm" 
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
-                          }}
-                        />
-                        <div className="text-left">
-                          <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Product Image Attached
-                          </span>
-                          <p className="text-[11px] text-slate-500">Image attached for purchasing agent</p>
+                  <p className="text-xs text-slate-500 mb-2">Upload a photo, catalog image, or mobile screenshot of the item you want.</p>
+                  
+                  {/* Real Hidden File Input */}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/png, image/jpeg, image/jpg, image/webp"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+
+                  {/* Interactive Upload Zone with Drag & Drop */}
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={handleImageDrop}
+                    className={`border-2 border-dashed rounded-2xl p-5 text-center transition-all cursor-pointer select-none ${
+                      isDragging 
+                        ? 'border-brand-500 bg-brand-50/70 scale-[1.01]' 
+                        : currentItem.hasUserCustomImage && currentItem.image
+                          ? 'border-emerald-300 bg-emerald-50/40 hover:bg-emerald-50/60' 
+                          : 'border-slate-300 hover:border-brand-400 bg-slate-50/60 hover:bg-slate-50'
+                    }`}
+                  >
+                    {currentItem.hasUserCustomImage && currentItem.image ? (
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3.5">
+                          <img 
+                            src={currentItem.image} 
+                            alt="Preview" 
+                            className="w-16 h-16 object-cover rounded-xl border border-emerald-300 shadow-sm bg-white" 
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                            }}
+                          />
+                          <div className="text-left">
+                            <span className="text-xs font-black text-emerald-700 flex items-center gap-1.5">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                              Product Image Attached
+                            </span>
+                            <p className="text-xs font-bold text-navy-900 truncate max-w-xs mt-0.5">
+                              {currentItem.imageName || 'Product Screenshot'}
+                            </p>
+                            <span className="text-[10px] text-slate-500 font-mono">
+                              {currentItem.imageSize || 'Image uploaded for purchasing agent'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 transition-colors shadow-2xs"
+                          >
+                            Replace Photo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCurrentItem(prev => ({
+                                ...prev,
+                                image: '',
+                                imageName: '',
+                                imageSize: '',
+                                hasUserCustomImage: false
+                              }));
+                              showToast('Uploaded image removed', 'info');
+                            }}
+                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-700 transition-colors"
+                            title="Remove Image"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                     ) : (
-                      <>
-                        <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                        <p className="text-xs font-semibold text-slate-700">Click to upload or drag & drop</p>
-                        <p className="text-[10px] text-slate-400 mt-1">JPG, PNG or Screenshot</p>
-                      </>
+                      <div className="py-2">
+                        <div className="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mx-auto mb-2.5 shadow-2xs">
+                          <Upload className="w-6 h-6" />
+                        </div>
+                        <p className="text-xs font-extrabold text-navy-900">
+                          Click to browse or drag & drop photo / screenshot
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Supports JPG, PNG, WEBP up to 8MB • Screenshots from mobile or laptop
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -422,42 +720,25 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                 <button
                   type="button"
                   onClick={() => {
-                    if (currentItem.url && (!currentItem.name || currentItem.name === 'Nike Air Max 270')) {
-                      const rawUrl = currentItem.url.trim();
-                      let detectedName = '';
-                      try {
-                        const parsed = new URL(rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`);
-                        const parts = decodeURIComponent(parsed.pathname).split('/').filter(Boolean);
-                        const dpIdx = parts.indexOf('dp');
-                        if (dpIdx > 0) {
-                          detectedName = parts[dpIdx - 1].replace(/[-_+]/g, ' ');
-                        } else if (parts.length > 0) {
-                          const candidates = parts.filter(p => p !== 'dp' && p !== 'gp' && p !== 'product' && p !== 'd' && !/^[A-Z0-9]{10}$/i.test(p));
-                          if (candidates.length > 0) {
-                            candidates.sort((a, b) => b.length - a.length);
-                            detectedName = candidates[0].replace(/[-_+]/g, ' ');
-                          }
-                        }
-                      } catch (e) {}
-
-                      if (detectedName) {
-                        detectedName = detectedName.split(' ').filter(w => w.length > 1 && !/^\d+$/.test(w) && w.length < 30).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                      }
-
-                      const lower = rawUrl.toLowerCase();
-                      if (!detectedName) {
-                        if (lower.includes('amazon') || lower.includes('amzn')) detectedName = 'Amazon Imported Item';
-                        else if (lower.includes('apple')) detectedName = 'Apple Official Import';
-                        else if (lower.includes('nike')) detectedName = 'Nike Authentic Footwear';
-                        else detectedName = 'Imported Global Product';
-                      }
-
-                      setCurrentItem(prev => ({
-                        ...prev,
-                        name: detectedName,
-                        brand: lower.includes('amazon') ? 'Amazon Store' : lower.includes('apple') ? 'Apple' : lower.includes('nike') ? 'Nike' : prev.brand || 'Global Brand'
-                      }));
+                    if (!currentItem.url && !currentItem.name && !currentItem.image) {
+                      showToast("Please paste a product web link or upload a screenshot/photo.", "warning");
+                      return;
                     }
+
+                    if (currentItem.url && !currentItem.name) {
+                      const parsed = parseProductFromUrl(currentItem.url);
+                      if (parsed) {
+                        setCurrentItem(prev => ({
+                          ...prev,
+                          name: parsed.name,
+                          category: parsed.category,
+                          brand: parsed.platform,
+                          image: prev.hasUserCustomImage ? prev.image : (parsed.image || prev.image),
+                          expectedPrice: prev.expectedPrice || parsed.suggestedPrice
+                        }));
+                      }
+                    }
+
                     setStep(2);
                   }}
                   className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
@@ -473,9 +754,9 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
               <div className="space-y-5">
                 <div className="bg-brand-50/60 p-4 rounded-2xl border border-brand-200 flex items-center gap-4">
                   <img 
-                    src={currentItem.image} 
+                    src={currentItem.image || FALLBACK_PRODUCT_IMAGE} 
                     alt="Preview" 
-                    className="w-16 h-16 object-cover rounded-xl border" 
+                    className="w-16 h-16 object-cover rounded-xl border bg-white shadow-2xs" 
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
@@ -603,37 +884,59 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                   <span className="text-xs text-slate-500">Target Country: <strong className="text-brand-600">{country}</strong></span>
                 </div>
 
-                <div className="space-y-3">
-                  {items.map((it) => (
-                    <div key={it.id} className="flex items-center gap-4 p-4 rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
-                      <img src={it.image} alt={it.name} className="w-16 h-16 object-cover rounded-xl border flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-sm text-navy-900 truncate">{it.name}</h4>
-                        <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                          <span>Size: <strong className="text-slate-800">{it.specs.size}</strong></span>
-                          <span>•</span>
-                          <span>Color: <strong className="text-slate-800">{it.specs.color}</strong></span>
-                          <span>•</span>
-                          <span>Qty: <strong className="text-slate-800">{it.specs.unit}</strong></span>
+                {items.length === 0 ? (
+                  <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                    <ShoppingBag className="w-10 h-10 text-slate-300 mx-auto" />
+                    <p className="text-sm font-bold text-slate-700">No items in your pre-order cart yet.</p>
+                    <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-xl shadow transition-all"
+                    >
+                      + Add Product via Link or Image
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {items.map((it) => (
+                      <div key={it.id} className="flex items-center gap-4 p-4 rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
+                        <img 
+                          src={it.image || FALLBACK_PRODUCT_IMAGE} 
+                          alt={it.name} 
+                          className="w-16 h-16 object-cover rounded-xl border flex-shrink-0 bg-white" 
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-sm text-navy-900 truncate">{it.name}</h4>
+                          <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
+                            <span>Size: <strong className="text-slate-800">{it.specs.size}</strong></span>
+                            <span>•</span>
+                            <span>Color: <strong className="text-slate-800">{it.specs.color}</strong></span>
+                            <span>•</span>
+                            <span>Qty: <strong className="text-slate-800">{it.specs.unit}</strong></span>
+                          </div>
+                          <span className="text-xs font-bold text-brand-600 mt-1 block">
+                            ৳{(it.expectedPrice * it.specs.unit).toLocaleString()}
+                          </span>
                         </div>
-                        <span className="text-xs font-bold text-brand-600 mt-1 block">
-                          ৳{(it.expectedPrice * it.specs.unit).toLocaleString()}
-                        </span>
+                        <button
+                          onClick={() => handleRemoveItem(it.id)}
+                          className="p-2 text-slate-400 hover:text-rose-600 transition-colors"
+                          title="Remove"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleRemoveItem(it.id)}
-                        className="p-2 text-slate-400 hover:text-rose-600 transition-colors"
-                        title="Remove"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
 
                 <button
                   type="button"
-                  onClick={() => setStep(2)}
+                  onClick={() => setStep(1)}
                   className="w-full py-3.5 border-2 border-dashed border-brand-400 text-brand-600 hover:bg-brand-50 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
                 >
                   <Plus className="w-4 h-4" />
