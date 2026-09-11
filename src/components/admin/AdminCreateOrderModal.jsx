@@ -17,7 +17,10 @@ import {
   Sparkles,
   Search,
   ChevronDown,
-  Check
+  Check,
+  Upload,
+  Image as ImageIcon,
+  FileText
 } from 'lucide-react';
 
 const SearchableStockSelector = ({ inventory = [], onSelect, currentItemName }) => {
@@ -275,6 +278,20 @@ export const AdminCreateOrderModal = ({ onClose }) => {
       }
       return updated;
     });
+  };
+
+  const handleItemImageUpload = (index, file) => {
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('Image file size must be less than 8MB', 'warning');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (uploadEvt) => {
+      handleItemChange(index, 'image', uploadEvt.target.result);
+      showToast(`Uploaded image for Item #${index + 1}!`, 'success');
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = (e) => {
@@ -601,6 +618,68 @@ export const AdminCreateOrderModal = ({ onClose }) => {
                     />
                   </div>
                 )}
+
+                {/* Product Reference Image (File Picker & Drag/Drop or URL) */}
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Product Reference Image</label>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-white p-2.5 rounded-xl border border-slate-200">
+                    {item.image ? (
+                      <div className="flex items-center gap-3 w-full">
+                        <img 
+                          src={item.image} 
+                          alt="Product Preview" 
+                          className="w-12 h-12 object-cover rounded-lg border border-slate-200 shadow-2xs flex-shrink-0 bg-slate-50"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-bold text-navy-900 block truncate">Reference Image Attached</span>
+                          <span className="text-[10px] text-emerald-600 font-semibold">Ready for Overseas Sourcing</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <label className="cursor-pointer px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] rounded-lg transition-colors">
+                            Replace
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={(e) => handleItemImageUpload(idx, e.target.files?.[0])}
+                            />
+                          </label>
+                          <button 
+                            type="button" 
+                            onClick={() => handleItemChange(idx, 'image', '')}
+                            className="p-1 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                            title="Remove image"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
+                        <label className="cursor-pointer flex-1 flex items-center justify-center gap-2 p-2 rounded-lg border-2 border-dashed border-slate-300 hover:border-brand-500 hover:bg-brand-50/50 transition-all text-slate-600 hover:text-brand-600 text-xs font-bold">
+                          <Upload className="w-3.5 h-3.5 text-brand-600" />
+                          <span>Upload Image / Drop photo here</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => handleItemImageUpload(idx, e.target.files?.[0])}
+                          />
+                        </label>
+                        <span className="text-[10px] text-slate-400 font-bold text-center sm:text-left">OR</span>
+                        <div className="relative flex-1">
+                          <input 
+                            type="url"
+                            placeholder="Paste image URL..."
+                            value={item.image || ''}
+                            onChange={(e) => handleItemChange(idx, 'image', e.target.value)}
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -703,6 +782,24 @@ export const AdminCreateOrderModal = ({ onClose }) => {
                 <span className="text-amber-700 text-sm">৳{Math.max(0, total - advanceRequired).toLocaleString()}</span>
               </div>
             </div>
+          </div>
+
+          {/* Admin Remarks & Internal Instructions */}
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-[11px] uppercase font-bold tracking-wider text-slate-700 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-brand-600" />
+                <span>Remarks & Internal Notes (Optional)</span>
+              </h4>
+              <span className="text-[10px] text-slate-400 font-medium">Visible to Admin HQ & Assigned Agent</span>
+            </div>
+            <textarea
+              rows={2}
+              value={adminNote}
+              onChange={(e) => setAdminNote(e.target.value)}
+              placeholder="e.g. Verify product batch & expiry, ensure authentic seal intact, package with double bubble-wrap, note customer preference..."
+              className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs text-navy-900 focus:ring-2 focus:ring-brand-500 bg-white placeholder:text-slate-400"
+            />
           </div>
 
           {/* Action Buttons */}

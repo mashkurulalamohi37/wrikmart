@@ -1648,6 +1648,110 @@ export const AppProvider = ({ children }) => {
     showToast(`Order #${orderId} status changed to ${newStatus}`, 'info');
   };
 
+  // Admin receives consignment in Bangladesh Central Hub & recalculates exact landed costs & profit
+  const receiveOrderInBangladesh = ({
+    orderId,
+    exchangeRate,
+    internationalShippingCostBDT = 500,
+    localDeliveryCostBDT = 120,
+    courierPartner = 'Steadfast Courier',
+    condition = 'Intact & Sealed',
+    notes = '',
+    itemPurchasePrices = null
+  }) => {
+    setOrders(prev => prev.map(order => {
+      if (order.id === orderId) {
+        // Calculate items and total foreign purchase cost
+        let totalForeignCost = 0;
+        const updatedItems = order.items.map(it => {
+          const customPrice = itemPurchasePrices && itemPurchasePrices[it.id] !== undefined
+            ? Number(itemPurchasePrices[it.id])
+            : Number(it.actualPurchasePrice || (it.expectedPrice ? it.expectedPrice * 0.75 : 0));
+          const unit = it.specs?.unit || 1;
+          totalForeignCost += customPrice * unit;
+          return {
+            ...it,
+            actualPurchasePrice: customPrice
+          };
+        });
+
+        const rate = Number(exchangeRate) || 1.43;
+        const agentCostBDT = Math.round(totalForeignCost * rate);
+        const shippingCostBDT = Number(internationalShippingCostBDT || 0);
+        const localCourierCostBDT = Number(localDeliveryCostBDT || 0);
+        const totalSourcingCostBDT = agentCostBDT + shippingCostBDT + localCourierCostBDT;
+        const sellingPriceBDT = Number(order.financials?.estimatedTotal || order.financials?.finalSellingPrice || 0);
+        const grossProfitBDT = sellingPriceBDT - totalSourcingCostBDT;
+
+        const receiveTime = new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        const newTimeline = order.timeline.map(t => {
+          if (t.step === 'Bangladesh Received') {
+            return {
+              ...t,
+              time: receiveTime,
+              actor: 'Dhaka Central Hub',
+              note: `Consignment safely received in Bangladesh (${condition}). Landed cost calculated.`,
+              done: true
+            };
+          }
+          if (t.step === 'Ready for Delivery') {
+            return {
+              ...t,
+              time: receiveTime,
+              actor: courierPartner || 'Steadfast Courier',
+              note: `Ready for doorstep delivery via ${courierPartner || 'Steadfast Courier'}`,
+              done: true
+            };
+          }
+          if (t.step === 'Shipped to Bangladesh' && !t.done) {
+            return {
+              ...t,
+              time: receiveTime,
+              actor: 'Air Cargo Logistics',
+              note: 'Cleared Bangladesh customs & arrived at hub',
+              done: true
+            };
+          }
+          return t;
+        });
+
+        return {
+          ...order,
+          status: 'BD Received',
+          courierName: courierPartner || 'Steadfast Courier',
+          bdReceivedAt: receiveTime,
+          bdReceivedDetails: {
+            receivedAt: receiveTime,
+            exchangeRate: rate,
+            internationalShippingCostBDT: shippingCostBDT,
+            localDeliveryCostBDT: localCourierCostBDT,
+            courierPartner: courierPartner || 'Steadfast Courier',
+            condition,
+            notes,
+            totalForeignCost,
+            totalSourcingCostBDT,
+            grossProfitBDT
+          },
+          items: updatedItems,
+          financials: {
+            ...order.financials,
+            agentCostBDT,
+            shippingCostBDT,
+            localCourierCostBDT,
+            grossProfitBDT,
+            isProcured: true,
+            exchangeRateUsed: rate
+          },
+          timeline: newTimeline
+        };
+      }
+      return order;
+    }));
+
+    showToast(`Order #${orderId} received at Bangladesh Central Hub! Landed cost & profit updated.`, 'success');
+  };
+
   // Admin Assigns Agent
   const assignAgentToOrder = (orderId, agentId) => {
     const agent = agents.find(a => a.id === agentId);
@@ -1890,6 +1994,7 @@ export const AppProvider = ({ children }) => {
     updateOrderPurchase,
     markOrderAtHub,
     updateOrderStatus,
+    receiveOrderInBangladesh,
     assignAgentToOrder,
     addAgentExpense,
     reviewExpense,

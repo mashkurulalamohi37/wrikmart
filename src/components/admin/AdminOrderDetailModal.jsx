@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { AdminDamageReturnModal } from './AdminDamageReturnModal';
+import { AdminReceiveBDModal } from './AdminReceiveBDModal';
 import { 
   X, 
   Printer, 
@@ -16,7 +17,8 @@ import {
   AlertTriangle,
   RotateCcw,
   ShieldAlert,
-  Edit3
+  Edit3,
+  PackageCheck
 } from 'lucide-react';
 import { CountryFlag } from '../common/CountryFlag';
 
@@ -25,6 +27,7 @@ const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1523275335684-
 export const AdminOrderDetailModal = ({ order, onClose }) => {
   const { exchangeRates } = useApp();
   const [showDamageModal, setShowDamageModal] = useState(false);
+  const [showReceiveModal, setShowReceiveModal] = useState(false);
 
   if (!order) return null;
 
@@ -69,6 +72,29 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+            {/* Receive in Bangladesh Action (for international pre-orders) */}
+            {order.orderType !== 'Stock Product' && order.country !== 'Bangladesh' && (
+              order.status === 'BD Received' || order.status === 'Delivered' || order.status === 'Ready for Delivery' ? (
+                <button
+                  onClick={() => setShowReceiveModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100"
+                  title="View or edit Bangladesh Hub receipt and landed profit breakdown"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Received in BD Hub ✅</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowReceiveModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white shadow-sm"
+                  title="Receive consignment at Bangladesh Hub, set exchange rate & calculate profit/loss"
+                >
+                  <PackageCheck className="w-3.5 h-3.5" />
+                  <span>Receive in Bangladesh</span>
+                </button>
+              )
+            )}
+
             <button
               onClick={() => setShowDamageModal(true)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
@@ -162,7 +188,34 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
                 {order.orderType === 'Stock Product' ? 'Local Fulfillment Team' : `Agent: ${order.assignedAgentName || 'Unassigned'} (${order.country})`}
               </p>
               <p className="text-slate-600">Assigned Hub: <strong className="text-slate-800">{order.hubName || 'Dhaka Main Hub'}</strong></p>
-              <p className="text-slate-600">Courier Partner: <strong className="text-slate-800">{order.courierName || 'Steadfast Courier'}</strong></p>
+              
+              {/* Courier & Transit Mode based on BD arrival status */}
+              {order.orderType === 'Stock Product' || order.country === 'Bangladesh' ? (
+                <p className="text-slate-600">Local Courier: <strong className="text-slate-800">{order.courierName || 'Steadfast Courier'}</strong></p>
+              ) : (
+                order.status === 'BD Received' || order.status === 'Ready for Delivery' || order.status === 'Delivered' ? (
+                  <>
+                    <p className="text-slate-600">
+                      Local Courier: <strong className="text-emerald-700 font-bold">{order.courierName || 'Steadfast Courier'}</strong>
+                    </p>
+                    {order.bdReceivedAt && (
+                      <p className="text-[11px] text-emerald-700 font-bold">
+                        Arrived BD Hub: {order.bdReceivedAt}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-slate-600">
+                      Transit Stage: <strong className="text-purple-700 font-bold">International Air Freight / Staging</strong>
+                    </p>
+                    <p className="text-slate-500 text-[11px]">
+                      Local Courier: <span className="italic">{order.courierName || 'Steadfast Courier'} (Active on BD Arrival)</span>
+                    </p>
+                  </>
+                )
+              )}
+
               <p className="text-[11px] text-slate-400 pt-1">
                 Order Placed At: {order.createdAt}
               </p>
@@ -275,6 +328,14 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
         <AdminDamageReturnModal
           order={order}
           onClose={() => setShowDamageModal(false)}
+        />
+      )}
+
+      {/* Receive in Bangladesh Central Hub Modal */}
+      {showReceiveModal && (
+        <AdminReceiveBDModal
+          order={order}
+          onClose={() => setShowReceiveModal(false)}
         />
       )}
     </div>

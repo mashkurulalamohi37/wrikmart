@@ -102,12 +102,13 @@ export const CustomerOrders = ({ onNewOrder }) => {
                     <div className="text-right">
                       <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                         order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
+                        order.status === 'BD Received' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
                         order.status === 'Purchased' ? 'bg-cyan-100 text-cyan-700' :
                         order.status === 'At Delivery House' ? 'bg-purple-100 text-purple-700' :
                         order.status === 'In Transit' ? 'bg-indigo-100 text-indigo-700' :
                         'bg-amber-100 text-amber-700'
                       }`}>
-                        {order.status}
+                        {order.status === 'BD Received' ? 'Arrived in BD' : order.status}
                       </span>
                     </div>
                   </div>
@@ -142,6 +143,14 @@ export const CustomerOrders = ({ onNewOrder }) => {
                         + {order.items.length - 1} more item ({order.items[1]?.name})
                       </span>
                       <span className="text-brand-600 text-[10px] font-bold flex-shrink-0 ml-1">View all</span>
+                    </div>
+                  )}
+
+                  {/* Arrived in BD Customer Alert */}
+                  {order.status === 'BD Received' && (
+                    <div className="mt-2.5 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-[11px] font-medium flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <span>পণ্যটি বাংলাদেশে পৌঁছেছে এবং আগামী ২-৪ দিনের মধ্যে ডেলিভারি সম্পন্ন হবে ({order.courierName || 'Steadfast Courier'})।</span>
                     </div>
                   )}
 

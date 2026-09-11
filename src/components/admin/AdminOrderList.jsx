@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { AdminCreateOrderModal } from './AdminCreateOrderModal';
 import { AdminDamageReturnModal } from './AdminDamageReturnModal';
+import { AdminReceiveBDModal } from './AdminReceiveBDModal';
 import { 
   Search, 
   Filter, 
@@ -17,12 +18,14 @@ import {
   AlertTriangle,
   RotateCcw,
   Package,
-  Globe2
+  Globe2,
+  PackageCheck
 } from 'lucide-react';
 import { CountryFlag } from '../common/CountryFlag';
 
 export const AdminOrderList = ({ onSelectOrder }) => {
   const { orders, agents, assignAgentToOrder, updateOrderStatus, showToast } = useApp();
+  const [selectedOrderForReceive, setSelectedOrderForReceive] = useState(null);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('All');
@@ -252,6 +255,7 @@ export const AdminOrderList = ({ onSelectOrder }) => {
                   <td className="px-3.5 sm:px-5 py-3 sm:py-3.5">
                     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                       order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' :
+                      order.status === 'BD Received' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
                       order.status === 'Damaged' ? 'bg-rose-100 text-rose-700 border border-rose-200' :
                       order.status === 'Returned' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
                       order.status === 'Purchased' ? 'bg-cyan-100 text-cyan-700' :
@@ -260,7 +264,8 @@ export const AdminOrderList = ({ onSelectOrder }) => {
                     }`}>
                       {order.status === 'Damaged' && <AlertTriangle className="w-3 h-3 text-rose-600" />}
                       {order.status === 'Returned' && <RotateCcw className="w-3 h-3 text-amber-600" />}
-                      <span>{order.status}</span>
+                      {order.status === 'BD Received' && <CheckCircle className="w-3 h-3 text-emerald-600" />}
+                      <span>{order.status === 'BD Received' ? 'Received in BD' : order.status}</span>
                     </span>
 
                     {order.damageDetails && (
@@ -275,6 +280,16 @@ export const AdminOrderList = ({ onSelectOrder }) => {
 
                   <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 text-right">
                     <div className="flex items-center justify-end gap-1.5">
+                      {order.country !== 'Bangladesh' && (order.status === 'Purchased' || order.status === 'At Delivery House' || order.status === 'Shipped') && (
+                        <button
+                          onClick={() => setSelectedOrderForReceive(order)}
+                          className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+                          title="Receive Consignment at Bangladesh Hub & Calculate Profit/Loss"
+                        >
+                          <PackageCheck className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
                       <button
                         onClick={() => setSelectedOrderForDamage(order)}
                         className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
@@ -309,6 +324,14 @@ export const AdminOrderList = ({ onSelectOrder }) => {
         <AdminDamageReturnModal 
           order={selectedOrderForDamage} 
           onClose={() => setSelectedOrderForDamage(null)} 
+        />
+      )}
+
+      {/* Receive in Bangladesh Modal */}
+      {selectedOrderForReceive && (
+        <AdminReceiveBDModal 
+          order={selectedOrderForReceive} 
+          onClose={() => setSelectedOrderForReceive(null)} 
         />
       )}
     </div>

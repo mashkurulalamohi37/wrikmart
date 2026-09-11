@@ -17,7 +17,8 @@ import {
   AlertTriangle,
   ChevronRight,
   ShieldAlert,
-  ArrowRight
+  ArrowRight,
+  CheckCircle2
 } from 'lucide-react';
 
 export const AgentDashboard = ({ onNavigate, onOpenPurchase, onOpenHub, onOpenOrderDetails }) => {
@@ -34,10 +35,15 @@ export const AgentDashboard = ({ onNavigate, onOpenPurchase, onOpenHub, onOpenOr
   // Filter orders assigned to this agent
   const agentOrders = orders.filter(o => o.assignedAgentId === activeAgent.id || o.country.toLowerCase() === activeAgent.country.toLowerCase());
   
-  const processingCount = agentOrders.filter(o => o.status === 'Processing').length;
-  const purchasedCount = agentOrders.filter(o => o.status === 'Purchased' || o.status === 'At Delivery House').length;
-  const deliveredCount = agentOrders.filter(o => o.status === 'Delivered').length;
-  const pendingCount = agentOrders.filter(o => o.status === 'In Transit').length;
+  // Clean filtering based on video feedback:
+  // 1. To Buy: ONLY orders pending purchase (not yet bought, not damaged)
+  const toBuyOrders = agentOrders.filter(o => o.status === 'Processing' && !o.damageDetails && o.status !== 'Damaged');
+  // 2. Hub / Air Freight: Orders already purchased, delivered to hub, or in-transit
+  const hubFreightOrders = agentOrders.filter(o => (o.status === 'Purchased' || o.status === 'At Delivery House' || o.status === 'In Transit' || o.status === 'Shipped') && !o.damageDetails && o.status !== 'Damaged');
+  // 3. Completed: Delivered or safely received at Bangladesh Hub
+  const completedOrders = agentOrders.filter(o => o.status === 'Delivered' || o.status === 'BD Received' || o.status === 'Ready for Delivery');
+  // 4. Damaged / Returns
+  const damagedCount = agentOrders.filter(o => o.status === 'Damaged' || o.status === 'Returned' || Boolean(o.damageDetails)).length;
 
   // Pending transfer for this agent
   const pendingTransfer = balanceTransfers.find(t => t.agentId === activeAgent.id && t.status === 'Pending');
@@ -212,47 +218,72 @@ export const AgentDashboard = ({ onNavigate, onOpenPurchase, onOpenHub, onOpenOr
 
             <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft">
               <span className="text-xs text-slate-500 font-medium">To Buy / Sourcing</span>
-              <p className="text-2xl font-extrabold text-amber-600 mt-1">{processingCount}</p>
+              <p className="text-2xl font-extrabold text-amber-600 mt-1">{toBuyOrders.length}</p>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft">
               <span className="text-xs text-slate-500 font-medium">At Hub / Air Freight</span>
-              <p className="text-2xl font-extrabold text-purple-600 mt-1">{purchasedCount + pendingCount}</p>
+              <p className="text-2xl font-extrabold text-purple-600 mt-1">{hubFreightOrders.length}</p>
             </div>
 
             <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-soft">
-              <span className="text-xs text-slate-500 font-medium">Completed</span>
-              <p className="text-2xl font-extrabold text-emerald-600 mt-1">{deliveredCount}</p>
+              <span className="text-xs text-slate-500 font-medium">Completed / BD Hub</span>
+              <p className="text-2xl font-extrabold text-emerald-600 mt-1">{completedOrders.length}</p>
             </div>
           </div>
 
-          {/* Recent Assigned Orders Snapshot */}
+          {/* Assigned Tasks to Buy / Source (Filtered - No already purchased or damaged items) */}
           <div className="bg-white rounded-3xl border border-slate-200/80 shadow-soft p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-extrabold text-navy-900 text-sm">Assigned Tasks ({agentOrders.length})</h3>
+              <div>
+                <h3 className="font-extrabold text-navy-900 text-sm">Assigned Tasks ({toBuyOrders.length})</h3>
+                <p className="text-[10px] text-slate-400">Items requiring agent purchase action</p>
+              </div>
               <button onClick={() => onNavigate('orders')} className="text-xs font-bold text-brand-600 hover:underline">
                 View All
               </button>
             </div>
 
             <div className="space-y-3">
-              {agentOrders.slice(0, 3).map((order) => (
-                <div key={order.id} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <img src={order.items[0]?.image} alt="Thumb" className="w-12 h-12 object-cover rounded-xl border flex-shrink-0" />
-                    <div>
-                      <span className="font-mono font-bold text-xs text-navy-900 block">{order.orderNumber}</span>
-                      <p className="text-[11px] text-slate-500 truncate max-w-[150px]">{order.items[0]?.name}</p>
-                    </div>
-                  </div>
-
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    order.status === 'Purchased' ? 'bg-cyan-100 text-cyan-800' : 'bg-amber-100 text-amber-800'
-                  }`}>
-                    {order.status}
-                  </span>
+              {toBuyOrders.length === 0 ? (
+                <div className="p-5 rounded-2xl bg-emerald-50/70 border border-emerald-100 text-center space-y-1.5">
+                  <CheckCircle2 className="w-7 h-7 text-emerald-600 mx-auto" />
+                  <p className="text-xs font-bold text-emerald-900">All Sourcing Tasks Up to Date!</p>
+                  <p className="text-[10px] text-emerald-700">No pending items waiting to be purchased. Check Hub Delivery or In-Transit.</p>
                 </div>
-              ))}
+              ) : (
+                toBuyOrders.slice(0, 5).map((order) => (
+                  <div key={order.id} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img 
+                        src={order.items[0]?.image} 
+                        alt="Thumb" 
+                        className="w-12 h-12 object-cover rounded-xl border border-slate-200 flex-shrink-0 bg-white" 
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <span className="font-mono font-bold text-xs text-navy-900 block">{order.orderNumber}</span>
+                        <p className="text-[11px] font-medium text-slate-700 truncate">{order.items[0]?.name}</p>
+                        <span className="text-[10px] text-amber-700 font-bold">Action Needed: Pending Purchase</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        if (onOpenPurchase) onOpenPurchase(order);
+                        else onNavigate('orders');
+                      }}
+                      className="px-3 py-1.5 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 active:scale-95 text-white font-bold text-[10px] rounded-xl shadow-xs transition-all flex items-center gap-1 flex-shrink-0"
+                    >
+                      <span>Buy / Update</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
