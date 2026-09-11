@@ -105,6 +105,46 @@ export const StoreBrandBadge = ({ storeName = '' }) => {
     );
   }
 
+  if (norm.includes('flipkart')) {
+    return (
+      <div className="w-10 h-10 rounded-xl bg-[#2874F0] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform font-black text-sm italic">
+        <span className="text-yellow-300 font-extrabold tracking-tight">fk</span>
+      </div>
+    );
+  }
+
+  if (norm.includes('sephora')) {
+    return (
+      <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform font-serif font-black text-xs tracking-widest">
+        <span>SE</span>
+      </div>
+    );
+  }
+
+  if (norm.includes('myntra')) {
+    return (
+      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#FF3F6C] via-[#FF527B] to-[#F26A10] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform font-black text-sm">
+        <span>M</span>
+      </div>
+    );
+  }
+
+  if (norm.includes('central')) {
+    return (
+      <div className="w-10 h-10 rounded-xl bg-[#ED1C24] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform font-extrabold text-xs tracking-tighter">
+        <span>C</span>
+      </div>
+    );
+  }
+
+  if (norm.includes('lazada')) {
+    return (
+      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F146D] to-[#F85606] text-white flex items-center justify-center shadow-xs p-1 group-hover:scale-105 transition-transform font-black text-sm">
+        <span>L</span>
+      </div>
+    );
+  }
+
   return (
     <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs border border-slate-200">
       {storeName.slice(0, 2).toUpperCase()}

@@ -276,8 +276,8 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
         <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
       </section>
 
-      {/* 2. Supported Global Sourcing Stores (Horizontal Slider as shown in 2nd image) */}
-      <section className="space-y-4 relative">
+      {/* 2. Supported Global Sourcing Stores (2 Rows as specified in design note) */}
+      <section className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#0D1B3D] tracking-tight">
@@ -296,71 +296,47 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
           </button>
         </div>
 
-        {/* Slider Container with Left & Right Arrow Buttons */}
-        <div className="relative group">
-          {/* Left Arrow Button */}
-          <button
-            onClick={() => scrollStores('left')}
-            className="absolute left-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-[#0D1B3D]/85 hover:bg-[#0D1B3D] text-white flex items-center justify-center shadow-xl backdrop-blur-sm transition-all hover:scale-110 active:scale-95 cursor-pointer border border-white/20"
-            title="Scroll Left"
-            aria-label="Previous Stores"
-          >
-            <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
-          </button>
-
-          {/* Right Arrow Button */}
-          <button
-            onClick={() => scrollStores('right')}
-            className="absolute right-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-[#0D1B3D]/85 hover:bg-[#0D1B3D] text-white flex items-center justify-center shadow-xl backdrop-blur-sm transition-all hover:scale-110 active:scale-95 cursor-pointer border border-white/20"
-            title="Scroll Right"
-            aria-label="Next Stores"
-          >
-            <ChevronRight className="w-5 h-5 stroke-[2.5]" />
-          </button>
-
-          {/* Horizontal Scrollable Row */}
-          <div 
-            ref={storesSliderRef}
-            className="flex items-stretch gap-3.5 sm:gap-4 overflow-x-auto scroll-smooth no-scrollbar py-2 px-1"
-          >
-            {[
-              { name: 'Nike India', country: 'India', cat: 'Sneakers & Apparel' },
-              { name: 'Apple Dubai', country: 'Dubai', cat: 'iPhone, AirPods, Mac' },
-              { name: 'Zara Global', country: 'India', cat: 'Designer Fashion' },
-              { name: 'Amazon India', country: 'India', cat: 'Electronics & Books' },
-              { name: 'Noon Dubai', country: 'Dubai', cat: 'Perfumes & Watches' },
-              { name: 'Shopee Thailand', country: 'Thailand', cat: 'Skincare & Cosmetics' },
-              { name: 'Flipkart India', country: 'India', cat: 'Smartphones & Tech' },
-              { name: 'Sephora Dubai', country: 'Dubai', cat: 'Luxury Cosmetics' },
-              { name: 'Amazon UAE', country: 'Dubai', cat: 'Dubai Lifestyle & Tech' },
-              { name: 'Central Thailand', country: 'Thailand', cat: 'Bangkok Mall Fashion' },
-              { name: 'Myntra India', country: 'India', cat: 'Trending Western Fashion' },
-              { name: 'Lazada Thailand', country: 'Thailand', cat: 'Thai Beauty & Tech' }
-            ].map((store, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  if (setPrefilledPreOrder) {
-                    setPrefilledPreOrder({ country: store.country, platform: store.name });
-                  }
-                  onStartPreOrder();
-                }}
-                className="w-[160px] sm:w-[185px] flex-shrink-0 p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/80 shadow-soft hover:shadow-card hover:border-brand-500 text-left transition-all group/card flex flex-col justify-between cursor-pointer"
-              >
-                <div className="mb-4">
-                  <StoreBrandBadge storeName={store.name} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-xs sm:text-sm text-navy-900 group-hover/card:text-brand-600 transition-colors leading-tight">
-                    {store.name}
-                  </h3>
-                  <p className="text-[11px] text-slate-400 mt-1 truncate">
-                    {store.cat}
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
+        {/* 2 Rows of 6 Global Sourcing Stores (Total 12 Stores) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-3.5">
+          {[
+            // Row 1 (6 Stores)
+            { name: 'Nike India', country: 'India', cat: 'Sneakers & Apparel' },
+            { name: 'Apple Dubai', country: 'Dubai', cat: 'iPhone, AirPods, Mac' },
+            { name: 'Zara Global', country: 'India', cat: 'Designer Fashion' },
+            { name: 'Amazon India', country: 'India', cat: 'Electronics & Books' },
+            { name: 'Noon Dubai', country: 'Dubai', cat: 'Perfumes & Watches' },
+            { name: 'Shopee Thailand', country: 'Thailand', cat: 'Skincare & Cosmetics' },
+            // Row 2 (6 Stores)
+            { name: 'Flipkart India', country: 'India', cat: 'Smartphones & Tech' },
+            { name: 'Sephora Dubai', country: 'Dubai', cat: 'Luxury Cosmetics' },
+            { name: 'Amazon UAE', country: 'Dubai', cat: 'Dubai Lifestyle & Tech' },
+            { name: 'Central Thailand', country: 'Thailand', cat: 'Bangkok Mall Fashion' },
+            { name: 'Myntra India', country: 'India', cat: 'Trending Western Fashion' },
+            { name: 'Lazada Thailand', country: 'Thailand', cat: 'Thai Beauty & Tech' }
+          ].map((store, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                if (setPrefilledPreOrder) {
+                  setPrefilledPreOrder({ country: store.country, platform: store.name });
+                }
+                onStartPreOrder();
+              }}
+              className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/80 shadow-soft hover:shadow-card hover:border-brand-500 text-left transition-all group flex flex-col justify-between cursor-pointer"
+            >
+              <div className="mb-3.5">
+                <StoreBrandBadge storeName={store.name} />
+              </div>
+              <div>
+                <h3 className="font-bold text-xs sm:text-sm text-navy-900 group-hover:text-brand-600 transition-colors leading-tight">
+                  {store.name}
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-1 truncate">
+                  {store.cat}
+                </p>
+              </div>
+            </button>
+          ))}
         </div>
       </section>
 
