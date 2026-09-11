@@ -251,30 +251,82 @@ export const AdminReportsAnalytics = () => {
 
   return (
     <div className="space-y-6 animate-fade-in print:p-0 print:space-y-4">
-      
-      {/* Official Print Header */}
-      <div className="hidden print:block pb-4 mb-4 border-b-2 border-slate-900">
-        <div className="flex justify-between items-start">
+      {/* ═══════════════════════════════════════════════════════ */}
+      {/* PROFESSIONAL PRINT LETTERHEAD — hidden on screen       */}
+      {/* ═══════════════════════════════════════════════════════ */}
+      <div className="hidden print:block print-report-header">
+
+        {/* Top bar: logo left, company info right */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10pt' }}>
+
+          {/* Left: Brand identity */}
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xl font-black tracking-tight text-black font-sans">
-                WrikMart Enterprise
-              </span>
-              <span className="text-[10px] uppercase font-bold px-2 py-0.5 border border-black rounded">
-                Official Audit
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8pt', marginBottom: '3pt' }}>
+              <div style={{
+                width: '34pt', height: '34pt', borderRadius: '8pt',
+                background: '#0AA79D', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', flexShrink: 0
+              }}>
+                <span style={{ color: '#fff', fontWeight: 900, fontSize: '16pt', lineHeight: 1 }}>W</span>
+              </div>
+              <div>
+                <div style={{ fontSize: '18pt', fontWeight: 900, color: '#0D1B3D', letterSpacing: '-0.5pt', lineHeight: 1.1 }}>
+                  WrikMart
+                </div>
+                <div style={{ fontSize: '7.5pt', color: '#64748B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Cross-Border Pre-Order &amp; Logistics Platform
+                </div>
+              </div>
             </div>
-            <h1 className="text-base font-black text-slate-900 mt-1">
-              Report #{currentReportObj.num}: {currentReportObj.label}
-            </h1>
-            <p className="text-xs text-slate-600">Cross-Border Pre-Order & Ready Stock Commerce Intelligence</p>
           </div>
-          <div className="text-right text-xs text-slate-700 space-y-0.5">
-            <p><strong>Audit Scope:</strong> {periodDateLabel}</p>
-            <p><strong>Generated:</strong> {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-            <p><strong>Report Channel:</strong> Admin Operations Console</p>
+
+          {/* Right: Report metadata */}
+          <div style={{ textAlign: 'right', fontSize: '8pt', color: '#334155', lineHeight: 1.7 }}>
+            <div style={{ fontSize: '7pt', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+              Business Intelligence Report
+            </div>
+            <div style={{ fontWeight: 800, color: '#0D1B3D', fontSize: '9pt' }}>
+              Report #{currentReportObj.num}: {currentReportObj.label}
+            </div>
+            <div><strong>Period:</strong> {periodDateLabel}</div>
+            <div><strong>Generated:</strong> {new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+            <div><strong>Issued by:</strong> WrikMart Admin Console</div>
           </div>
         </div>
+
+        {/* Accent divider */}
+        <div style={{ height: '3pt', background: 'linear-gradient(to right, #0AA79D, #0D1B3D)', borderRadius: '2pt', marginBottom: '8pt' }} />
+
+        {/* Summary KPI strip */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8pt' }}>
+          {[
+            { label: 'Gross Revenue', value: `৳${grossRevenue.toLocaleString()}` },
+            { label: 'Net Profit', value: `৳${netProfit.toLocaleString()}` },
+            { label: 'Total Orders', value: totalOrdersCount.toLocaleString() },
+            { label: 'Net Margin', value: `${netMarginPercent}%` },
+          ].map(({ label, value }) => (
+            <div key={label} style={{
+              background: '#F8FAFC', border: '0.5pt solid #E2E8F0',
+              borderRadius: '4pt', padding: '6pt 8pt'
+            }}>
+              <div style={{ fontSize: '6.5pt', color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.06em' }}>{label}</div>
+              <div style={{ fontSize: '13pt', fontWeight: 900, color: '#0D1B3D', lineHeight: 1.2 }}>{value}</div>
+              <div style={{ fontSize: '6.5pt', color: '#64748B' }}>{periodDateLabel}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Thin separator below KPIs */}
+        <div style={{ borderBottom: '0.5pt solid #CBD5E1', marginTop: '10pt' }} />
+      </div>
+
+      {/* Fixed page footer (shows on every printed page) */}
+      <div className="print-page-footer hidden print:block" style={{ fontSize: '7pt', color: '#94A3B8' }}>
+        <span style={{ float: 'left' }}>WrikMart Enterprise — Strictly Confidential &amp; For Internal Use Only</span>
+        <span style={{ float: 'right' }}>Banani, Dhaka, Bangladesh · contact@wrikmart.com</span>
+        <span style={{ display: 'block', textAlign: 'center', marginTop: '1pt' }}>
+          Report #{currentReportObj.num}: {currentReportObj.label} · {periodDateLabel}
+        </span>
       </div>
 
       {/* ========================================================= */}

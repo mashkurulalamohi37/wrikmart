@@ -170,17 +170,17 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
       })()}
 
       {/* 1. Full-Width Hero Section with Rich Visuals */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0AA79D] via-[#08867E] to-[#0D1B3D] text-white p-8 sm:p-12 lg:p-14 shadow-card">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#0AA79D] via-[#08867E] to-[#0D1B3D] text-white p-5 sm:p-10 lg:p-14 shadow-card">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center relative z-10">
           
           {/* Left Text & CTA */}
-          <div className="lg:col-span-7 space-y-5">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 text-xs font-semibold backdrop-blur-md border border-white/20">
-              <Sparkles className="w-4 h-4 text-amber-300" />
+          <div className="lg:col-span-7 space-y-4 sm:space-y-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/15 text-[11px] sm:text-xs font-semibold backdrop-blur-md border border-white/20">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300" />
               <span>Cross-Border Pre-Order & Ready Stock Commerce</span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.15]">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.2] sm:leading-[1.15]">
               Shop Global Brands from <br />
               <span className="text-amber-300 underline decoration-amber-400">India, Dubai & Thailand</span>
             </h1>

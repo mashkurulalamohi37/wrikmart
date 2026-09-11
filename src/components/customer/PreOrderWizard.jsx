@@ -26,6 +26,35 @@ import { CountryFlag } from '../common/CountryFlag';
 
 const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
 
+/**
+ * Extracts the Amazon ASIN from any Amazon URL format:
+ * /dp/ASIN, /gp/product/ASIN, /product/ASIN, ?ASIN=, amzn.to short links
+ */
+const extractAmazonAsin = (urlStr) => {
+  const patterns = [
+    /\/dp\/([A-Z0-9]{10})/i,
+    /\/gp\/product\/([A-Z0-9]{10})/i,
+    /\/product\/([A-Z0-9]{10})/i,
+    /[?&]ASIN=([A-Z0-9]{10})/i,
+    /\/([A-Z0-9]{10})(?:[/?&]|$)/i,
+  ];
+  for (const re of patterns) {
+    const m = urlStr.match(re);
+    if (m && m[1]) return m[1].toUpperCase();
+  }
+  return null;
+};
+
+/**
+ * Returns a real Amazon product image URL from an ASIN.
+ * Uses Amazon's publicly-accessible image CDN — no CORS, no auth needed.
+ */
+const buildAmazonImageUrl = (asin) => {
+  if (!asin) return null;
+  // SL500 = 500×500 main image, _AC_SL500_ quality preset
+  return `https://ws-na.amazon-adsystem.com/widgets/q?_encoding=UTF8&ASIN=${asin}&Format=_SL500_&ID=AsinImage&MarketPlace=IN&ServiceVersion=20070822&WS=1&tag=wrikmart-21`;
+};
+
 export const parseProductFromUrl = (rawUrl) => {
   if (!rawUrl || !rawUrl.trim()) return null;
   const urlStr = rawUrl.trim();
@@ -51,7 +80,11 @@ export const parseProductFromUrl = (rawUrl) => {
   else if (lower.includes('zara')) detectedPlatform = 'Zara Official';
   else if (lower.includes('sephora')) detectedPlatform = 'Sephora';
 
-  // 3. Extract Name from URL path
+  // 3. Extract ASIN for Amazon URLs
+  const isAmazon = lower.includes('amazon') || lower.includes('amzn');
+  const asin = isAmazon ? extractAmazonAsin(urlStr) : null;
+
+  // 4. Extract Name from URL path
   let detectedName = '';
   try {
     const parsed = new URL(urlStr.startsWith('http') ? urlStr : `https://${urlStr}`);
@@ -62,8 +95,8 @@ export const parseProductFromUrl = (rawUrl) => {
     if (dpIdx > 0) {
       detectedName = parts[dpIdx - 1].replace(/[-_+]/g, ' ');
     } else if (parts.length > 0) {
-      const candidates = parts.filter(p => 
-        p !== 'dp' && p !== 'gp' && p !== 'product' && p !== 'd' && 
+      const candidates = parts.filter(p =>
+        p !== 'dp' && p !== 'gp' && p !== 'product' && p !== 'd' &&
         p !== 'p' && p !== 'item' && !/^[A-Z0-9]{10}$/i.test(p) && p.length > 2
       );
       if (candidates.length > 0) {
@@ -88,37 +121,54 @@ export const parseProductFromUrl = (rawUrl) => {
     else detectedName = 'Imported Global Product';
   }
 
-  // 4. Detect Category & Price
+  // 5. Detect Category & Price
   let category = 'General';
   let suggestedPrice = 3500;
   const lowerName = detectedName.toLowerCase();
-  if (lowerName.includes('beauty') || lowerName.includes('lipstick') || lowerName.includes('serum') || lowerName.includes('cream') || lowerName.includes('smudgeproof') || lowerName.includes('fae') || lowerName.includes('cosmetic')) {
+  const lowerUrl = lower;
+  if (lowerName.includes('beauty') || lowerName.includes('lipstick') || lowerName.includes('serum') || lowerName.includes('cream') || lowerName.includes('cosmetic') || lowerUrl.includes('beauty') || lowerUrl.includes('skincare')) {
     category = 'Beauty & Cosmetics';
     suggestedPrice = 1850;
-  } else if (lowerName.includes('shoe') || lowerName.includes('sneaker') || lowerName.includes('nike') || lowerName.includes('running') || lowerName.includes('air max')) {
+  } else if (lowerName.includes('shoe') || lowerName.includes('sneaker') || lowerName.includes('nike') || lowerName.includes('running') || lowerName.includes('air max') || lowerUrl.includes('footwear') || lowerUrl.includes('shoes')) {
     category = 'Footwear';
     suggestedPrice = 8500;
-  } else if (lowerName.includes('iphone') || lowerName.includes('macbook') || lowerName.includes('airpods') || lowerName.includes('apple') || lowerName.includes('laptop') || lowerName.includes('camera') || lowerName.includes('electronics')) {
+  } else if (lowerName.includes('iphone') || lowerName.includes('macbook') || lowerName.includes('airpods') || lowerName.includes('apple') || lowerName.includes('laptop') || lowerName.includes('camera') || lowerName.includes('electronics') || lowerUrl.includes('electronics') || lowerUrl.includes('laptop') || lowerUrl.includes('phone') || lowerUrl.includes('headphone') || lowerUrl.includes('tablet')) {
     category = 'Electronics';
     suggestedPrice = 45000;
-  } else if (lowerName.includes('dress') || lowerName.includes('shirt') || lowerName.includes('jacket') || lowerName.includes('zara') || lowerName.includes('hoodie')) {
+  } else if (lowerName.includes('dress') || lowerName.includes('shirt') || lowerName.includes('jacket') || lowerName.includes('zara') || lowerName.includes('hoodie') || lowerUrl.includes('fashion') || lowerUrl.includes('clothing') || lowerUrl.includes('apparel')) {
     category = 'Fashion';
     suggestedPrice = 4200;
+  } else if (lowerName.includes('book') || lowerName.includes('stories') || lowerName.includes('novel') || lowerUrl.includes('books')) {
+    category = 'Books';
+    suggestedPrice = 900;
+  } else if (lowerName.includes('toy') || lowerName.includes('game') || lowerName.includes('lego') || lowerName.includes('kids') || lowerName.includes('princess') || lowerName.includes('barbie') || lowerUrl.includes('toys')) {
+    category = 'Toys & Kids';
+    suggestedPrice = 2500;
+  } else if (lowerName.includes('watch') || lowerUrl.includes('watch')) {
+    category = 'Watches';
+    suggestedPrice = 12000;
+  } else if (lowerName.includes('perfume') || lowerName.includes('fragrance') || lowerUrl.includes('perfume')) {
+    category = 'Perfumes';
+    suggestedPrice = 5500;
   }
 
-  // 5. Category Image
-  let sampleImage = '';
-  if (category === 'Beauty & Cosmetics') {
-    sampleImage = 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&auto=format&fit=crop&q=80';
-  } else if (category === 'Footwear') {
-    sampleImage = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80';
-  } else if (category === 'Electronics') {
-    sampleImage = 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=600&auto=format&fit=crop&q=80';
-  } else if (category === 'Fashion') {
-    sampleImage = 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=600&auto=format&fit=crop&q=80';
-  } else {
-    sampleImage = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80';
-  }
+  // 6. Best image to show
+  // For Amazon: use ASIN-based CDN image (publicly accessible, no CORS)
+  // For others: curated high-quality Unsplash by category
+  const categoryFallbacks = {
+    'Beauty & Cosmetics': 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&auto=format&fit=crop&q=80',
+    'Footwear': 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
+    'Electronics': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=600&auto=format&fit=crop&q=80',
+    'Fashion': 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=600&auto=format&fit=crop&q=80',
+    'Books': 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&auto=format&fit=crop&q=80',
+    'Toys & Kids': 'https://images.unsplash.com/photo-1558060370-d6752b65f7f9?w=600&auto=format&fit=crop&q=80',
+    'Watches': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80',
+    'Perfumes': 'https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&auto=format&fit=crop&q=80',
+  };
+  const fallbackImage = categoryFallbacks[category] || FALLBACK_PRODUCT_IMAGE;
+
+  // Try Amazon image CDN first (ASIN-based), else use category fallback
+  const amazonImg = asin ? `https://images-na.ssl-images-amazon.com/images/I/${asin}._AC_SL500_.jpg` : null;
 
   return {
     name: detectedName,
@@ -126,7 +176,11 @@ export const parseProductFromUrl = (rawUrl) => {
     country: detectedCountry,
     category,
     suggestedPrice,
-    image: sampleImage
+    asin,
+    // Primary: real Amazon CDN image if ASIN found, else category Unsplash
+    image: amazonImg || fallbackImage,
+    // Kept as fallback if Amazon CDN 403s (used via onError in <img>)
+    fallbackImage,
   };
 };
 
@@ -279,6 +333,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
         updated.brand = parsed.platform;
         if (!prev.hasUserCustomImage && parsed.image) {
           updated.image = parsed.image;
+          updated.fallbackImage = parsed.fallbackImage || FALLBACK_PRODUCT_IMAGE;
         }
         if (!prev.expectedPrice || prev.expectedPrice === 8000) {
           updated.expectedPrice = parsed.suggestedPrice;
@@ -587,7 +642,8 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                         className="w-14 h-14 object-cover rounded-xl border border-brand-200 bg-white flex-shrink-0 shadow-2xs"
                         onError={(e) => {
                           e.currentTarget.onerror = null;
-                          e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                          // Use category-specific fallback, not the generic watch image
+                          e.currentTarget.src = currentItem.fallbackImage || FALLBACK_PRODUCT_IMAGE;
                         }}
                       />
                       <div className="flex-1 min-w-0">

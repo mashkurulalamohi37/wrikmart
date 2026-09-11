@@ -157,38 +157,6 @@ export const Footer = () => {
               </div>
             </div>
 
-            {/* Payment Method Badges with Official Logos */}
-            <div className="pt-2">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-2">Supported Payment Gateways</span>
-              <div className="flex flex-wrap items-center gap-2">
-                
-                {/* EPS Easy Payment System Badge */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 hover:bg-emerald-500/25 transition-colors shadow-sm">
-                  <img src="/eps/Group 93.png" alt="EPS Payment Gateway" className="h-4 w-auto object-contain" />
-                  <span className="text-xs font-bold text-emerald-400">EPS Gateway</span>
-                </div>
-
-                {/* bKash Badge with Origami Bird Logo */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#E2136E]/10 border border-[#E2136E]/40 hover:bg-[#E2136E]/20 transition-colors shadow-sm">
-                  <BKashLogo className="w-4 h-4 flex-shrink-0" />
-                  <span className="text-xs font-bold text-[#FF4081]">bKash</span>
-                </div>
-
-                {/* Nagad Badge with Swirl Ribbon Logo */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F7941D]/10 border border-[#F7941D]/40 hover:bg-[#F7941D]/20 transition-colors shadow-sm">
-                  <NagadLogo className="w-4 h-4 flex-shrink-0" />
-                  <span className="text-xs font-bold text-[#FF9800]">Nagad</span>
-                </div>
-
-                {/* Visa & Mastercard Badges */}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700 hover:bg-slate-800 transition-colors shadow-sm">
-                  <VisaLogo className="w-6 h-3 flex-shrink-0" />
-                  <span className="text-slate-600">/</span>
-                  <MastercardLogo className="w-5 h-3 flex-shrink-0" />
-                  <span className="text-xs font-bold text-slate-200">Cards</span>
-                </div>
-              </div>
-            </div>
 
           </div>
 
@@ -199,9 +167,6 @@ export const Footer = () => {
           <div className="flex flex-wrap items-center justify-center gap-2">
             <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
               Official Payment Gateway Partner
-            </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-extrabold">
-              EPS Certified Merchant • Store ID: f49c63f4-3c57-495c-ac00-b136093671d4
             </span>
           </div>
           <div className="w-full max-w-4xl p-2 rounded-2xl bg-[#08132B]/60 border border-slate-800/80 shadow-md">

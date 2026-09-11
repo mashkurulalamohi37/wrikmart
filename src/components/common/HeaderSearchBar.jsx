@@ -188,7 +188,7 @@ export const HeaderSearchBar = ({ isMobile = false }) => {
           onKeyDown={handleKeyDown}
           placeholder={
             isMobile 
-              ? "Search stock or paste link (Nike, Apple, Zara)..." 
+              ? "Search stock or paste product link..." 
               : "Search ready stock products or paste link (Nike, Apple, Zara, Amazon)..."
           }
           className="w-full bg-[#14234B]/90 hover:bg-[#14234B] focus:bg-[#0B1530] text-xs text-white placeholder:text-slate-400 pl-10 pr-24 py-2 sm:py-2.5 rounded-2xl border border-slate-700/80 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400/30 transition-all select-text shadow-inner"

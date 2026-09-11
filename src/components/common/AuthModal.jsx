@@ -102,6 +102,8 @@ export const AuthModal = () => {
     login({ email: identifier, password: 'password123', role });
   };
 
+  if (!isAuthModalOpen) return null;
+
   return createPortal(
     <div 
       className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-6 bg-navy-950/80 backdrop-blur-sm animate-fade-in overflow-y-auto"

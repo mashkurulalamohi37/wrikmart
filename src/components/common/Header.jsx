@@ -110,27 +110,27 @@ export const Header = () => {
         {/* Right Section: New Pre-Order CTA + Workspace / Role Switcher Menu */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0" ref={dropdownRef}>
           
-          {/* Quick Pre-Order CTA Button (Visible on ALL devices) */}
+          {/* Quick Pre-Order CTA Button (Desktop / Tablet) */}
           <button
             onClick={handleStartPreOrder}
-            className="flex items-center gap-1 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 active:scale-95 text-white font-bold text-[11px] sm:text-xs px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-xl shadow-md transition-all whitespace-nowrap flex-shrink-0"
+            className="hidden md:flex items-center gap-1 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 active:scale-95 text-white font-bold text-xs px-3 py-2 rounded-xl shadow-md transition-all whitespace-nowrap flex-shrink-0"
             title="Create New Pre-Order"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Pre-Order</span>
           </button>
 
-          {/* Quick Cart Button */}
+          {/* Quick Cart Button (Desktop / Tablet) */}
           <button
             onClick={() => {
               setCurrentRole('customer');
               if (setIsCartOpen) setIsCartOpen(true);
             }}
-            className="flex items-center gap-1.5 bg-[#14234B] hover:bg-[#1A2E63] border border-slate-700/80 rounded-xl sm:rounded-2xl px-2.5 py-1.5 sm:px-3 sm:py-2 text-white font-bold text-xs shadow-md transition-all relative flex-shrink-0"
+            className="hidden sm:flex items-center gap-1.5 bg-[#14234B] hover:bg-[#1A2E63] border border-slate-700/80 rounded-xl sm:rounded-2xl px-2.5 py-1.5 sm:px-3 sm:py-2 text-white font-bold text-xs shadow-md transition-all relative flex-shrink-0"
             title="Open Shopping Cart"
           >
             <ShoppingBag className="w-4 h-4 text-brand-400" />
-            <span className="hidden sm:inline">Cart</span>
+            <span className="hidden md:inline">Cart</span>
             {cart.length > 0 && (
               <span className="px-1.5 py-0.2 rounded-full bg-brand-500 text-white font-extrabold text-[10px] min-w-[18px] text-center">
                 {cart.reduce((sum, item) => sum + (item.quantity || 1), 0)}
@@ -145,10 +145,10 @@ export const Header = () => {
                 <img 
                   src={currentUser.avatar} 
                   alt={currentUser.name} 
-                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover border border-brand-400"
+                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover border border-brand-400 flex-shrink-0"
                 />
               ) : (
-                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-brand-500/30 text-brand-300 flex items-center justify-center font-bold text-[10px] sm:text-xs">
+                <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-brand-500/30 text-brand-300 flex items-center justify-center font-bold text-[10px] sm:text-xs flex-shrink-0">
                   {currentUser.name?.charAt(0) || 'U'}
                 </div>
               )}
@@ -163,7 +163,7 @@ export const Header = () => {
               <button 
                 onClick={logout}
                 title="Sign Out"
-                className="p-1 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition-colors"
+                className="p-1 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-800 transition-colors flex-shrink-0"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
@@ -194,27 +194,27 @@ export const Header = () => {
                 {currentRole === 'customer' && <User className="w-3.5 h-3.5" />}
               </div>
 
-              <div className="text-left hidden xs:block">
+              <div className="text-left hidden md:block">
                 <span className="text-[7.5px] uppercase font-extrabold tracking-wider text-slate-400 block leading-none">
                   ROLE
                 </span>
-                <span className="text-[11px] sm:text-xs font-bold text-white block max-w-[70px] sm:max-w-none truncate">
+                <span className="text-[11px] sm:text-xs font-bold text-white block max-w-[90px] lg:max-w-none truncate">
                   {currentRole === 'admin' && (
                     <>
-                      <span className="hidden sm:inline">👑 Super Admin</span>
-                      <span className="sm:hidden">👑 Admin</span>
+                      <span className="hidden lg:inline">👑 Super Admin</span>
+                      <span className="lg:hidden">👑 Admin</span>
                     </>
                   )}
                   {currentRole === 'agent' && (
                     <>
-                      <span className="hidden sm:inline">{activeAgent.name} ({activeAgent.country})</span>
-                      <span className="sm:hidden">{activeAgent.country}</span>
+                      <span className="hidden lg:inline">{activeAgent.name} ({activeAgent.country})</span>
+                      <span className="lg:hidden">{activeAgent.country}</span>
                     </>
                   )}
                   {currentRole === 'customer' && (
                     <>
-                      <span className="hidden sm:inline">🛍️ Customer Storefront</span>
-                      <span className="sm:hidden">🛍️ Customer</span>
+                      <span className="hidden lg:inline">🛍️ Customer Storefront</span>
+                      <span className="lg:hidden">🛍️ Customer</span>
                     </>
                   )}
                 </span>

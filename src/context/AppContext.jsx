@@ -211,13 +211,20 @@ export const AppProvider = ({ children }) => {
 
   const [inventory, setInventory] = useState(() => {
     try {
-      localStorage.removeItem('wrikmart_inventory');
+      // One-time migration v5: wipe all demo products on first load after this deploy
+      if (!localStorage.getItem('wrikmart_inv_wiped_v5')) {
+        localStorage.removeItem('wrikmart_inventory');
+        localStorage.removeItem('wrikmart_inventory_v3');
+        localStorage.removeItem('wrikmart_inv_wiped_v4');
+        localStorage.setItem('wrikmart_inv_wiped_v5', '1');
+        return [];
+      }
     } catch (e) {}
+    // After one-time wipe: load real admin-uploaded products from storage
     const saved = localStorage.getItem('wrikmart_inventory_v3');
     if (saved !== null) {
       try { return JSON.parse(saved); } catch (e) {}
     }
-    // Clean initial slate: all mock products deleted, ready for real stock upload
     return [];
   });
 
