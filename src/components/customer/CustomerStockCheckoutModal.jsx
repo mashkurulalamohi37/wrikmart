@@ -759,34 +759,22 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
 
                 {/* Gateway Detail Note */}
                 {paymentMethod === 'EPS' ? (
-                  <div className="p-4 bg-emerald-50/80 rounded-2xl border border-emerald-200 text-xs space-y-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <Lock className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                        <span className="text-[11px] font-bold text-emerald-950">Official Bangladesh Bank Certified EPS Payment Systems Operator (PSO)</span>
-                      </div>
-                      <span className="text-[10px] font-mono font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-300">
-                        Store ID: {epsSettings?.storeId || '5c6d0f37-2974-4be8-818d-0736593e456e'}
-                      </span>
+                  <div className="p-3 bg-emerald-50/80 rounded-2xl border border-emerald-200 text-xs space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Lock className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                      <span className="text-[11px] font-bold text-emerald-950">Bangladesh Bank Certified EPS Gateway (PSO)</span>
                     </div>
 
-                    <p className="text-[11px] text-slate-600 leading-relaxed">
-                      Pay securely with <strong>Visa, Mastercard, bKash, Nagad, Rocket, Upay</strong> or Internet Banking via the official EPS Payment Gateway.
+                    <p className="text-[10.5px] text-slate-600 leading-relaxed">
+                      Pay with <strong>Visa, Mastercard, bKash, Nagad, Rocket, Upay</strong> or Internet Banking. You'll be redirected to the secure EPS page and brought back automatically.
                     </p>
 
-                    <div className="p-2.5 rounded-xl border border-emerald-200/80 bg-white shadow-2xs">
+                    <div className="p-2 rounded-xl border border-emerald-200/80 bg-white shadow-2xs">
                       <img 
                         src="/eps/Group 106.png" 
                         alt="Supported EPS Payment Channels" 
-                        className="w-full h-auto object-contain rounded-lg max-h-11 mx-auto"
+                        className="w-full h-auto object-contain rounded-lg max-h-10 mx-auto"
                       />
-                    </div>
-
-                    <div className="p-3 bg-white rounded-xl border border-emerald-100 flex items-center gap-2.5">
-                      <ExternalLink className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                      <p className="text-[11px] text-slate-700 leading-snug">
-                        Clicking <strong>"Proceed to EPS Payment"</strong> will redirect you to the secure EPS hosted payment page. Complete payment there and you'll be brought back automatically.
-                      </p>
                     </div>
                   </div>
                 ) : (
