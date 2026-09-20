@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../../context/AppContext';
 import { 
@@ -22,12 +22,24 @@ import {
   ExternalLink,
   Sparkles,
   Layers,
-  ArrowUpDown
+  ArrowUpDown,
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Heading,
+  Eye,
+  FileText,
+  FolderPlus,
+  ShieldCheck,
+  Check,
+  ChevronDown
 } from 'lucide-react';
+import { FormattedDescription } from '../common/FormattedDescription';
 
 const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   { id: 'Electronics', name: 'Electronics & Gadgets' },
   { id: 'Fashion', name: 'Fashion & Apparel' },
   { id: 'Perfumes', name: 'Perfumes & Fragrances' },
@@ -55,6 +67,58 @@ export const AdminStockInventory = () => {
     showToast 
   } = useApp();
 
+  // Dynamic Categories stored in localStorage
+  const [categories, setCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem('wrikmart_custom_categories');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return DEFAULT_CATEGORIES;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('wrikmart_custom_categories', JSON.stringify(categories));
+    } catch (e) {}
+  }, [categories]);
+
+  // Add Category modal/inline state
+  const [showAddCatModal, setShowAddCatModal] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+
+  const handleCreateNewCategory = (e) => {
+    e?.preventDefault();
+    const cleanName = newCatName.trim();
+    if (!cleanName) {
+      showToast('Please enter a category name', 'warning');
+      return;
+    }
+    const existing = categories.find(c => c.name.toLowerCase() === cleanName.toLowerCase() || c.id.toLowerCase() === cleanName.toLowerCase());
+    if (existing) {
+      setFormData(prev => ({ ...prev, category: existing.id }));
+      setShowAddCatModal(false);
+      setNewCatName('');
+      showToast(`Selected existing category "${existing.name}"`, 'info');
+      return;
+    }
+    const newCat = { id: cleanName, name: cleanName };
+    setCategories(prev => [...prev, newCat]);
+    setFormData(prev => ({ ...prev, category: newCat.id }));
+    setShowAddCatModal(false);
+    setNewCatName('');
+    showToast(`New category "${cleanName}" created and selected!`, 'success');
+  };
+
+  // Brand Suggestions from Inventory + popular brands
+  const existingBrands = useMemo(() => {
+    const fromInv = inventory.map(i => i.brand).filter(Boolean);
+    const defaults = ['Apple', 'Nike', 'Zara', 'Casio', 'Samsung', 'Sony', 'Dyson', 'Sephora', 'The Body Shop', 'L\'Oreal', 'Adidas', 'Gucci'];
+    return Array.from(new Set([...fromInv, ...defaults]));
+  }, [inventory]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
@@ -80,6 +144,8 @@ export const AdminStockInventory = () => {
     image: '',
     description: '',
     badge: 'New Arrival',
+    isDefect: false,
+    defectNote: '',
     specs: [
       { key: 'Color', value: 'Black' },
       { key: 'Warranty', value: '1 Year Official' }
@@ -87,14 +153,57 @@ export const AdminStockInventory = () => {
   });
 
   const [imagePreview, setImagePreview] = useState('');
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [descTab, setDescTab] = useState('editor'); // 'editor' | 'preview'
+  const descTextareaRef = useRef(null);
+
+  // Rich text insertion helper
+  const insertFormatting = (type) => {
+    const textarea = descTextareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart || 0;
+    const end = textarea.selectionEnd || 0;
+    const current = formData.description || '';
+    const selected = current.substring(start, end);
+    let replacement = '';
+
+    if (type === 'bold') {
+      replacement = selected ? `**${selected}**` : '**Bold Feature Title**';
+    } else if (type === 'italic') {
+      replacement = selected ? `*${selected}*` : '*Italic Note*';
+    } else if (type === 'h3') {
+      replacement = selected ? `\n### ${selected}\n` : '\n### Key Highlights\n';
+    } else if (type === 'bullet') {
+      replacement = selected 
+        ? '\n' + selected.split('\n').map(l => l.startsWith('• ') ? l : `• ${l}`).join('\n') + '\n'
+        : '\n• 100% Authentic imported stock\n• Official international packaging & serial code\n• Premium build quality';
+    } else if (type === 'number') {
+      replacement = selected
+        ? '\n' + selected.split('\n').map((l, i) => `${i + 1}. ${l}`).join('\n') + '\n'
+        : '\n1. Original sealed box\n2. Sourced directly from authorized brand retailer\n3. Doorstep delivery with tracking';
+    } else if (type === 'authentic') {
+      replacement = '\n⭐ **100% Authentic Guarantee**: Purchased from official brand store in original box.\n';
+    } else if (type === 'warranty') {
+      replacement = '\n🛡️ **Official Warranty Included**: 1-Year manufacturer replacement coverage.\n';
+    }
+
+    const updated = current.substring(0, start) + replacement + current.substring(end);
+    setFormData(prev => ({ ...prev, description: updated }));
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + replacement.length, start + replacement.length);
+    }, 0);
+  };
 
   // Open modal for new product
   const handleOpenNewModal = () => {
     setEditingProduct(null);
+    setDescTab('editor');
+    setShowUrlInput(false);
     setFormData({
       name: '',
       brand: '',
-      category: 'Electronics',
+      category: categories[0]?.id || 'Electronics',
       sku: `WM-ELEC-${Math.floor(1000 + Math.random() * 9000)}`,
       warehouse: 'Dhaka Main Hub (Tejgaon)',
       costPrice: '',
@@ -105,6 +214,8 @@ export const AdminStockInventory = () => {
       image: '',
       description: '',
       badge: 'New Arrival',
+      isDefect: false,
+      defectNote: '',
       specs: [
         { key: 'Color', value: '' },
         { key: 'Warranty', value: '1 Year Official' }
@@ -117,6 +228,8 @@ export const AdminStockInventory = () => {
   // Open modal for editing existing product
   const handleOpenEditModal = (product) => {
     setEditingProduct(product);
+    setDescTab('editor');
+    setShowUrlInput(Boolean(product.image && !product.image.startsWith('data:')));
     const specEntries = product.specs 
       ? Object.entries(product.specs).map(([key, value]) => ({ key, value }))
       : [{ key: 'Color', value: '' }];
@@ -124,7 +237,7 @@ export const AdminStockInventory = () => {
     setFormData({
       name: product.name || '',
       brand: product.brand || '',
-      category: product.category || 'Electronics',
+      category: product.category || categories[0]?.id || 'Electronics',
       sku: product.sku || '',
       warehouse: product.warehouse || 'Dhaka Main Hub (Tejgaon)',
       costPrice: product.costPrice || '',
@@ -135,6 +248,8 @@ export const AdminStockInventory = () => {
       image: product.image || '',
       description: product.description || '',
       badge: product.badge || 'New Arrival',
+      isDefect: Boolean(product.isDefect),
+      defectNote: product.defectNote || '',
       specs: specEntries.length > 0 ? specEntries : [{ key: 'Color', value: '' }]
     });
     setImagePreview(product.image || '');
@@ -221,7 +336,9 @@ export const AdminStockInventory = () => {
       reorderLevel: Number(formData.reorderLevel || 5),
       image: formData.image.trim() || FALLBACK_PRODUCT_IMAGE,
       description: formData.description.trim() || 'High quality authentic import stock with official warranty.',
-      badge: formData.badge || null,
+      badge: formData.isDefect ? (formData.badge || 'Clearance Deal') : (formData.badge || null),
+      isDefect: Boolean(formData.isDefect),
+      defectNote: formData.isDefect ? formData.defectNote.trim() : '',
       specs: specsObj
     };
 
@@ -262,6 +379,8 @@ export const AdminStockInventory = () => {
       if (stockFilter === 'in_stock' && (item.currentStock || 0) <= 0) return false;
       if (stockFilter === 'low_stock' && ((item.currentStock || 0) <= 0 || (item.currentStock || 0) > (item.reorderLevel || 5))) return false;
       if (stockFilter === 'out_of_stock' && (item.currentStock || 0) > 0) return false;
+      if (stockFilter === 'defect_clearance' && !item.isDefect) return false;
+      if (stockFilter === 'regular_stock' && item.isDefect) return false;
 
       // Search match
       if (searchQuery.trim()) {
@@ -269,7 +388,8 @@ export const AdminStockInventory = () => {
         const matchName = item.name?.toLowerCase().includes(q);
         const matchBrand = item.brand?.toLowerCase().includes(q);
         const matchSku = item.sku?.toLowerCase().includes(q);
-        if (!matchName && !matchBrand && !matchSku) return false;
+        const matchNote = item.defectNote?.toLowerCase().includes(q);
+        if (!matchName && !matchBrand && !matchSku && !matchNote) return false;
       }
 
       return true;
@@ -402,8 +522,8 @@ export const AdminStockInventory = () => {
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
           >
-            <option value="all">All Categories</option>
-            {CATEGORIES.map(c => (
+            <option value="all">All Categories ({categories.length})</option>
+            {categories.map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
@@ -414,7 +534,9 @@ export const AdminStockInventory = () => {
             onChange={(e) => setStockFilter(e.target.value)}
             className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
           >
-            <option value="all">All Stock Status</option>
+            <option value="all">All Inventory Items</option>
+            <option value="regular_stock">Regular Stock (Brand New)</option>
+            <option value="defect_clearance">⚠️ Defect & Clearance Deals</option>
             <option value="in_stock">In Stock (&gt; 0)</option>
             <option value="low_stock">Low Stock (≤ 5)</option>
             <option value="out_of_stock">Out of Stock (0)</option>
@@ -512,11 +634,24 @@ export const AdminStockInventory = () => {
                             <h4 className="font-bold text-navy-900 text-xs truncate" title={product.name}>
                               {product.name}
                             </h4>
-                            {product.badge && (
-                              <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">
-                                {product.badge}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                              {product.isDefect && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
+                                  <AlertTriangle className="w-2.5 h-2.5 text-rose-500" />
+                                  <span>Clearance / Defect</span>
+                                </span>
+                              )}
+                              {product.badge && !product.isDefect && (
+                                <span className="inline-block px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">
+                                  {product.badge}
+                                </span>
+                              )}
+                              {product.isDefect && product.defectNote && (
+                                <span className="text-[10px] text-slate-500 truncate max-w-[200px]" title={product.defectNote}>
+                                  Note: {product.defectNote}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -679,33 +814,81 @@ export const AdminStockInventory = () => {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g. Apple AirPods Pro (2nd Gen, USB-C)"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none font-medium"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none font-medium text-slate-800"
                   />
                 </div>
 
+                {/* Brand Name with Suggestions & Custom Input */}
                 <div>
-                  <label className="block text-slate-700 font-bold mb-1">Brand Name *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-slate-700 font-bold">Brand Name *</label>
+                    <span className="text-[10px] text-slate-400">Type or select from list</span>
+                  </div>
                   <input
                     type="text"
                     required
+                    list="admin-brand-suggestions"
                     value={formData.brand}
                     onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    placeholder="e.g. Apple, Nike, Casio, Zara"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none font-medium"
+                    placeholder="e.g. Apple, Nike, Zara, Casio, Sephora"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none font-medium text-slate-800"
                   />
+                  <datalist id="admin-brand-suggestions">
+                    {existingBrands.map((b, idx) => (
+                      <option key={idx} value={b} />
+                    ))}
+                  </datalist>
+                  {/* Quick popular brand chips */}
+                  <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                    <span className="text-[10px] font-semibold text-slate-400">Quick:</span>
+                    {['Apple', 'Nike', 'Zara', 'Casio', 'Dyson', 'Sephora'].map(b => (
+                      <button
+                        key={b}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, brand: b })}
+                        className={`text-[10px] px-2 py-0.5 rounded-md border transition-colors ${
+                          formData.brand === b 
+                            ? 'bg-brand-600 text-white border-brand-600 font-bold' 
+                            : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                        }`}
+                      >
+                        {b}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
+                {/* Product Category with "+ Add New Category" */}
                 <div>
-                  <label className="block text-slate-700 font-bold mb-1">Product Category *</label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none font-medium cursor-pointer"
-                  >
-                    {CATEGORIES.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-slate-700 font-bold">Product Category *</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddCatModal(true)}
+                      className="text-[11px] font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Add New Category</span>
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <select
+                      value={formData.category}
+                      onChange={(e) => {
+                        if (e.target.value === '__add_new__') {
+                          setShowAddCatModal(true);
+                        } else {
+                          setFormData({ ...formData, category: e.target.value });
+                        }
+                      }}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none font-medium cursor-pointer text-slate-800"
+                    >
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                      <option value="__add_new__" className="text-brand-600 font-bold">+ Add New Category...</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div>
@@ -715,7 +898,7 @@ export const AdminStockInventory = () => {
                     value={formData.sku}
                     onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                     placeholder="e.g. WM-ELEC-APL-01"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none font-mono font-bold"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none font-mono font-bold text-slate-800"
                   />
                 </div>
 
@@ -724,7 +907,7 @@ export const AdminStockInventory = () => {
                   <select
                     value={formData.warehouse}
                     onChange={(e) => setFormData({ ...formData, warehouse: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none font-medium cursor-pointer"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none font-medium cursor-pointer text-slate-800"
                   >
                     {WAREHOUSES.map(w => (
                       <option key={w} value={w}>{w}</option>
@@ -792,67 +975,258 @@ export const AdminStockInventory = () => {
                 </div>
               </div>
 
-              {/* Image Upload: Dual Mode (URL or Local File) */}
-              <div className="space-y-2">
-                <label className="block text-slate-700 font-bold">Product Image *</label>
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-                  <div className="sm:col-span-8 space-y-2">
-                    <input
-                      type="url"
-                      value={formData.image.startsWith('data:') ? 'Image uploaded from device (Base64)' : formData.image}
-                      onChange={(e) => {
-                        setFormData({ ...formData, image: e.target.value });
-                        setImagePreview(e.target.value);
-                      }}
-                      placeholder="Paste image web URL (https://...)"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 text-xs font-mono"
-                    />
-
-                    <div className="flex items-center gap-2">
-                      <label className="flex-1 px-3 py-2 rounded-xl border border-dashed border-brand-300 bg-brand-50/50 hover:bg-brand-50 text-brand-700 font-bold cursor-pointer text-center transition-colors flex items-center justify-center gap-1.5">
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>Upload photo from your computer/device</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileUpload}
-                          className="hidden"
-                        />
-                      </label>
+              {/* Defect / Clearance Item Toggle & Condition Note */}
+              <div className="p-4 rounded-2xl border transition-all bg-amber-50/50 border-amber-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <div>
+                      <span className="font-bold text-slate-800 text-xs block">Defect / Clearance / B-Stock Product</span>
+                      <span className="text-[11px] text-slate-500">Mark item as clearance (e.g., damaged box, cosmetic scratch, display piece)</span>
                     </div>
                   </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.isDefect}
+                      onChange={(e) => setFormData({ ...formData, isDefect: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                  </label>
+                </div>
 
-                  {/* Thumbnail Preview */}
-                  <div className="sm:col-span-4 flex justify-center">
-                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center relative shadow-xs">
+                {formData.isDefect && (
+                  <div className="pt-2 border-t border-amber-200 space-y-2 animate-fade-in">
+                    <div>
+                      <label className="block text-slate-700 font-bold mb-1">Defect / Clearance Condition Note *</label>
+                      <textarea
+                        rows="2"
+                        required={formData.isDefect}
+                        value={formData.defectNote}
+                        onChange={(e) => setFormData({ ...formData, defectNote: e.target.value })}
+                        placeholder="e.g. Outer cardboard box slightly dented during freight transit. Inner item is 100% brand new, authentic, and working perfectly with full warranty."
+                        className="w-full px-3 py-2 rounded-xl bg-white border border-amber-300 focus:ring-2 focus:ring-amber-500 font-medium text-slate-800 text-xs"
+                      />
+                    </div>
+                    <p className="text-[10px] text-amber-800 font-medium">
+                      💡 Clearance products are showcased with a transparent defect note and special clearance badge on the storefront to build 100% customer trust.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Product Image: Direct Device Upload Primary */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-700 font-bold">Product Photo / Image *</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowUrlInput(!showUrlInput)}
+                    className="text-[11px] text-brand-600 hover:underline font-bold"
+                  >
+                    {showUrlInput ? 'Hide Web URL Input' : 'Or paste online image URL'}
+                  </button>
+                </div>
+
+                {/* Primary Upload Area */}
+                <div className="p-4 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 hover:border-brand-400 transition-colors">
+                  <div className="flex flex-col sm:flex-row items-center gap-4">
+                    {/* Thumbnail / Upload Trigger */}
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-white border border-slate-200 flex items-center justify-center shrink-0 relative shadow-xs group">
                       {imagePreview ? (
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="w-full h-full object-cover object-center"
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
-                          }}
-                        />
+                        <>
+                          <img
+                            src={imagePreview}
+                            alt="Product Preview"
+                            className="w-full h-full object-cover object-center"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-navy-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="text-[10px] font-bold text-white bg-navy-900/80 px-2 py-1 rounded-lg">Change</span>
+                          </div>
+                        </>
                       ) : (
-                        <ImageIcon className="w-6 h-6 text-slate-300" />
+                        <div className="text-center p-2">
+                          <ImageIcon className="w-8 h-8 text-slate-300 mx-auto mb-1" />
+                          <span className="text-[10px] text-slate-400 font-bold block">No Photo</span>
+                        </div>
                       )}
                     </div>
+
+                    {/* Upload Controls */}
+                    <div className="flex-1 text-center sm:text-left space-y-2">
+                      <div>
+                        <h4 className="font-bold text-navy-900 text-xs sm:text-sm">
+                          {imagePreview ? 'Photo Selected & Ready' : 'Upload photo from your computer or phone'}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          Supports JPG, PNG, WEBP, and JPEG image files (Auto-resized for fast loading)
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+                        <label className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>{imagePreview ? 'Choose Different Photo' : 'Select Photo from Device'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                          />
+                        </label>
+                        {imagePreview && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, image: '' }));
+                              setImagePreview('');
+                            }}
+                            className="px-3 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 font-bold transition-colors"
+                          >
+                            Remove Photo
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Optional Web URL Input (collapsible) */}
+                  {showUrlInput && (
+                    <div className="mt-3 pt-3 border-t border-slate-200/80">
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1">External Image Web URL (Optional):</label>
+                      <input
+                        type="url"
+                        value={formData.image.startsWith('data:') ? '' : formData.image}
+                        onChange={(e) => {
+                          setFormData({ ...formData, image: e.target.value });
+                          setImagePreview(e.target.value);
+                        }}
+                        placeholder="https://example.com/product-image.jpg"
+                        className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 focus:ring-2 focus:ring-brand-500 text-xs font-mono"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Product Description */}
-              <div>
-                <label className="block text-slate-700 font-bold mb-1">Product Description</label>
-                <textarea
-                  rows="2"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Key features, warranty notes, authenticity details..."
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:bg-white focus:outline-none"
-                />
+              {/* Product Description: Rich Formatting Editor */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-700 font-bold">Product Description & Key Highlights</label>
+                  {/* Editor vs Preview Mode Switcher */}
+                  <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-[11px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setDescTab('editor')}
+                      className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
+                        descTab === 'editor' ? 'bg-white text-navy-900 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      <FileText className="w-3 h-3" />
+                      <span>Editor</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDescTab('preview')}
+                      className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
+                        descTab === 'preview' ? 'bg-white text-brand-600 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      <Eye className="w-3 h-3" />
+                      <span>Live Store Preview</span>
+                    </button>
+                  </div>
+                </div>
+
+                {descTab === 'editor' ? (
+                  <div className="border border-slate-200 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-brand-500 bg-white">
+                    {/* Formatting Toolbar */}
+                    <div className="bg-slate-100/80 px-3 py-2 border-b border-slate-200 flex items-center gap-1.5 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => insertFormatting('bold')}
+                        title="Bold Text (**text**)"
+                        className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold hover:text-navy-900 shadow-2xs transition-colors"
+                      >
+                        <Bold className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertFormatting('italic')}
+                        title="Italic Text (*text*)"
+                        className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 hover:text-navy-900 shadow-2xs transition-colors"
+                      >
+                        <Italic className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertFormatting('h3')}
+                        title="Heading (### Title)"
+                        className="px-2 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-black text-[11px] shadow-2xs transition-colors"
+                      >
+                        H3
+                      </button>
+                      <div className="w-px h-4 bg-slate-300 mx-1" />
+                      <button
+                        type="button"
+                        onClick={() => insertFormatting('bullet')}
+                        title="Bullet List (• item)"
+                        className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 hover:text-navy-900 shadow-2xs transition-colors flex items-center gap-1"
+                      >
+                        <List className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-bold">Bullet List</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertFormatting('number')}
+                        title="Numbered List (1. item)"
+                        className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 hover:text-navy-900 shadow-2xs transition-colors flex items-center gap-1"
+                      >
+                        <ListOrdered className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-bold">1. 2. 3.</span>
+                      </button>
+                      <div className="w-px h-4 bg-slate-300 mx-1" />
+                      <button
+                        type="button"
+                        onClick={() => insertFormatting('authentic')}
+                        title="Add Authentic Guarantee Badge"
+                        className="px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 font-bold text-[10px] shadow-2xs transition-colors"
+                      >
+                        ⭐ Authentic Badge
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => insertFormatting('warranty')}
+                        title="Add Warranty Note"
+                        className="px-2 py-1 rounded-lg bg-brand-50 border border-brand-200 hover:bg-brand-100 text-brand-700 font-bold text-[10px] shadow-2xs transition-colors"
+                      >
+                        🛡️ Warranty Badge
+                      </button>
+                    </div>
+
+                    <textarea
+                      ref={descTextareaRef}
+                      rows="6"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Write rich product description here...&#10;&#10;### Key Features&#10;• 100% Authentic imported stock&#10;• Premium build and official warranty&#10;• Fast 24-48h Dhaka delivery"
+                      className="w-full p-3.5 bg-white focus:outline-none text-xs leading-relaxed text-slate-800 font-sans"
+                    />
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 min-h-[160px] max-h-[220px] overflow-y-auto">
+                    {formData.description ? (
+                      <FormattedDescription content={formData.description} />
+                    ) : (
+                      <p className="text-xs text-slate-400 italic">No description entered yet. Switch to Editor tab to add formatted text.</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Dynamic Specifications */}
@@ -911,12 +1285,71 @@ export const AdminStockInventory = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold shadow-md shadow-brand-500/20"
+                  className="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold shadow-md shadow-brand-500/20 cursor-pointer"
                 >
                   {editingProduct ? 'Save Changes' : 'Upload Product'}
                 </button>
               </div>
 
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Add New Category Modal */}
+      {showAddCatModal && createPortal(
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-navy-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2 text-navy-900 font-extrabold text-sm">
+                <FolderPlus className="w-5 h-5 text-brand-600" />
+                <span>Add New Product Category</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddCatModal(false);
+                  setNewCatName('');
+                }}
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateNewCategory} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">Category Name *</label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={newCatName}
+                  onChange={(e) => setNewCatName(e.target.value)}
+                  placeholder="e.g. Home & Kitchen, Gaming, Jewelry"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 font-medium"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddCatModal(false);
+                    setNewCatName('');
+                  }}
+                  className="px-3.5 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold shadow-md shadow-brand-500/20"
+                >
+                  Save Category
+                </button>
+              </div>
             </form>
           </div>
         </div>,

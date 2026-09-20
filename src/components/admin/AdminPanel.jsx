@@ -15,6 +15,7 @@ import { AdminSystemSettings } from './AdminSystemSettings';
 import { AdminCreateOrderModal } from './AdminCreateOrderModal';
 import { AdminCustomerManagement } from './AdminCustomerManagement';
 import { AdminStockInventory } from './AdminStockInventory';
+import { AdminFooterSettings } from './AdminFooterSettings';
 import { 
   LayoutDashboard, 
   ShoppingBag, 
@@ -37,7 +38,8 @@ import {
   X,
   ChevronRight,
   Sparkles,
-  Cake
+  Cake,
+  Globe2
 } from 'lucide-react';
 import { CountryFlag } from '../common/CountryFlag';
 
@@ -75,6 +77,7 @@ export const AdminPanel = () => {
       badge: todayBirthdaysCount > 0 ? `🎂 ${todayBirthdaysCount}` : null
     },
     { id: 'preorder_settings', label: 'Pre-Order & Home Stores', icon: <FileEdit className="w-4 h-4" /> },
+    { id: 'footer_cms', label: 'Footer & Storefront CMS', icon: <Globe2 className="w-4 h-4 text-cyan-400" /> },
     { id: 'agents', label: 'Agent Management', icon: <UserCheck className="w-4 h-4" /> },
     { 
       id: 'balance', 
@@ -229,6 +232,10 @@ export const AdminPanel = () => {
 
           {activeNav === 'preorder_settings' && (
             <AdminPreOrderSettings />
+          )}
+
+          {activeNav === 'footer_cms' && (
+            <AdminFooterSettings />
           )}
 
           {activeNav === 'agents' && (

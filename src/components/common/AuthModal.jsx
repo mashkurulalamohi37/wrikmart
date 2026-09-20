@@ -47,7 +47,6 @@ export const AuthModal = () => {
   const [loginForm, setLoginForm] = useState({
     identifier: '',
     password: '',
-    role: 'customer',
     rememberMe: true
   });
 
@@ -88,8 +87,7 @@ export const AuthModal = () => {
     }
     login({
       email: loginForm.identifier,
-      password: loginForm.password,
-      role: loginForm.role
+      password: loginForm.password
     });
   };
 
@@ -231,19 +229,6 @@ export const AuthModal = () => {
         {/* 1. Login Form */}
         {mode === 'login' && (
           <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">Select Role Portal *</label>
-              <select
-                value={loginForm.role}
-                onChange={(e) => setLoginForm({ ...loginForm, role: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-500 font-bold text-slate-800"
-              >
-                <option value="admin">👑 Super Administrator (Full HQ Access)</option>
-                <option value="agent">🌍 Sourcing Agent (Foreign Hub Stations)</option>
-                <option value="customer">🛍️ Customer Storefront & Orders</option>
-              </select>
-            </div>
-
             <div>
               <label className="block font-bold text-slate-700 mb-1">Email or Mobile Number *</label>
               <div className="relative">

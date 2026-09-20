@@ -265,7 +265,7 @@ export const HeaderSearchBar = ({ isMobile = false }) => {
                 </div>
 
                 <p className="text-[11px] text-slate-300 leading-relaxed">
-                  Our local agents in <strong>{urlStoreHint?.country || 'India/Dubai'}</strong> will purchase this exact item directly from the official store and deliver it to your address in Bangladesh with <strong>25% advance payment</strong>.
+                  Our local agents in <strong>{urlStoreHint?.country || 'India/Dubai'}</strong> will purchase this exact item directly from the official store and deliver it to your address in Bangladesh with <strong>30% advance payment</strong>.
                 </p>
 
                 <button
@@ -411,7 +411,7 @@ export const HeaderSearchBar = ({ isMobile = false }) => {
                     className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-brand-500 to-cyan-500 hover:from-brand-400 hover:to-cyan-400 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-98"
                   >
                     <Package className="w-3.5 h-3.5" />
-                    <span>Create Pre-Order for "{searchTerm}" (25% Advance)</span>
+                    <span>Create Pre-Order for "{searchTerm}" (30% Advance)</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -455,7 +455,7 @@ export const HeaderSearchBar = ({ isMobile = false }) => {
                     <h4 className="text-xs font-bold text-white mb-1 flex items-center gap-1.5">
                       <span>Global Store Pre-Order</span>
                       <span className="px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 text-[9px] font-extrabold uppercase">
-                        25% Advance
+                        30% Advance
                       </span>
                     </h4>
                     <p className="text-[11px] text-slate-300 leading-relaxed mb-3">

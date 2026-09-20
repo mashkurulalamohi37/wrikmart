@@ -15,6 +15,7 @@ import {
   DEFAULT_BIRTHDAY_SETTINGS,
   DEFAULT_SOURCING_STORES
 } from '../data/mockData';
+import { DEFAULT_EPS_CONFIG } from '../utils/epsPaymentService';
 
 const AppContext = createContext();
 
@@ -39,11 +40,49 @@ const VALID_CUSTOMER_TABS = ['home', 'stock', 'preorder', 'orders', 'chat', 'pro
 const VALID_ADMIN_NAVS = [
   'dashboard', 'orders', 'customers', 'preorder_settings', 
   'agents', 'balance', 'expenses', 'hubs', 'delivery', 
-  'history', 'reports', 'settings'
+  'history', 'reports', 'settings', 'footer_cms'
 ];
 const VALID_AGENT_TABS = [
   'dashboard', 'orders', 'purchase', 'expense', 'hub', 'history', 'chat'
 ];
+
+export const DEFAULT_FOOTER_SETTINGS = {
+  companyName: 'WrikMart',
+  tagline: 'Global Logistics & Sourcing',
+  aboutText: "Bangladesh's leading cross-border pre-order platform. We connect Bangladeshi consumers with on-ground purchasing agents in India, Dubai, and Thailand for authentic international products.",
+  address: 'House-08, Road-12, Sector-11, Mirpur, Dhaka-1216',
+  phone: '+880 1700-000000',
+  email: 'support@wrikmart.com',
+  whatsapp: '+880 1700-000000',
+  popularStores: [
+    'Nike India Official',
+    'Apple Store Dubai Mall',
+    'Zara & H&M Global',
+    'Amazon & Flipkart India',
+    'CentralWorld Bangkok',
+    'Noon UAE & Sephora'
+  ],
+  helpLinks: [
+    'How Pre-Order Works',
+    'Advance Payment (30%) Rules',
+    'Refund & Cancellation Terms',
+    'Customs & Air Freight Timelines',
+    'Track Order Status'
+  ],
+  sourcingHubs: [
+    { country: 'India', label: 'India (Delhi / Mumbai)' },
+    { country: 'Dubai', label: 'Dubai (Al Quoz)' },
+    { country: 'Thailand', label: 'Thailand (Bangkok)' }
+  ],
+  trustBadges: [
+    { title: '100% Genuine Receipts', desc: 'Purchased from official overseas brand stores with tax invoices.' },
+    { title: '30% Advance Protection', desc: 'Held in escrow until order purchased. 100% refund guarantee.' },
+    { title: 'Express Air Freight', desc: 'Regular flights from Delhi, Dubai, and Bangkok to Dhaka DAC.' },
+    { title: '24/7 Agent Support', desc: 'WhatsApp hotline and live portal chat for order updates.' }
+  ],
+  poweredByText: 'Inovasi Tech Pvt. Ltd.',
+  poweredByLink: 'https://inovasitech.net'
+};
 
 export const parseInitialRoute = () => {
   // 1. Try URL hash first
@@ -152,13 +191,19 @@ export const AppProvider = ({ children }) => {
       }
 
       const currentFullHash = window.location.hash;
+      const rawPath = typeof window !== 'undefined' ? window.location.pathname : '/';
+      const normalizedPath = (rawPath || '/').replace(/\/+/g, '/');
+      const hasDoubleSlash = rawPath.includes('//');
+
       if (targetHash === '') {
-        // Cleanly strip any trailing hash from root homepage URL
-        if (currentFullHash && currentFullHash !== '') {
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        // Cleanly strip any trailing hash from root homepage URL and fix double slashes
+        if ((currentFullHash && currentFullHash !== '') || hasDoubleSlash) {
+          window.history.replaceState(null, '', normalizedPath + (window.location.search || ''));
         }
-      } else if (currentFullHash !== targetHash) {
-        window.history.replaceState(null, '', targetHash);
+      } else if (currentFullHash !== targetHash || hasDoubleSlash) {
+        const cleanBase = normalizedPath === '/' ? '' : normalizedPath.replace(/\/$/, '');
+        const fullUrl = `${cleanBase}/${targetHash}`.replace(/\/+/g, '/');
+        window.history.replaceState(null, '', fullUrl);
       }
     } catch (e) {}
   }, [currentRole, customerTab, adminNav, agentTab, activeAgentId]);
@@ -234,23 +279,15 @@ export const AppProvider = ({ children }) => {
 
   const [inventory, setInventory] = useState(() => {
     try {
-      // One-time migration v7: wipe all old demo products on first load after this deploy
-      if (!localStorage.getItem('wrikmart_inv_wiped_v7')) {
-        localStorage.removeItem('wrikmart_inventory');
-        localStorage.removeItem('wrikmart_inventory_v3');
-        localStorage.removeItem('wrikmart_inv_wiped_v4');
-        localStorage.removeItem('wrikmart_inv_wiped_v5');
-        localStorage.removeItem('wrikmart_inv_wiped_v6');
-        localStorage.setItem('wrikmart_inv_wiped_v7', '1');
-        return [];
+      const saved = localStorage.getItem('wrikmart_inventory_v3');
+      if (saved !== null) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       }
     } catch (e) {}
-    // After one-time wipe: load real admin-uploaded products from storage
-    const saved = localStorage.getItem('wrikmart_inventory_v3');
-    if (saved !== null) {
-      try { return JSON.parse(saved); } catch (e) {}
-    }
-    return [];
+    return INITIAL_STOCK_INVENTORY;
   });
 
   // Ready Stock Cart State
@@ -326,9 +363,12 @@ export const AppProvider = ({ children }) => {
   });
 
   const [customerProfile, setCustomerProfile] = useState(() => {
-    const saved = localStorage.getItem('wrikmart_customer_profile');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
+    const savedUser = localStorage.getItem('wrikmart_current_user');
+    if (savedUser) {
+      const saved = localStorage.getItem('wrikmart_customer_profile');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) {}
+      }
     }
     return {
       id: `cust-${Date.now()}`,
@@ -372,9 +412,18 @@ export const AppProvider = ({ children }) => {
   const [preOrderFormSettings, setPreOrderFormSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('wrikmart_preorder_settings');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          courierDeliveryCharge: 200,
+          freeShippingThreshold: 0,
+          ...parsed
+        };
+      }
     } catch (e) {}
     return {
+      courierDeliveryCharge: 200,
+      freeShippingThreshold: 0,
       countries: { india: true, dubai: true, thailand: true },
       requiredFields: {
         name: true,
@@ -388,6 +437,56 @@ export const AppProvider = ({ children }) => {
       }
     };
   });
+
+  // Footer & HQ Contact Settings configurable from Admin Panel
+  const [footerSettings, setFooterSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('wrikmart_footer_settings');
+      if (saved) return { ...DEFAULT_FOOTER_SETTINGS, ...JSON.parse(saved) };
+    } catch (e) {}
+    return DEFAULT_FOOTER_SETTINGS;
+  });
+
+  const updateFooterSettings = (newSettings) => {
+    setFooterSettings(prev => {
+      const updated = typeof newSettings === 'function' ? newSettings(prev) : { ...prev, ...newSettings };
+      safeLocalStorageSet('wrikmart_footer_settings', updated);
+      return updated;
+    });
+    showToast('Footer & HQ Contact settings updated successfully!', 'success');
+  };
+
+  const resetFooterSettings = () => {
+    setFooterSettings(DEFAULT_FOOTER_SETTINGS);
+    safeLocalStorageSet('wrikmart_footer_settings', DEFAULT_FOOTER_SETTINGS);
+    showToast('Footer settings reset to default', 'info');
+  };
+
+  // Official EPS Payment Gateway Production Settings (Kririk Toy Live)
+  const [epsSettings, setEpsSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('wrikmart_eps_settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Automatically migrate if cached values contain old sandbox demo credentials
+        if (parsed.userName === 'xyz.eps@gmail.com' || parsed.storeId === 'f49c63f4-3c57-495c-ac00-b136093671d4') {
+          safeLocalStorageSet('wrikmart_eps_settings', DEFAULT_EPS_CONFIG);
+          return DEFAULT_EPS_CONFIG;
+        }
+        return { ...DEFAULT_EPS_CONFIG, ...parsed };
+      }
+    } catch (e) {}
+    return DEFAULT_EPS_CONFIG;
+  });
+
+  const updateEpsSettings = (newSettings) => {
+    setEpsSettings(prev => {
+      const updated = typeof newSettings === 'function' ? newSettings(prev) : { ...prev, ...newSettings };
+      safeLocalStorageSet('wrikmart_eps_settings', updated);
+      return updated;
+    });
+    showToast('EPS Payment Gateway settings saved successfully!', 'success');
+  };
 
   // Supported Global Sourcing Stores (Home Page & Pre-Order)
   const [sourcingStores, setSourcingStores] = useState(() => {
@@ -479,6 +578,10 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     safeLocalStorageSet('wrikmart_sourcing_stores', sourcingStores);
   }, [sourcingStores]);
+
+  useEffect(() => {
+    safeLocalStorageSet('wrikmart_eps_settings', epsSettings);
+  }, [epsSettings]);
 
   // Current active agent profile
   const activeAgent = agents.find(a => a.id === activeAgentId) || agents[0];
@@ -585,9 +688,11 @@ export const AppProvider = ({ children }) => {
     const orderNumber = `PO-2026-${String(Math.floor(100000 + Math.random() * 900000))}`;
     
     const estimatedSubtotal = items.reduce((sum, item) => sum + (Number(item.expectedPrice || 0) * (item.specs?.unit || 1)), 0);
-    const deliveryCharge = 200;
+    const standardDelivery = Number(preOrderFormSettings?.courierDeliveryCharge ?? 200);
+    const freeThreshold = Number(preOrderFormSettings?.freeShippingThreshold || 0);
+    const deliveryCharge = (freeThreshold > 0 && estimatedSubtotal >= freeThreshold) ? 0 : standardDelivery;
     const estimatedTotal = estimatedSubtotal + deliveryCharge;
-    const advanceRequired = advancePaid || Math.round(estimatedTotal * 0.25);
+    const advanceRequired = advancePaid || Math.round(estimatedTotal * 0.30);
 
     const matchedAgent = agents.find(a => a.country.toLowerCase() === country.toLowerCase()) || agents[0];
 
@@ -1212,15 +1317,17 @@ export const AppProvider = ({ children }) => {
       reorderLevel: Number(productData.reorderLevel || 5),
       image: productData.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80',
       description: productData.description || 'Authentic imported stock with official warranty.',
-      badge: productData.badge || 'New Arrival',
+      badge: productData.badge || (productData.isDefect ? 'Clearance Deal' : 'New Arrival'),
       specs: productData.specs || { Color: 'Standard', Warranty: 'Official 1 Year' },
+      isDefect: Boolean(productData.isDefect),
+      defectNote: productData.defectNote || '',
       rating: 5.0,
       reviewsCount: 1,
       createdAt: new Date().toISOString()
     };
 
     setInventory(prev => [newProduct, ...prev]);
-    showToast(`Product "${newProduct.name}" added to stock inventory!`, 'success');
+    showToast(`Product "${newProduct.name}" added to ${newProduct.isDefect ? 'clearance' : 'stock'} inventory!`, 'success');
     return newProduct;
   };
 
@@ -1411,6 +1518,17 @@ export const AppProvider = ({ children }) => {
     }
 
     setCurrentUser(user);
+    if (user.role === 'customer' || !customerProfile?.name) {
+      setCustomerProfile(prev => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+        address: user.address || prev.address,
+        district: user.district || prev.district || 'Dhaka',
+        dateOfBirth: user.dateOfBirth || prev.dateOfBirth || ''
+      }));
+    }
     if (user.role) {
       setCurrentRole(user.role);
       if (user.role === 'agent' && user.agentId) {
@@ -1418,7 +1536,8 @@ export const AppProvider = ({ children }) => {
       }
     }
     setIsAuthModalOpen(false);
-    showToast(`Welcome back, ${user.name}! Logged in as ${user.role}.`, 'success');
+    const destinationName = user.role === 'admin' ? 'Super Admin Dashboard' : user.role === 'agent' ? 'Agent Workstation' : 'Customer Hub';
+    showToast(`Welcome back, ${user.name}! Connected to ${destinationName}.`, 'success');
     return { success: true, user };
   };
 
@@ -1507,7 +1626,31 @@ export const AppProvider = ({ children }) => {
     setCurrentUser(null);
     setCurrentRole('customer');
     setCustomerTab('home');
+    setCustomerProfile({
+      id: `cust-${Date.now()}`,
+      name: '',
+      phone: '',
+      email: '',
+      address: '',
+      district: 'Dhaka',
+      dateOfBirth: ''
+    });
+    safeLocalStorageRemove('wrikmart_customer_profile');
+    safeLocalStorageRemove('wrikmart_current_user');
     showToast(prevName ? `Goodbye, ${prevName}! You have been signed out.` : 'Logged out successfully.', 'info');
+  };
+
+  const updateCurrentUserAvatar = (newAvatarUrl) => {
+    if (!newAvatarUrl) return;
+    if (currentUser) {
+      const updated = { ...currentUser, avatar: newAvatarUrl };
+      setCurrentUser(updated);
+      setRegisteredUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, avatar: newAvatarUrl } : u));
+      if (currentUser.role === 'agent' && currentUser.agentId) {
+        setAgents(prev => prev.map(a => a.id === currentUser.agentId ? { ...a, avatar: newAvatarUrl } : a));
+      }
+      showToast('Profile photo updated successfully!', 'success');
+    }
   };
 
   // ==========================================
@@ -1536,7 +1679,7 @@ export const AppProvider = ({ children }) => {
     const estimatedSubtotal = items.reduce((sum, item) => sum + (Number(item.expectedPrice || 0) * (item.specs?.unit || 1)), 0);
     const deliveryCharge = Number(financials?.deliveryCharge ?? 200);
     const estimatedTotal = estimatedSubtotal + deliveryCharge;
-    const advancePaid = Number(financials?.advancePaid ?? (paymentStatus === 'Fully Paid' ? estimatedTotal : Math.round(estimatedTotal * 0.25)));
+    const advancePaid = Number(financials?.advancePaid ?? (paymentStatus === 'Fully Paid' ? estimatedTotal : Math.round(estimatedSubtotal * 0.30)));
     const dueAmount = Math.max(0, estimatedTotal - advancePaid);
 
     const initialStatus = orderType === 'Stock Product'
@@ -1616,6 +1759,80 @@ export const AppProvider = ({ children }) => {
     setOrders(prev => [newOrder, ...prev]);
     showToast(`Created ${orderType} #${orderNumber} successfully!`, 'success');
     return newOrder;
+  };
+
+  const updateAdminOrder = (orderId, updatedData) => {
+    setOrders(prev => prev.map(order => {
+      if (order.id !== orderId) return order;
+
+      const items = updatedData.items || order.items;
+      const orderType = updatedData.orderType || order.orderType;
+      const country = orderType === 'Stock Product' ? 'Bangladesh' : (updatedData.country || order.country);
+      
+      const estimatedSubtotal = items.reduce((sum, item) => sum + (Number(item.expectedPrice || 0) * (item.specs?.unit || 1)), 0);
+      const deliveryCharge = Number(updatedData.financials?.deliveryCharge ?? order.financials.deliveryCharge ?? 200);
+      const estimatedTotal = estimatedSubtotal + deliveryCharge;
+      
+      const paymentStatus = updatedData.paymentStatus || order.paymentStatus;
+      const advancePaid = Number(updatedData.financials?.advancePaid ?? (paymentStatus === 'Fully Paid' ? estimatedTotal : (paymentStatus === 'Unpaid' ? 0 : Math.round(estimatedSubtotal * 0.30))));
+      const dueAmount = Math.max(0, estimatedTotal - advancePaid);
+
+      const matchedAgent = updatedData.assignedAgentId 
+        ? agents.find(a => a.id === updatedData.assignedAgentId)
+        : (orderType === 'Stock Product' ? null : agents.find(a => a.country.toLowerCase() === country.toLowerCase()) || agents[0]);
+
+      return {
+        ...order,
+        orderType,
+        country,
+        countryFlag: orderType === 'Stock Product' ? '🇧🇩' : (country === 'India' ? '🇮🇳' : country === 'Dubai' ? '🇦🇪' : '🇹🇭'),
+        status: updatedData.status || order.status,
+        paymentStatus,
+        purchaseDeadline: updatedData.purchaseDeadline || order.purchaseDeadline,
+        assignedAgentId: orderType === 'Stock Product' ? null : matchedAgent?.id,
+        assignedAgentName: orderType === 'Stock Product' ? 'Dhaka Hub Fulfillment' : matchedAgent?.name,
+        customer: {
+          ...order.customer,
+          ...(updatedData.customer || updatedData.customerInfo || {}),
+          note: updatedData.note || updatedData.customer?.note || updatedData.customerInfo?.note || order.customer.note
+        },
+        financials: {
+          ...order.financials,
+          estimatedSubtotal,
+          deliveryCharge,
+          estimatedTotal,
+          advanceRequired: advancePaid,
+          advancePaid,
+          finalSellingPrice: estimatedTotal,
+          dueAmount,
+          grossProfitBDT: Math.round(estimatedTotal - (estimatedSubtotal * 0.75) - 120)
+        },
+        items: items.map((item, idx) => ({
+          id: item.id || `item-${Date.now()}-${idx}`,
+          name: item.name,
+          category: item.category || 'General',
+          brand: item.brand || 'Original Brand',
+          url: item.url || '',
+          image: item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80',
+          specs: item.specs || { size: 'Standard', color: 'Default', unit: 1 },
+          expectedPrice: Number(item.expectedPrice || 0),
+          actualPurchasePrice: item.actualPurchasePrice ?? (orderType === 'Stock Product' ? Number(item.costPrice || item.expectedPrice * 0.75) : null),
+          actualPurchaseCurrency: item.actualPurchaseCurrency ?? (orderType === 'Stock Product' ? 'BDT' : matchedAgent?.currency || 'INR'),
+          mrp: Number(item.mrp || item.expectedPrice * 1.1),
+          purchasedFrom: item.purchasedFrom || (orderType === 'Stock Product' ? 'Dhaka Warehouse Local Stock' : ''),
+          purchaseDate: item.purchaseDate || (orderType === 'Stock Product' ? new Date().toLocaleString() : null),
+          receiptImage: item.receiptImage || null,
+          notes: item.notes || ''
+        }))
+      };
+    }));
+
+    showToast(`Order #${orderId} updated successfully!`, 'success');
+  };
+
+  const deleteAdminOrder = (orderId) => {
+    setOrders(prev => prev.filter(o => o.id !== orderId));
+    showToast(`Order #${orderId} deleted successfully!`, 'success');
   };
 
   // ==========================================
@@ -2289,7 +2506,6 @@ export const AppProvider = ({ children }) => {
     acceptBalanceTransfer,
     rejectBalanceTransfer,
     createCustomerPreOrder,
-    createAdminOrder,
     reportDamageOrReturn,
     resolveDamageOrReturn,
     updateOrderPurchase,
@@ -2362,7 +2578,19 @@ export const AppProvider = ({ children }) => {
     deleteInventoryProduct,
     clearAllInventory,
     restoreDemoInventory,
-    // Authentication & Users
+    // Pre-Order & Order Management
+    createAdminOrder,
+    updateAdminOrder,
+    deleteAdminOrder,
+    // Footer CMS
+    footerSettings,
+    setFooterSettings,
+    updateFooterSettings,
+    resetFooterSettings,
+    // Official EPS Gateway Settings
+    epsSettings,
+    setEpsSettings,
+    updateEpsSettings,
     currentUser,
     setCurrentUser,
     registeredUsers,
@@ -2373,13 +2601,14 @@ export const AppProvider = ({ children }) => {
     login,
     logout,
     registerUser,
-    changeUserPassword
+    changeUserPassword,
+    updateCurrentUserAvatar
   }), [
     currentRole, customerTab, adminNav, agentTab, activeAgentId, activeAgent,
     orders, agents, hubs, inventory, exchangeRates, expenses, hqExpenses,
     balanceTransfers, chatMessages, toast, cart, isCartOpen, coupons, appliedCoupon,
     customers, customerProfile, birthdaySettings, stockSearchQuery, prefilledPreOrder,
-    selectedDistrict, preOrderFormSettings, sourcingStores, currentUser, isAuthModalOpen, authModalMode,
+    selectedDistrict, preOrderFormSettings, sourcingStores, footerSettings, epsSettings, currentUser, isAuthModalOpen, authModalMode,
     registeredUsers
   ]);
 

@@ -31,7 +31,11 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
     removeCoupon,
     setCustomerTab,
     selectedDistrict,
-    setSelectedDistrict
+    setSelectedDistrict,
+    currentUser,
+    setIsAuthModalOpen,
+    setAuthModalMode,
+    showToast
   } = useApp();
 
   const [couponInput, setCouponInput] = useState('');
@@ -70,6 +74,13 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
   };
 
   const handleCheckoutClick = () => {
+    if (!currentUser) {
+      setIsCartOpen(false);
+      if (showToast) showToast('Please sign in or create an account to proceed with checkout.', 'warning');
+      if (setAuthModalMode) setAuthModalMode('register');
+      if (setIsAuthModalOpen) setIsAuthModalOpen(true);
+      return;
+    }
     setIsCartOpen(false);
     if (onProceedToCheckout) {
       onProceedToCheckout();
@@ -372,11 +383,20 @@ export const CustomerCartDrawer = ({ onProceedToCheckout }) => {
 
               {/* Action Buttons */}
               <div className="space-y-2">
+                {!currentUser && (
+                  <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                    <span className="text-[11px] leading-tight">
+                      <strong>Account Required:</strong> Please register or sign in to complete your purchase.
+                    </span>
+                  </div>
+                )}
+
                 <button
                   onClick={handleCheckoutClick}
                   className="w-full py-3.5 px-4 rounded-2xl font-extrabold text-sm bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2 transition-all transform active:scale-98"
                 >
-                  <span>Proceed to Checkout</span>
+                  <span>{currentUser ? 'Proceed to Checkout' : 'Sign In / Register to Checkout'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
 

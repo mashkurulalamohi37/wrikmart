@@ -6,6 +6,8 @@ import { Toast } from './components/common/Toast';
 import { AuthModal } from './components/common/AuthModal';
 
 import { CustomerApp } from './components/customer/CustomerApp';
+import { EpsPaymentReturn } from './components/customer/EpsPaymentReturn';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const AdminPanel = lazy(() => import('./components/admin/AdminPanel').then(m => ({ default: m.AdminPanel })));
 const AgentApp = lazy(() => import('./components/agent/AgentApp').then(m => ({ default: m.AgentApp })));
@@ -18,26 +20,71 @@ const LoadingFallback = () => (
   </div>
 );
 
+// Detect if current URL is an EPS payment return path
+function getEpsReturnStatus() {
+  const path = window.location.pathname;
+  if (path === '/payment/success') return 'success';
+  if (path === '/payment/fail') return 'fail';
+  if (path === '/payment/cancel') return 'cancel';
+  return null;
+}
+
 const AppContent = () => {
-  const { currentRole, customerTab, adminNav, agentTab } = useApp();
+  const {
+    currentRole,
+    setCurrentRole,
+    customerTab,
+    adminNav,
+    agentTab,
+    currentUser,
+    setIsAuthModalOpen,
+    setAuthModalMode
+  } = useApp();
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [currentRole, customerTab, adminNav, agentTab]);
+
+  // Route protection guard: redirect to login if attempting to access admin/agent without permissions
+  useEffect(() => {
+    if (currentRole === 'admin' && currentUser?.role !== 'admin') {
+      setCurrentRole('customer');
+      if (setAuthModalMode) setAuthModalMode('login');
+      if (setIsAuthModalOpen) setIsAuthModalOpen(true);
+    } else if (currentRole === 'agent' && currentUser?.role !== 'agent' && currentUser?.role !== 'admin') {
+      setCurrentRole('customer');
+      if (setAuthModalMode) setAuthModalMode('login');
+      if (setIsAuthModalOpen) setIsAuthModalOpen(true);
+    }
+  }, [currentRole, currentUser, setCurrentRole, setAuthModalMode, setIsAuthModalOpen]);
+
+  // Check if we're on an EPS payment return URL
+  const epsReturnStatus = getEpsReturnStatus();
+  if (epsReturnStatus) {
+    // Render full-screen EPS return handler wrapped in the provider (for createCustomerStockOrder etc.)
+    return (
+      <>
+        <EpsPaymentReturn status={epsReturnStatus} />
+        <Toast />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full bg-[#F2F7FB] flex flex-col font-sans">
       <Header />
       
       <main className="flex-1 w-full">
-        {currentRole === 'customer' ? (
-          <CustomerApp />
-        ) : (
-          <Suspense fallback={<LoadingFallback />}>
-            {currentRole === 'admin' && <AdminPanel />}
-            {currentRole === 'agent' && <AgentApp />}
-          </Suspense>
-        )}
+        <ErrorBoundary>
+          {currentRole === 'customer' ? (
+            <CustomerApp />
+          ) : (
+            <Suspense fallback={<LoadingFallback />}>
+              {currentRole === 'admin' && currentUser?.role === 'admin' && <AdminPanel />}
+              {currentRole === 'agent' && (currentUser?.role === 'agent' || currentUser?.role === 'admin') && <AgentApp />}
+            </Suspense>
+          )}
+        </ErrorBoundary>
       </main>
 
       {currentRole === 'customer' && <Footer />}

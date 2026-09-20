@@ -47,6 +47,9 @@ export const CustomerApp = () => {
     setAppliedCoupon,
     setIsAuthModalOpen,
     setAuthModalMode,
+    currentUser,
+    currentRole,
+    setCurrentRole,
     showToast
   } = useApp();
   const activeTab = customerTab;
@@ -64,6 +67,7 @@ export const CustomerApp = () => {
   });
 
   const totalCartCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  const isAdmin = currentUser?.role === 'admin';
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex flex-col bg-[#F4F7FB]">
@@ -143,6 +147,17 @@ export const CustomerApp = () => {
 
           {/* Right Highlights & Cart Drawer Trigger */}
           <div className="flex items-center gap-3 text-xs">
+            {/* Quick Admin HQ Switcher for Super Admin */}
+            {isAdmin && (
+              <button
+                onClick={() => setCurrentRole('admin')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-navy-950 font-black text-xs shadow-sm transition-all active:scale-95 border border-amber-300"
+                title="Switch to Super Admin HQ Dashboard"
+              >
+                <span>👑 Super Admin HQ</span>
+              </button>
+            )}
+
             {/* Cart Button */}
             <button
               onClick={() => setIsCartOpen(true)}
@@ -162,22 +177,24 @@ export const CustomerApp = () => {
               )}
             </button>
 
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all ${
-                activeTab === 'profile'
-                  ? 'border-brand-500 bg-brand-50 text-brand-700 font-bold'
-                  : 'border-slate-200 text-slate-700 hover:bg-slate-50 font-medium'
-              }`}
-            >
-              <div className="w-5 h-5 rounded-full bg-brand-500 text-white text-[10px] font-bold flex items-center justify-center">
-                {(customerProfile?.name || 'RC').split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </div>
-              <span>{customerProfile?.name || 'Customer Profile'}</span>
-              {getBirthdayStatus?.(customerProfile?.dateOfBirth)?.isToday && (
-                <span className="text-xs animate-bounce">🎂</span>
-              )}
-            </button>
+            {currentUser && (
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
+                  activeTab === 'profile'
+                    ? 'border-amber-500 bg-amber-50 text-amber-900 font-bold shadow-2xs'
+                    : 'border-slate-200 text-slate-700 hover:bg-slate-50 font-medium'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-full text-white text-[10px] font-bold flex items-center justify-center ${isAdmin ? 'bg-amber-500' : 'bg-brand-500'}`}>
+                  {isAdmin ? '👑' : (currentUser.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2)}
+                </div>
+                <span>{isAdmin ? '👑 Admin Profile' : (currentUser.name?.split(' ')[0] || 'Profile')}</span>
+                {getBirthdayStatus?.(currentUser?.dateOfBirth || customerProfile?.dateOfBirth)?.isToday && (
+                  <span className="text-xs animate-bounce">🎂</span>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -189,88 +206,170 @@ export const CustomerApp = () => {
             <CustomerHome 
               onStartPreOrder={() => setActiveTab('preorder')}
               onBrowseStock={() => setActiveTab('stock')}
-              onOpenChat={() => setActiveTab('chat')}
-              onOpenOrders={() => setActiveTab('orders')}
             />
           )}
 
-        {activeTab === 'stock' && (
-          <CustomerStockCatalog 
-            onOpenCheckout={() => setIsCheckoutOpen(true)}
-          />
-        )}
+          {activeTab === 'stock' && (
+            <CustomerStockCatalog 
+              onOpenCheckout={() => {
+                if (!currentUser) {
+                  if (showToast) showToast('Please create an account or sign in to proceed with your purchase.', 'warning');
+                  if (setAuthModalMode) setAuthModalMode('register');
+                  if (setIsAuthModalOpen) setIsAuthModalOpen(true);
+                  return;
+                }
+                setIsCheckoutOpen(true);
+              }}
+              onStartPreOrder={() => setActiveTab('preorder')} 
+            />
+          )}
 
-        {activeTab === 'preorder' && (
-          <PreOrderWizard 
-            onComplete={() => setActiveTab('orders')}
-            onCancel={() => setActiveTab('home')}
-          />
-        )}
+          {activeTab === 'preorder' && (
+            <PreOrderWizard onComplete={() => setActiveTab('orders')} />
+          )}
 
-        {activeTab === 'orders' && (
-          <CustomerOrders 
-            onNewOrder={() => setActiveTab('preorder')}
-          />
-        )}
+          {activeTab === 'orders' && (
+            <CustomerOrders onNewPreOrder={() => setActiveTab('preorder')} />
+          )}
 
-        {activeTab === 'chat' && (
-          <div className="max-w-4xl mx-auto">
+          {activeTab === 'chat' && (
             <CustomerChat />
-          </div>
-        )}
+          )}
 
         {activeTab === 'profile' && (
           <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-card space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 text-white flex items-center justify-center font-extrabold text-2xl shadow-md">
-                  {(customerProfile?.name || 'RC').split(' ').map(n => n[0]).join('').slice(0, 2)}
+            {!currentUser ? (
+              <div className="text-center py-10 space-y-4">
+                <div className="w-14 h-14 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mx-auto shadow-sm">
+                  <User className="w-7 h-7" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-xl text-navy-900">{customerProfile?.name || 'Customer'}</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">{customerProfile?.phone} • {customerProfile?.email}</p>
-                  <span className="inline-block mt-1.5 px-2.5 py-0.5 bg-emerald-50 text-emerald-700 text-[11px] font-bold rounded-full border border-emerald-200">
-                    Verified Customer 🇧🇩
-                  </span>
+                  <h3 className="text-lg font-bold text-navy-950">Sign In Required</h3>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                    Please log in to view your saved profile information, delivery address, and account settings.
+                  </p>
                 </div>
+                <button
+                  onClick={() => {
+                    setAuthModalMode('login');
+                    setIsAuthModalOpen(true);
+                  }}
+                  className="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                >
+                  Sign In / Register
+                </button>
               </div>
+            ) : (() => {
+              const effectiveName = isAdmin 
+                ? (currentUser?.name || 'Super Administrator') 
+                : (customerProfile?.name || (currentUser?.name && currentUser.role !== 'admin' ? currentUser.name : ''));
 
-              <button
-                onClick={() => {
-                  if (isEditingProfile) {
-                    updateCustomerProfile(profileForm);
-                    setIsEditingProfile(false);
-                  } else {
-                    setProfileForm({
-                      name: customerProfile?.name || '',
-                      phone: customerProfile?.phone || '',
-                      email: customerProfile?.email || '',
-                      address: customerProfile?.address || '',
-                      district: customerProfile?.district || 'Dhaka',
-                      dateOfBirth: customerProfile?.dateOfBirth || ''
-                    });
-                    setIsEditingProfile(true);
-                  }
-                }}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto ${
-                  isEditingProfile 
-                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm' 
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                }`}
-              >
-                {isEditingProfile ? (
-                  <>
-                    <Save className="w-3.5 h-3.5" />
-                    <span>Save Profile</span>
-                  </>
-                ) : (
-                  <>
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>Edit Profile & Birthday</span>
-                  </>
-                )}
-              </button>
-            </div>
+              const effectiveEmail = isAdmin 
+                ? (currentUser?.email || 'admin@wrikmart.com') 
+                : (customerProfile?.email || (currentUser?.email && currentUser.role !== 'admin' ? currentUser.email : ''));
+
+              const effectivePhone = isAdmin 
+                ? (currentUser?.phone || '+880 1800-000000') 
+                : (customerProfile?.phone || (currentUser?.phone && currentUser.role !== 'admin' ? currentUser.phone : ''));
+
+              const effectiveAddress = isAdmin 
+                ? (customerProfile?.address || 'WrikMart Bangladesh HQ, Mirpur, Dhaka') 
+                : (customerProfile?.address || '');
+
+              const effectiveDistrict = customerProfile?.district || 'Dhaka';
+
+              const getInitials = (name) => {
+                if (!name || !name.trim()) return '';
+                const parts = name.trim().split(/\s+/);
+                if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+                return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+              };
+
+              const initials = getInitials(effectiveName);
+              const contactDetails = [effectivePhone, effectiveEmail].filter(Boolean);
+
+              return (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center font-extrabold text-2xl shadow-md ${
+                      isAdmin 
+                        ? 'bg-gradient-to-tr from-amber-500 via-amber-600 to-navy-900 text-white border-2 border-amber-300' 
+                        : 'bg-gradient-to-tr from-brand-600 to-brand-400 text-white'
+                    }`}>
+                      {isAdmin ? '👑' : initials ? initials : <User className="w-8 h-8 text-white" />}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-extrabold text-xl text-navy-900">
+                          {effectiveName || 'Customer Profile'}
+                        </h3>
+                        {isAdmin && (
+                          <span className="px-2.5 py-0.5 bg-amber-100 text-amber-900 text-[10px] font-black rounded-full uppercase border border-amber-300">
+                            Super Administrator
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {contactDetails.length > 0 ? contactDetails.join(' • ') : 'Phone & email not set yet'}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className={`inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-full border ${
+                          isAdmin 
+                            ? 'bg-amber-50 text-amber-800 border-amber-300' 
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        }`}>
+                          {isAdmin ? 'Super Admin HQ Access 👑' : (effectiveName ? 'Verified Customer 🇧🇩' : 'Guest Customer 🇧🇩')}
+                        </span>
+                        {isAdmin && (
+                          <button
+                            onClick={() => setCurrentRole('admin')}
+                            className="px-2.5 py-0.5 bg-amber-500 hover:bg-amber-600 text-navy-950 text-[11px] font-extrabold rounded-full shadow-2xs transition-all"
+                          >
+                            Open Admin HQ Dashboard →
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (isEditingProfile) {
+                        updateCustomerProfile(profileForm);
+                        setIsEditingProfile(false);
+                      } else {
+                        setProfileForm({
+                          name: effectiveName,
+                          phone: effectivePhone,
+                          email: effectiveEmail,
+                          address: effectiveAddress,
+                          district: effectiveDistrict,
+                          dateOfBirth: customerProfile?.dateOfBirth || ''
+                        });
+                        setIsEditingProfile(true);
+                      }
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto ${
+                      isEditingProfile 
+                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm' 
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                    }`}
+                  >
+                    {isEditingProfile ? (
+                      <>
+                        <Save className="w-3.5 h-3.5" />
+                        <span>Save Profile</span>
+                      </>
+                    ) : (
+                      <>
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Edit Profile & Birthday</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              );
+            })()}
 
             {/* Birthday Celebration & Reward Card */}
             {(() => {
@@ -436,8 +535,19 @@ export const CustomerApp = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Default Delivery Address</span>
-                  <p className="font-bold text-slate-800 text-sm">{customerProfile?.address || 'House 12, Road 5, Dhanmondi'}</p>
-                  <p className="text-slate-500">{customerProfile?.district || 'Dhaka'}, Bangladesh</p>
+                  {(customerProfile?.address || (isAdmin ? 'WrikMart Bangladesh HQ, Mirpur, Dhaka' : '')) ? (
+                    <>
+                      <p className="font-bold text-slate-800 text-sm">
+                        {customerProfile?.address || (isAdmin ? 'WrikMart Bangladesh HQ, Mirpur, Dhaka' : '')}
+                      </p>
+                      <p className="text-slate-500">{customerProfile?.district || 'Dhaka'}, Bangladesh</p>
+                    </>
+                  ) : (
+                    <div>
+                      <p className="font-bold text-slate-600 text-sm">Not set yet</p>
+                      <p className="text-slate-400 text-[11px]">Click Edit to set your delivery address</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
@@ -462,8 +572,8 @@ export const CustomerApp = () => {
 
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Preferred Payment Method</span>
-                  <p className="font-bold text-slate-800 text-sm">bKash (01712-***678)</p>
-                  <p className="text-emerald-600 font-semibold">Instant Online MFS & COD Enabled</p>
+                  <p className="font-bold text-slate-800 text-sm">EPS Payment Gateway</p>
+                  <p className="text-emerald-600 font-semibold">bKash, Nagad, Cards & Net Banking</p>
                 </div>
 
                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
@@ -521,15 +631,25 @@ export const CustomerApp = () => {
 
       {/* Slide-Over Cart Drawer */}
       <CustomerCartDrawer 
-        onProceedToCheckout={() => setIsCheckoutOpen(true)}
+        onProceedToCheckout={() => {
+          if (!currentUser) {
+            if (showToast) showToast('Please create an account or sign in to proceed with checkout.', 'warning');
+            if (setAuthModalMode) setAuthModalMode('register');
+            if (setIsAuthModalOpen) setIsAuthModalOpen(true);
+            return;
+          }
+          setIsCheckoutOpen(true);
+        }}
       />
 
       {/* Stock Checkout Modal */}
-      <CustomerStockCheckoutModal
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-        onOrderPlaced={(order) => {}}
-      />
+      {isCheckoutOpen && (
+        <CustomerStockCheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          onOrderPlaced={(order) => {}}
+        />
+      )}
 
       {/* Customer Birthday Celebration Pop-Up Modal */}
       <CustomerBirthdayModal />

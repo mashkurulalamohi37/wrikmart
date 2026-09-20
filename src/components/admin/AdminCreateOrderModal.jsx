@@ -176,53 +176,70 @@ const SearchableStockSelector = ({ inventory = [], onSelect, currentItemName }) 
   );
 };
 
-export const AdminCreateOrderModal = ({ onClose }) => {
-  const { agents, inventory, createAdminOrder, showToast } = useApp();
+export const AdminCreateOrderModal = ({ onClose, editingOrder = null }) => {
+  const { agents, inventory, createAdminOrder, updateAdminOrder, showToast } = useApp();
 
-  const [orderType, setOrderType] = useState('Pre-Order'); // 'Pre-Order' | 'Stock Product'
-  const [country, setCountry] = useState('India');
-  const [assignedAgentId, setAssignedAgentId] = useState('');
+  const isEditing = !!editingOrder;
+
+  const [orderType, setOrderType] = useState(editingOrder?.orderType || 'Pre-Order'); // 'Pre-Order' | 'Stock Product'
+  const [country, setCountry] = useState(editingOrder?.country || 'India');
+  const [assignedAgentId, setAssignedAgentId] = useState(editingOrder?.assignedAgentId || '');
+  const [status, setStatus] = useState(editingOrder?.status || 'Processing');
 
   // Customer Info
   const [customerInfo, setCustomerInfo] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    address: '',
-    district: 'Dhaka',
-    note: ''
+    name: editingOrder?.customer?.name || '',
+    phone: editingOrder?.customer?.phone || '',
+    email: editingOrder?.customer?.email || '',
+    address: editingOrder?.customer?.address || '',
+    district: editingOrder?.customer?.district || 'Dhaka',
+    note: editingOrder?.customer?.note || ''
   });
 
   // Line Items
-  const [items, setItems] = useState([
-    {
-      id: 'item-new-1',
-      name: '',
-      category: 'Electronics',
-      brand: '',
-      url: '',
-      image: '',
-      specs: { size: 'Standard', color: 'Default', unit: 1 },
-      expectedPrice: ''
+  const [items, setItems] = useState(() => {
+    if (editingOrder?.items && editingOrder.items.length > 0) {
+      return editingOrder.items.map((it, idx) => ({
+        id: it.id || `item-edit-${idx}`,
+        name: it.name || '',
+        category: it.category || 'General',
+        brand: it.brand || '',
+        url: it.url || '',
+        image: it.image || '',
+        specs: it.specs || { size: 'Standard', color: 'Default', unit: 1 },
+        expectedPrice: it.expectedPrice || ''
+      }));
     }
-  ]);
+    return [
+      {
+        id: 'item-new-1',
+        name: '',
+        category: 'Electronics',
+        brand: '',
+        url: '',
+        image: '',
+        specs: { size: 'Standard', color: 'Default', unit: 1 },
+        expectedPrice: ''
+      }
+    ];
+  });
 
   // Payment Setup
-  const [paymentStatus, setPaymentStatus] = useState('Advance Paid'); // 'Advance Paid' | 'Fully Paid' | 'Unpaid'
-  const [paymentMethod, setPaymentMethod] = useState('bKash');
-  const [customAdvance, setCustomAdvance] = useState('');
-  const [deliveryCharge, setDeliveryCharge] = useState(200);
+  const [paymentStatus, setPaymentStatus] = useState(editingOrder?.paymentStatus || 'Advance Paid'); // 'Advance Paid' | 'Fully Paid' | 'Unpaid'
+  const [paymentMethod, setPaymentMethod] = useState(editingOrder?.paymentMethod || 'bKash');
+  const [customAdvance, setCustomAdvance] = useState(editingOrder?.financials?.advancePaid ? String(editingOrder.financials.advancePaid) : '');
+  const [deliveryCharge, setDeliveryCharge] = useState(editingOrder?.financials?.deliveryCharge ?? 200);
   const [purchaseDeadline, setPurchaseDeadline] = useState(
-    new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    editingOrder?.purchaseDeadline || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
-  const [adminNote, setAdminNote] = useState('');
+  const [adminNote, setAdminNote] = useState(editingOrder?.customer?.note || '');
 
   // Auto Calculations
   const subtotal = items.reduce((sum, it) => sum + (Number(it.expectedPrice || 0) * (it.specs?.unit || 1)), 0);
   const total = subtotal + Number(deliveryCharge || 0);
   const advanceRequired = paymentStatus === 'Fully Paid'
     ? total
-    : (paymentStatus === 'Unpaid' ? 0 : (customAdvance ? Number(customAdvance) : Math.round(total * 0.25)));
+    : (paymentStatus === 'Unpaid' ? 0 : (customAdvance ? Number(customAdvance) : Math.round(subtotal * 0.30)));
 
   // Add Item Line
   const handleAddItem = () => {
@@ -308,21 +325,40 @@ export const AdminCreateOrderModal = ({ onClose }) => {
       return;
     }
 
-    createAdminOrder({
-      orderType,
-      country: orderType === 'Stock Product' ? 'Bangladesh' : country,
-      customerInfo,
-      items,
-      financials: {
-        deliveryCharge: Number(deliveryCharge),
-        advancePaid: advanceRequired
-      },
-      paymentMethod,
-      paymentStatus,
-      assignedAgentId: orderType === 'Stock Product' ? null : (assignedAgentId || null),
-      purchaseDeadline,
-      note: adminNote
-    });
+    if (isEditing) {
+      updateAdminOrder(editingOrder.id, {
+        orderType,
+        country: orderType === 'Stock Product' ? 'Bangladesh' : country,
+        customerInfo,
+        items,
+        financials: {
+          deliveryCharge: Number(deliveryCharge),
+          advancePaid: advanceRequired
+        },
+        paymentMethod,
+        paymentStatus,
+        status,
+        assignedAgentId: orderType === 'Stock Product' ? null : (assignedAgentId || null),
+        purchaseDeadline,
+        note: adminNote
+      });
+    } else {
+      createAdminOrder({
+        orderType,
+        country: orderType === 'Stock Product' ? 'Bangladesh' : country,
+        customerInfo,
+        items,
+        financials: {
+          deliveryCharge: Number(deliveryCharge),
+          advancePaid: advanceRequired
+        },
+        paymentMethod,
+        paymentStatus,
+        assignedAgentId: orderType === 'Stock Product' ? null : (assignedAgentId || null),
+        purchaseDeadline,
+        note: adminNote
+      });
+    }
 
     onClose();
   };
@@ -339,14 +375,18 @@ export const AdminCreateOrderModal = ({ onClose }) => {
               <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className="font-extrabold text-sm sm:text-base text-navy-900">Create New Order (Admin Console)</h3>
-              <p className="text-[10px] sm:text-[11px] text-slate-400">Generate pre-orders or local warehouse stock consignments</p>
+              <h3 className="font-extrabold text-sm sm:text-base text-navy-900">
+                {isEditing ? `Edit Order #${editingOrder.orderNumber}` : 'Create New Order (Admin Console)'}
+              </h3>
+              <p className="text-[10px] sm:text-[11px] text-slate-400">
+                {isEditing ? 'Modify line items, customer details, status and financial figures' : 'Generate pre-orders or local warehouse stock consignments'}
+              </p>
             </div>
           </div>
           <button 
             type="button"
             onClick={onClose}
-            aria-label="Close Create Order Modal"
+            aria-label="Close Order Modal"
             className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -709,7 +749,7 @@ export const AdminCreateOrderModal = ({ onClose }) => {
                   onChange={(e) => setPaymentStatus(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold bg-white"
                 >
-                  <option value="Advance Paid">Advance Paid (25%)</option>
+                  <option value="Advance Paid">Advance Paid (30%)</option>
                   <option value="Fully Paid">Fully Paid (100%)</option>
                   <option value="Unpaid">Unpaid / Cash on Delivery</option>
                 </select>
@@ -722,6 +762,7 @@ export const AdminCreateOrderModal = ({ onClose }) => {
                   onChange={(e) => setPaymentMethod(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold bg-white"
                 >
+                  <option value="EPS">EPS Payment Gateway (Verified)</option>
                   <option value="bKash">bKash Merchant</option>
                   <option value="Nagad">Nagad Direct</option>
                   <option value="Bank Transfer">Bank Wire / EFT</option>
@@ -756,6 +797,27 @@ export const AdminCreateOrderModal = ({ onClose }) => {
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 font-bold"
                   />
                 </div>
+              </div>
+            )}
+
+            {isEditing && (
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Pipeline Order Status</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-brand-300 font-bold bg-white text-brand-900 focus:ring-2 focus:ring-brand-500"
+                >
+                  <option value="Processing">Processing / Sourcing</option>
+                  <option value="Purchased">Purchased</option>
+                  <option value="At Delivery House">At Delivery House / Hub</option>
+                  <option value="Shipped">Shipped to BD</option>
+                  <option value="BD Received">BD Received (Dhaka Hub)</option>
+                  <option value="Ready for Delivery">Ready for Delivery</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Damaged">⚠️ Damaged Consignment</option>
+                  <option value="Returned">🔄 Returned to Vendor</option>
+                </select>
               </div>
             )}
 
@@ -816,7 +878,7 @@ export const AdminCreateOrderModal = ({ onClose }) => {
               className="w-full sm:w-auto px-7 py-2.5 bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5"
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>Confirm & Generate Order</span>
+              <span>{isEditing ? 'Save & Update Order' : 'Confirm & Generate Order'}</span>
             </button>
           </div>
         </form>

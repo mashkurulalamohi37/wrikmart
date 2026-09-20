@@ -21,27 +21,25 @@ import {
 export const AdminReceiveBDModal = ({ order, onClose }) => {
   const { exchangeRates, receiveOrderInBangladesh, showToast } = useApp();
 
-  if (!order) return null;
-
   // Determine foreign currency from order country or first item
-  const foreignCurrency = order.items?.[0]?.actualPurchaseCurrency || 
-    (order.country === 'India' ? 'INR' : order.country === 'Dubai' ? 'AED' : order.country === 'Thailand' ? 'THB' : 'INR');
+  const foreignCurrency = order?.items?.[0]?.actualPurchaseCurrency || 
+    (order?.country === 'India' ? 'INR' : order?.country === 'Dubai' ? 'AED' : order?.country === 'Thailand' ? 'THB' : 'INR');
   
   const defaultRate = exchangeRates?.[foreignCurrency]?.rateToBDT || (foreignCurrency === 'INR' ? 1.43 : foreignCurrency === 'AED' ? 32.5 : 3.55);
   const currencySymbol = exchangeRates?.[foreignCurrency]?.symbol || (foreignCurrency === 'INR' ? '₹' : foreignCurrency === 'AED' ? 'د.إ' : '฿');
 
   // Local Form State
   const [exchangeRate, setExchangeRate] = useState(defaultRate);
-  const [shippingCostBDT, setShippingCostBDT] = useState(order.financials?.shippingCostBDT || 500);
-  const [localCourierCostBDT, setLocalCourierCostBDT] = useState(order.financials?.localCourierCostBDT || 120);
-  const [courierPartner, setCourierPartner] = useState(order.courierName || 'Steadfast Courier');
+  const [shippingCostBDT, setShippingCostBDT] = useState(order?.financials?.shippingCostBDT || 500);
+  const [localCourierCostBDT, setLocalCourierCostBDT] = useState(order?.financials?.localCourierCostBDT || 120);
+  const [courierPartner, setCourierPartner] = useState(order?.courierName || 'Steadfast Courier');
   const [condition, setCondition] = useState('Intact & Sealed');
   const [notes, setNotes] = useState('');
 
   // Editable purchase prices per item in foreign currency
   const [itemPrices, setItemPrices] = useState(() => {
     const initial = {};
-    order.items.forEach(it => {
+    (order?.items || []).forEach(it => {
       initial[it.id] = it.actualPurchasePrice ?? Math.round(Number(it.expectedPrice || 0) * 0.75);
     });
     return initial;
@@ -53,12 +51,14 @@ export const AdminReceiveBDModal = ({ order, onClose }) => {
 
   // Live Calculations
   const totalForeignCost = useMemo(() => {
-    return order.items.reduce((sum, it) => {
+    return (order?.items || []).reduce((sum, it) => {
       const price = Number(itemPrices[it.id] ?? 0);
       const unit = it.specs?.unit || 1;
       return sum + (price * unit);
     }, 0);
-  }, [order.items, itemPrices]);
+  }, [order?.items, itemPrices]);
+
+  if (!order) return null;
 
   const convertedCostBDT = Math.round(totalForeignCost * Number(exchangeRate || 0));
   const intlShippingBDT = Number(shippingCostBDT || 0);

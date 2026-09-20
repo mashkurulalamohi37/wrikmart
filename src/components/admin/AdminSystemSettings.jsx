@@ -1,14 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Settings, ArrowRightLeft, ShieldCheck, CreditCard, Lock, Save, KeyRound, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { Settings, ArrowRightLeft, ShieldCheck, CreditCard, Lock, Save, KeyRound, Eye, EyeOff, CheckCircle2, Zap, ExternalLink, RefreshCw } from 'lucide-react';
 import { CountryFlag } from '../common/CountryFlag';
+import { DEFAULT_EPS_CONFIG, getEpsAuthToken } from '../../utils/epsPaymentService';
 
 export const AdminSystemSettings = () => {
-  const { exchangeRates, updateExchangeRate, changeUserPassword, currentUser, showToast } = useApp();
+  const { exchangeRates, updateExchangeRate, changeUserPassword, currentUser, setAdminNav, showToast, epsSettings, updateEpsSettings } = useApp();
 
   const [inrRate, setInrRate] = useState(exchangeRates.INR.rateFromBDT);
   const [aedRate, setAedRate] = useState(exchangeRates.AED.rateFromBDT);
   const [thbRate, setThbRate] = useState(exchangeRates.THB.rateFromBDT);
+
+  // EPS Payment Gateway Production State
+  const [epsForm, setEpsForm] = useState(() => ({
+    ...DEFAULT_EPS_CONFIG,
+    ...(epsSettings || {})
+  }));
+  const [epsTesting, setEpsTesting] = useState(false);
+  const [epsTestResult, setEpsTestResult] = useState(null);
+
+  useEffect(() => {
+    if (epsSettings) {
+      setEpsForm(prev => ({ ...prev, ...epsSettings }));
+    }
+  }, [epsSettings]);
 
   // Admin Password Management State
   const [adminPasswordForm, setAdminPasswordForm] = useState({
@@ -54,6 +69,34 @@ export const AdminSystemSettings = () => {
         confirmPassword: ''
       }));
       setTimeout(() => setPasswordSuccess(false), 4000);
+    }
+  };
+
+  const handleSaveEps = (e) => {
+    e.preventDefault();
+    if (updateEpsSettings) {
+      updateEpsSettings(epsForm);
+    }
+  };
+
+  const handleTestEpsConnection = async () => {
+    setEpsTesting(true);
+    setEpsTestResult(null);
+    try {
+      const token = await getEpsAuthToken(epsForm);
+      setEpsTestResult({
+        success: true,
+        message: `EPS Gateway connected successfully! Live Bearer Token generated (${token.slice(0, 24)}...)`
+      });
+      showToast('EPS Payment Gateway connection verified!', 'success');
+    } catch (err) {
+      setEpsTestResult({
+        success: false,
+        message: err.message || 'Failed to authenticate with EPS API.'
+      });
+      showToast('EPS Connection Test failed. Verify credentials.', 'error');
+    } finally {
+      setEpsTesting(false);
     }
   };
 
@@ -134,6 +177,134 @@ export const AdminSystemSettings = () => {
           <Save className="w-4 h-4" />
           <span>Save FX Rates</span>
         </button>
+      </form>
+
+      {/* Official EPS Payment Gateway Production Settings Card */}
+      <form onSubmit={handleSaveEps} className="bg-white p-6 rounded-2xl border border-emerald-200/80 shadow-soft space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 rounded-xl bg-emerald-50 border border-emerald-200">
+              <img src="/eps/Group 93.png" alt="EPS Gateway" className="h-6 w-auto object-contain" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-navy-900 text-sm">EPS Payment Gateway Integration (Production Grade)</h3>
+                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                  epsForm.environment === 'production' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {epsForm.environment === 'production' ? '● Live Production' : '● Sandbox Testing'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">Official Bangladesh Bank licensed PSO gateway credentials & API parameters</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleTestEpsConnection}
+              disabled={epsTesting}
+              className="px-3 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${epsTesting ? 'animate-spin' : ''}`} />
+              <span>{epsTesting ? 'Testing API...' : 'Test Connection'}</span>
+            </button>
+          </div>
+        </div>
+
+        {epsTestResult && (
+          <div className={`p-3 rounded-xl border text-xs flex items-start gap-2 animate-fade-in ${
+            epsTestResult.success ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
+          }`}>
+            {epsTestResult.success ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" /> : <ShieldCheck className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />}
+            <span className="font-medium">{epsTestResult.message}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Gateway Environment</label>
+            <select
+              value={epsForm.environment}
+              onChange={(e) => setEpsForm({ ...epsForm, environment: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50 rounded-xl border border-slate-200 font-bold text-navy-900 focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="production">Production (https://pgapi.eps.com.bd)</option>
+              <option value="sandbox">Sandbox Testing (https://sandboxpgapi.eps.com.bd)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Store ID (Live / Merchant)</label>
+            <input
+              type="text"
+              required
+              value={epsForm.storeId}
+              onChange={(e) => setEpsForm({ ...epsForm, storeId: e.target.value })}
+              placeholder="f49c63f4-3c57-495c-ac00-..."
+              className="w-full px-3 py-2 bg-slate-50 rounded-xl border border-slate-200 font-mono text-slate-800 focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">Merchant ID</label>
+            <input
+              type="text"
+              value={epsForm.merchantId}
+              onChange={(e) => setEpsForm({ ...epsForm, merchantId: e.target.value })}
+              placeholder="094980ee-..."
+              className="w-full px-3 py-2 bg-slate-50 rounded-xl border border-slate-200 font-mono text-slate-800 focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">API User Name</label>
+            <input
+              type="text"
+              value={epsForm.userName}
+              onChange={(e) => setEpsForm({ ...epsForm, userName: e.target.value })}
+              placeholder="xyz.eps@gmail.com"
+              className="w-full px-3 py-2 bg-slate-50 rounded-xl border border-slate-200 font-medium text-slate-800 focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+
+          <div>
+            <label className="block font-bold text-slate-700 mb-1">API Password</label>
+            <input
+              type="password"
+              value={epsForm.password}
+              onChange={(e) => setEpsForm({ ...epsForm, password: e.target.value })}
+              placeholder="••••••••"
+              className="w-full px-3 py-2 bg-slate-50 rounded-xl border border-slate-200 font-mono text-slate-800 focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+
+          <div className="sm:col-span-2 lg:col-span-1">
+            <label className="block font-bold text-slate-700 mb-1">HMAC-SHA512 Hash Key</label>
+            <input
+              type="text"
+              value={epsForm.hashKey}
+              onChange={(e) => setEpsForm({ ...epsForm, hashKey: e.target.value })}
+              placeholder="Base64 encoded hash key"
+              className="w-full px-3 py-2 bg-slate-50 rounded-xl border border-slate-200 font-mono text-[11px] text-slate-800 focus:ring-2 focus:ring-emerald-500"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+          <span className="text-slate-400 text-[11px] flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Configured according to EPS Merchant API V4 / V5 Integration Specification.</span>
+          </span>
+
+          <button
+            type="submit"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-xl transition-colors shadow flex items-center gap-2 cursor-pointer"
+          >
+            <Save className="w-4 h-4" />
+            <span>Save EPS Settings</span>
+          </button>
+        </div>
       </form>
 
       {/* Admin Security & Password Change Card */}
@@ -250,6 +421,24 @@ export const AdminSystemSettings = () => {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Footer & Storefront CMS Quick Access */}
+      <div className="bg-gradient-to-r from-navy-900 to-[#14234B] text-white p-6 rounded-2xl border border-slate-700/80 shadow-soft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-cyan-400">Storefront Content Management</span>
+          <h3 className="font-extrabold text-white text-base">Footer & Bangladesh HQ Contact CMS</h3>
+          <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
+            Customize Bangladesh HQ physical address, hotline numbers, support emails, popular store lists, help links, and trust guarantee badges.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setAdminNav && setAdminNav('footer_cms')}
+          className="px-5 py-2.5 bg-brand-500 hover:bg-brand-400 active:scale-95 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 flex-shrink-0"
+        >
+          <span>Open Footer CMS Editor →</span>
+        </button>
       </div>
     </div>
   );

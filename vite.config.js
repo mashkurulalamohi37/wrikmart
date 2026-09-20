@@ -6,7 +6,21 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    host: true
+    host: true,
+    proxy: {
+      '/api/eps-sandbox': {
+        target: 'https://sandboxpgapi.eps.com.bd',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api\/eps-sandbox/, '')
+      },
+      '/api/eps': {
+        target: 'https://pgapi.eps.com.bd',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api\/eps/, '')
+      }
+    }
   },
   build: {
     chunkSizeWarningLimit: 600,

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import confetti from 'canvas-confetti';
+import {
+  createEpsPaymentSession,
+  generateEpsTransactionId
+} from '../../utils/epsPaymentService';
 import { 
   X, 
   CheckCircle2, 
@@ -19,7 +23,8 @@ import {
   Cake,
   Tag,
   Copy,
-  HelpCircle
+  HelpCircle,
+  AlertCircle
 } from 'lucide-react';
 import { BKashLogo, NagadLogo, VisaLogo, MastercardLogo } from '../common/PaymentLogos';
 
@@ -35,29 +40,33 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
     createCustomerStockOrder, 
     setCustomerTab,
     customerProfile,
+    currentUser,
+    setIsAuthModalOpen,
+    setAuthModalMode,
     showToast,
     clearCart,
     selectedDistrict,
-    setSelectedDistrict
+    setSelectedDistrict,
+    epsSettings
   } = useApp();
 
   // Form State
-  const [customerInfo, setCustomerInfo] = useState({
-    name: customerProfile?.name || 'Rahim Chowdhury',
-    phone: customerProfile?.phone || '+880 1712-345678',
-    email: customerProfile?.email || 'rahim.c@example.com',
+  const [customerInfo, setCustomerInfo] = useState(() => ({
+    name: customerProfile?.name || (currentUser?.name && currentUser?.role !== 'admin' ? currentUser.name : ''),
+    phone: customerProfile?.phone || (currentUser?.phone && currentUser?.role !== 'admin' ? currentUser.phone : ''),
+    email: customerProfile?.email || (currentUser?.email && currentUser?.role !== 'admin' ? currentUser.email : ''),
     district: selectedDistrict === 'Outside Dhaka' ? 'Chittagong' : (customerProfile?.district || 'Dhaka'),
-    address: customerProfile?.address || 'House 12, Road 5, Dhanmondi, Dhaka-1205',
+    address: customerProfile?.address || '',
     dateOfBirth: customerProfile?.dateOfBirth || '',
-    note: 'Please call 30 minutes before arrival.'
-  });
+    note: ''
+  }));
 
   const [deliveryMethod, setDeliveryMethod] = useState('Standard Courier'); // 'Standard Courier' | 'Express Same-Day'
-  const [paymentMethod, setPaymentMethod] = useState('EPS'); // 'EPS' | 'COD' | 'bKash' | 'Nagad' | 'Card'
-  const [transactionId, setTransactionId] = useState('');
-  const [couponInput, setCouponInput] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('EPS'); // 'EPS' | 'COD'
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEpsRedirecting, setIsEpsRedirecting] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
+  const [couponInput, setCouponInput] = useState('');
 
   // CRITICAL: Always reset confirmedOrder and submission state when modal opens
   // This guarantees fresh checkout form is displayed and prevents getting stuck on "Order Confirmed"
@@ -65,8 +74,7 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
     if (isOpen) {
       setConfirmedOrder(null);
       setIsSubmitting(false);
-      setTransactionId('');
-      setCouponInput('');
+      setIsEpsRedirecting(false);
     }
   }, [isOpen]);
 
@@ -84,17 +92,17 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
         }
 
         return {
-          name: customerProfile?.name || prev.name || 'Rahim Chowdhury',
-          phone: customerProfile?.phone || prev.phone || '+880 1712-345678',
-          email: customerProfile?.email || prev.email || 'rahim.c@example.com',
+          name: customerProfile?.name || (currentUser?.role !== 'admin' ? currentUser?.name : '') || prev.name || '',
+          phone: customerProfile?.phone || (currentUser?.role !== 'admin' ? currentUser?.phone : '') || prev.phone || '',
+          email: customerProfile?.email || (currentUser?.role !== 'admin' ? currentUser?.email : '') || prev.email || '',
           district: initialDistrict,
-          address: customerProfile?.address || prev.address || 'House 12, Road 5, Dhanmondi, Dhaka-1205',
+          address: customerProfile?.address || prev.address || '',
           dateOfBirth: customerProfile?.dateOfBirth || prev.dateOfBirth || '',
-          note: prev.note || 'Please call 30 minutes before arrival.'
+          note: prev.note || ''
         };
       });
     }
-  }, [isOpen, customerProfile, selectedDistrict]);
+  }, [isOpen, customerProfile, currentUser, selectedDistrict]);
 
   if (!isOpen) return null;
 
@@ -136,11 +144,11 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
   };
 
   // Auto-fill Sandbox Transaction ID
+  // Auto-fill Sandbox Transaction ID
   const handleAutoFillSandboxTrx = () => {
-    const prefix = paymentMethod === 'EPS' ? 'EPS-TRX' : `TRX-${paymentMethod.toUpperCase()}`;
-    const randomTrx = `${prefix}-${Math.floor(100000 + Math.random() * 900000)}`;
+    const randomTrx = `EPS-TRX-${Math.floor(100000 + Math.random() * 900000)}`;
     setTransactionId(randomTrx);
-    if (showToast) showToast(`${paymentMethod === 'EPS' ? 'EPS Gateway' : paymentMethod} TrxID generated!`, 'info');
+    if (showToast) showToast('EPS Gateway TrxID auto-generated!', 'info');
   };
 
   // Close & Clean State
@@ -156,59 +164,101 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
     if (setCustomerTab) setCustomerTab('orders');
   };
 
-  const handleSubmitOrder = (e) => {
+  // Submit Order Handler
+  const handleSubmitOrder = async (e) => {
     if (e) e.preventDefault();
     if (cart.length === 0) {
       if (showToast) showToast('Your cart is empty! Add products first.', 'error');
       return;
     }
-
     if (!customerInfo.name.trim() || !customerInfo.phone.trim() || !customerInfo.address.trim()) {
       if (showToast) showToast('Please fill in your name, phone number, and delivery address.', 'warning');
       return;
     }
 
-    setIsSubmitting(true);
+    const epsStore = epsSettings?.storeId || '5c6d0f37-2974-4be8-818d-0736593e456e';
 
-    setTimeout(() => {
-      const defaultTrx = paymentMethod === 'EPS' 
-        ? `EPS-TRX-${Math.floor(100000 + Math.random() * 900000)}` 
-        : `TRX-${paymentMethod.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
-      const genTrx = paymentMethod === 'COD' 
-        ? null 
-        : (transactionId.trim() || defaultTrx);
+    // ── Cash on Delivery ──────────────────────────────────────────────────
+    if (paymentMethod === 'COD') {
+      setIsSubmitting(true);
+      setTimeout(() => {
+        const order = createCustomerStockOrder({
+          customerInfo,
+          items: cart,
+          deliveryMethod,
+          deliveryFee: effectiveDeliveryFee,
+          paymentMethod: 'Cash on Delivery (COD)',
+          transactionId: null,
+          subtotal,
+          discountAmount,
+          grandTotal,
+          advancePaid: 0,
+          paymentStatus: 'Unpaid'
+        });
+        setConfirmedOrder(order);
+        setIsSubmitting(false);
+        try { confetti({ particleCount: 140, spread: 80, origin: { y: 0.6 } }); } catch (_) {}
+        if (clearCart) clearCart();
+        if (onOrderPlaced) onOrderPlaced(order);
+        if (showToast) showToast('Order placed! Pay cash upon doorstep delivery.', 'success');
+      }, 700);
+      return;
+    }
 
-      const order = createCustomerStockOrder({
+    // ── EPS Payment Gateway — Real Redirect Flow ──────────────────────────
+    setIsEpsRedirecting(true);
+    try {
+      const merchantTransactionId = generateEpsTransactionId();
+
+      // Save all order data to sessionStorage BEFORE redirect
+      // (browser will lose React state when navigating away)
+      const pendingOrder = {
+        type: 'stock',
+        merchantTransactionId,
         customerInfo,
         items: cart,
         deliveryMethod,
         deliveryFee: effectiveDeliveryFee,
-        paymentMethod: paymentMethod === 'EPS' ? 'EPS Payment Gateway' : paymentMethod,
-        epsStoreId: paymentMethod === 'EPS' ? 'f49c63f4-3c57-495c-ac00-b136093671d4' : undefined,
-        transactionId: genTrx,
+        epsStoreId: epsStore,
         subtotal,
         discountAmount,
-        grandTotal,
-        advancePaid: paymentMethod === 'COD' ? 0 : grandTotal,
-        paymentStatus: paymentMethod === 'COD' ? 'Unpaid' : 'Fully Paid'
+        grandTotal
+      };
+      sessionStorage.setItem('eps_pending_order', JSON.stringify(pendingOrder));
+
+      // Call EPS API to initialize a payment session
+      const session = await createEpsPaymentSession({
+        orderNumber: `ORD-${merchantTransactionId}`,
+        merchantTransactionId,
+        totalAmount: grandTotal,
+        customerInfo,
+        orderType: 'Stock Order',
+        items: cart.map(item => ({
+          name: item.name,
+          quantity: item.quantity || 1,
+          sellingPrice: item.sellingPrice || 0,
+          category: item.category || 'Retail'
+        }))
       });
 
-      setConfirmedOrder(order);
-      setIsSubmitting(false);
-
-      // Trigger Celebration Confetti
-      try {
-        confetti({
-          particleCount: 140,
-          spread: 80,
-          origin: { y: 0.6 }
-        });
-      } catch (err) {}
-
-      if (onOrderPlaced) {
-        onOrderPlaced(order);
+      if (!session.redirectUrl) {
+        throw new Error('EPS did not return a redirect URL. Please try again.');
       }
-    }, 1200);
+
+      if (showToast) showToast('Redirecting to EPS Payment Gateway...', 'info');
+
+      // Redirect browser to EPS hosted payment page
+      window.location.href = session.redirectUrl;
+
+    } catch (err) {
+      console.error('EPS payment initialization failed:', err);
+      setIsEpsRedirecting(false);
+      sessionStorage.removeItem('eps_pending_order');
+      if (showToast) showToast(
+        `EPS Gateway Error: ${err.message || 'Could not connect to EPS. Please try COD or contact support.'}`,
+        'error'
+      );
+    }
   };
 
   return (
@@ -344,6 +394,29 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
             /* ========================================================= */
             <form onSubmit={handleSubmitOrder} className="space-y-6">
               
+              {/* Account Required Notice if Guest */}
+              {!currentUser && (
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-black text-xs text-amber-950">Account Required to Place Order</h4>
+                      <p className="text-[11px] text-amber-800">You must create a customer account or sign in before finalizing your order.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (setAuthModalMode) setAuthModalMode('register');
+                      if (setIsAuthModalOpen) setIsAuthModalOpen(true);
+                    }}
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex-shrink-0 self-start sm:self-auto cursor-pointer"
+                  >
+                    Sign In / Register
+                  </button>
+                </div>
+              )}
+
               {/* SECTION 1: Items in Order */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-xs font-bold text-slate-700">
@@ -626,146 +699,104 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
               <div className="space-y-3">
                 <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-brand-600"></span>
-                  4. Payment Gateway & Options
+                  4. Payment Method
                 </h3>
 
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   {/* EPS Payment Gateway */}
                   <label
                     onClick={() => setPaymentMethod('EPS')}
-                    className={`p-2.5 sm:p-3 rounded-2xl border cursor-pointer text-center transition-all flex flex-col items-center justify-center gap-1.5 relative overflow-hidden ${
+                    className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-3 relative overflow-hidden ${
                       paymentMethod === 'EPS' 
-                        ? 'border-emerald-600 bg-emerald-50/80 text-emerald-950 shadow-2xs ring-2 ring-emerald-500/30 font-bold' 
+                        ? 'border-emerald-600 bg-emerald-50/80 text-emerald-950 shadow-sm ring-2 ring-emerald-500/30' 
                         : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                     }`}
                   >
-                    <span className="absolute top-1 right-1 px-1.5 py-0.2 bg-emerald-600 text-white text-[7px] font-black rounded uppercase">Fast</span>
-                    <img src="/eps/Group 93.png" alt="EPS Gateway" className="h-5 sm:h-6 w-auto object-contain" />
-                    <span className="text-[10px] sm:text-[11px] font-black text-emerald-900">EPS Gateway</span>
-                  </label>
-
-                  {/* bKash */}
-                  <label
-                    onClick={() => setPaymentMethod('bKash')}
-                    className={`p-2.5 sm:p-3 rounded-2xl border cursor-pointer text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
-                      paymentMethod === 'bKash' 
-                        ? 'border-pink-500 bg-pink-50 text-pink-900 shadow-2xs ring-2 ring-pink-500/20 font-bold' 
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <BKashLogo className="h-5 sm:h-6 w-auto" />
-                    <span className="text-[10px] sm:text-[11px]">bKash Pay</span>
-                  </label>
-
-                  {/* Nagad */}
-                  <label
-                    onClick={() => setPaymentMethod('Nagad')}
-                    className={`p-2.5 sm:p-3 rounded-2xl border cursor-pointer text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
-                      paymentMethod === 'Nagad' 
-                        ? 'border-orange-500 bg-orange-50 text-orange-900 shadow-2xs ring-2 ring-orange-500/20 font-bold' 
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <NagadLogo className="h-5 sm:h-6 w-auto" />
-                    <span className="text-[10px] sm:text-[11px]">Nagad</span>
-                  </label>
-
-                  {/* Card */}
-                  <label
-                    onClick={() => setPaymentMethod('Card')}
-                    className={`p-2.5 sm:p-3 rounded-2xl border cursor-pointer text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
-                      paymentMethod === 'Card' 
-                        ? 'border-blue-500 bg-blue-50 text-blue-900 shadow-2xs ring-2 ring-blue-500/20 font-bold' 
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <VisaLogo className="h-3 sm:h-3.5 w-auto" />
-                      <MastercardLogo className="h-3 sm:h-3.5 w-auto" />
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-white rounded-xl border border-emerald-200 shadow-2xs">
+                        <img src="/eps/Group 93.png" alt="EPS Gateway" className="h-6 w-auto object-contain" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-extrabold text-xs text-emerald-950">EPS Payment Gateway</span>
+                          <span className="px-1.5 py-0.2 bg-emerald-600 text-white text-[8px] font-black rounded uppercase">Official</span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 mt-0.5">Cards, bKash, Nagad & Net Banking</p>
+                      </div>
                     </div>
-                    <span className="text-[10px] sm:text-[11px]">Cards</span>
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                      paymentMethod === 'EPS' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'
+                    }`}>
+                      {paymentMethod === 'EPS' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
                   </label>
 
                   {/* Cash on Delivery (COD) */}
                   <label
                     onClick={() => setPaymentMethod('COD')}
-                    className={`p-2.5 sm:p-3 rounded-2xl border cursor-pointer text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
+                    className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-3 relative overflow-hidden ${
                       paymentMethod === 'COD' 
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-900 shadow-2xs ring-2 ring-emerald-500/20 font-bold' 
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-950 shadow-sm ring-2 ring-emerald-500/20' 
                         : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                     }`}
                   >
-                    <div className="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
-                      💵
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-base">
+                        💵
+                      </div>
+                      <div>
+                        <span className="font-extrabold text-xs text-navy-900 block">Cash on Delivery</span>
+                        <p className="text-[10px] text-slate-500 mt-0.5">Pay in cash at doorstep</p>
+                      </div>
                     </div>
-                    <span className="text-[10px] sm:text-[11px]">Cash on Del.</span>
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                      paymentMethod === 'COD' ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'
+                    }`}>
+                      {paymentMethod === 'COD' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
                   </label>
                 </div>
 
-                {/* Gateway Detail & Verification Box */}
-                {paymentMethod !== 'COD' ? (
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/90 text-xs space-y-3">
-                    <div className="flex justify-between items-center text-[11px]">
-                      <span className="font-bold text-slate-700 flex items-center gap-1.5">
-                        <CreditCard className="w-3.5 h-3.5 text-brand-600" />
-                        {paymentMethod === 'EPS' && 'EPS Easy Payment System • Store ID: f49c63f4-3c57-495c-ac00-b136093671d4'}
-                        {paymentMethod === 'bKash' && 'bKash Merchant Payment (01712-998877)'}
-                        {paymentMethod === 'Nagad' && 'Nagad Merchant Payment (01912-334455)'}
-                        {paymentMethod === 'Card' && 'SSLCommerz 256-bit Secure Card Checkout'}
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 font-extrabold text-[10px]">
-                        {paymentMethod === 'EPS' ? 'EPS Certified' : 'Sandbox Active'}
+                {/* Gateway Detail Note */}
+                {paymentMethod === 'EPS' ? (
+                  <div className="p-4 bg-emerald-50/80 rounded-2xl border border-emerald-200 text-xs space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        <span className="text-[11px] font-bold text-emerald-950">Official Bangladesh Bank Certified EPS Payment Systems Operator (PSO)</span>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-300">
+                        Store ID: {epsSettings?.storeId || '5c6d0f37-2974-4be8-818d-0736593e456e'}
                       </span>
                     </div>
 
-                    {paymentMethod === 'EPS' ? (
-                      <div className="space-y-2">
-                        <p className="text-[11px] text-slate-600 leading-relaxed">
-                          Pay securely with <strong>Visa, Mastercard, bKash, Nagad, Rocket, Upay</strong> or Internet Banking via the certified EPS Payment Gateway.
-                        </p>
-                        <div className="p-2.5 rounded-xl bg-white border border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                          <img src="/eps/Group 93.png" alt="EPS Payment Gateway" className="h-6 w-auto object-contain" />
-                          <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                            Store ID: f49c63f4-3c57-495c-ac00-b136093671d4
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-[11px] text-slate-500 leading-relaxed">
-                        {paymentMethod === 'bKash' && 'Send payment of ৳' + grandTotal.toLocaleString() + ' to Merchant: 01712-998877. Enter TrxID below or use the auto-fill button.'}
-                        {paymentMethod === 'Nagad' && 'Send payment of ৳' + grandTotal.toLocaleString() + ' to Merchant: 01912-334455. Enter TrxID below or use the auto-fill button.'}
-                        {paymentMethod === 'Card' && 'Instant card authorization simulation for Visa, Mastercard, and UnionPay.'}
-                      </p>
-                    )}
+                    <p className="text-[11px] text-slate-600 leading-relaxed">
+                      Pay securely with <strong>Visa, Mastercard, bKash, Nagad, Rocket, Upay</strong> or Internet Banking via the official EPS Payment Gateway.
+                    </p>
 
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="text"
-                        placeholder={`Enter ${paymentMethod === 'EPS' ? 'EPS' : paymentMethod} TrxID (or leave blank to auto-verify)`}
-                        value={transactionId}
-                        onChange={(e) => setTransactionId(e.target.value)}
-                        className="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 focus:ring-2 focus:ring-brand-500 focus:outline-none font-mono text-xs"
+                    <div className="p-2.5 rounded-xl border border-emerald-200/80 bg-white shadow-2xs">
+                      <img 
+                        src="/eps/Group 106.png" 
+                        alt="Supported EPS Payment Channels" 
+                        className="w-full h-auto object-contain rounded-lg max-h-11 mx-auto"
                       />
-                      <button
-                        type="button"
-                        onClick={handleAutoFillSandboxTrx}
-                        className="px-3.5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs rounded-xl transition-colors whitespace-nowrap"
-                      >
-                        Auto-Fill TrxID
-                      </button>
+                    </div>
+
+                    <div className="p-3 bg-white rounded-xl border border-emerald-100 flex items-center gap-2.5">
+                      <ExternalLink className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <p className="text-[11px] text-slate-700 leading-snug">
+                        Clicking <strong>"Proceed to EPS Payment"</strong> will redirect you to the secure EPS hosted payment page. Complete payment there and you'll be brought back automatically.
+                      </p>
                     </div>
                   </div>
                 ) : (
-                  <div className="p-4 bg-emerald-50/70 rounded-2xl border border-emerald-200/80 text-xs flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
-                      💵
-                    </div>
-                    <p className="text-emerald-900 text-xs leading-relaxed">
-                      <strong>Cash on Delivery Active:</strong> You will pay <strong>৳{grandTotal.toLocaleString()}</strong> in cash directly to the courier agent when your parcel arrives at your doorstep in {customerInfo.district}.
-                    </p>
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600 flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-brand-600 flex-shrink-0" />
+                    <span className="text-[11px]">Pay <strong>৳{grandTotal.toLocaleString()}</strong> in cash upon parcel delivery in {customerInfo.district}.</span>
                   </div>
                 )}
               </div>
+
 
               {/* SECTION 6: Financial Breakdown */}
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/90 space-y-2 text-xs">
@@ -793,7 +824,7 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
                   <div className="text-right">
                     <span className="font-black text-2xl text-brand-600">৳{grandTotal.toLocaleString()}</span>
                     <span className="block text-[10px] text-slate-400">
-                      {paymentMethod === 'COD' ? 'Pay upon doorstep delivery' : 'Payable right now via ' + paymentMethod}
+                      {paymentMethod === 'COD' ? 'Pay upon doorstep delivery' : 'Payable right now via EPS Gateway'}
                     </span>
                   </div>
                 </div>
@@ -802,21 +833,23 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
               {/* Submit CTA */}
               <button
                 type="submit"
-                disabled={isSubmitting || cart.length === 0}
-                className="w-full py-4 px-6 rounded-2xl font-black text-sm bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white shadow-lg shadow-brand-500/25 flex items-center justify-center gap-2 transition-all transform active:scale-98 disabled:opacity-50 cursor-pointer"
+                disabled={isSubmitting || isEpsRedirecting || cart.length === 0}
+                className="w-full py-4 px-6 rounded-2xl font-black text-sm bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-700/25 flex items-center justify-center gap-2 transition-all transform active:scale-98 disabled:opacity-50 cursor-pointer"
               >
-                {isSubmitting ? (
+                {(isSubmitting || isEpsRedirecting) ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Processing Order...</span>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>
+                      {isEpsRedirecting ? 'Connecting to EPS Gateway...' : 'Processing...'}
+                    </span>
                   </>
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />
                     <span>
-                      {paymentMethod === 'COD' 
-                        ? `Confirm Order with Cash on Delivery (৳${grandTotal.toLocaleString()})` 
-                        : `Pay & Confirm Order via ${paymentMethod} (৳${grandTotal.toLocaleString()})`}
+                      {paymentMethod === 'COD'
+                        ? `Confirm Order with Cash on Delivery (৳${grandTotal.toLocaleString()})`
+                        : `Proceed to EPS Payment (৳${grandTotal.toLocaleString()})`}
                     </span>
                     <ArrowRight className="w-4 h-4" />
                   </>

@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import confetti from 'canvas-confetti';
+import {
+  createEpsPaymentSession,
+  generateEpsTransactionId
+} from '../../utils/epsPaymentService';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -19,10 +23,15 @@ import {
   Lock,
   RotateCcw,
   Cake,
-  Image as ImageIcon
+  Image as ImageIcon,
+  MessageCircle,
+  Calculator,
+  Bot,
+  Zap
 } from 'lucide-react';
 import { BKashLogo, NagadLogo, VisaLogo, MastercardLogo } from '../common/PaymentLogos';
 import { CountryFlag } from '../common/CountryFlag';
+import { detectAutomatedPrice } from '../../utils/productPricingEngine';
 
 const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
 
@@ -38,24 +47,15 @@ const extractAmazonAsin = (urlStr) => {
     /[?&]ASIN=([A-Z0-9]{10})/i,
     /\/([A-Z0-9]{10})(?:[/?&]|$)/i,
   ];
-  for (const re of patterns) {
-    const m = urlStr.match(re);
+  if (!urlStr) return null;
+  for (const p of patterns) {
+    const m = urlStr.match(p);
     if (m && m[1]) return m[1].toUpperCase();
   }
   return null;
 };
 
-/**
- * Returns a real Amazon product image URL from an ASIN.
- * Uses Amazon's publicly-accessible image CDN — no CORS, no auth needed.
- */
-const buildAmazonImageUrl = (asin) => {
-  if (!asin) return null;
-  // SL500 = 500×500 main image, _AC_SL500_ quality preset
-  return `https://ws-na.amazon-adsystem.com/widgets/q?_encoding=UTF8&ASIN=${asin}&Format=_SL500_&ID=AsinImage&MarketPlace=IN&ServiceVersion=20070822&WS=1&tag=wrikmart-21`;
-};
-
-export const parseProductFromUrl = (rawUrl) => {
+export const parseProductFromUrl = (rawUrl, exchangeRates = null) => {
   if (!rawUrl || !rawUrl.trim()) return null;
   const urlStr = rawUrl.trim();
   const lower = urlStr.toLowerCase();
@@ -121,36 +121,27 @@ export const parseProductFromUrl = (rawUrl) => {
     else detectedName = 'Imported Global Product';
   }
 
-  // 5. Detect Category & Price
+  // 5. Detect Category
   let category = 'General';
-  let suggestedPrice = 3500;
   const lowerName = detectedName.toLowerCase();
   const lowerUrl = lower;
 
   if (lowerName.includes('beauty') || lowerName.includes('lipstick') || lowerName.includes('serum') || lowerName.includes('cream') || lowerName.includes('cosmetic') || lowerUrl.includes('beauty') || lowerUrl.includes('skincare') || lowerUrl.includes('sephora')) {
     category = 'Beauty & Cosmetics';
-    suggestedPrice = 1850;
   } else if (lowerName.includes('shoe') || lowerName.includes('sneaker') || lowerName.includes('nike') || lowerName.includes('running') || lowerName.includes('air max') || lowerName.includes('jordan') || lowerName.includes('adidas') || lowerUrl.includes('footwear') || lowerUrl.includes('shoes')) {
     category = 'Footwear';
-    suggestedPrice = 8500;
   } else if (lowerName.includes('iphone') || lowerName.includes('macbook') || lowerName.includes('airpods') || lowerName.includes('apple') || lowerName.includes('laptop') || lowerName.includes('camera') || lowerName.includes('electronics') || lowerUrl.includes('electronics') || lowerUrl.includes('laptop') || lowerUrl.includes('phone') || lowerUrl.includes('headphone') || lowerUrl.includes('tablet')) {
     category = 'Electronics';
-    suggestedPrice = 45000;
   } else if (lowerName.includes('book') || lowerName.includes('stories') || lowerName.includes('story') || lowerName.includes('princess') || lowerName.includes('disney') || lowerName.includes('novel') || lowerName.includes('manga') || lowerName.includes('comic') || lowerUrl.includes('book') || lowerUrl.includes('stories')) {
     category = 'Books & Stories';
-    suggestedPrice = 1200;
   } else if (lowerName.includes('dress') || lowerName.includes('shirt') || lowerName.includes('jacket') || lowerName.includes('zara') || lowerName.includes('hoodie') || lowerUrl.includes('fashion') || lowerUrl.includes('clothing') || lowerUrl.includes('apparel')) {
     category = 'Fashion';
-    suggestedPrice = 4200;
   } else if (lowerName.includes('toy') || lowerName.includes('game') || lowerName.includes('lego') || lowerName.includes('kids') || lowerName.includes('barbie') || lowerUrl.includes('toys')) {
     category = 'Toys & Kids';
-    suggestedPrice = 2500;
   } else if (lowerName.includes('watch') || lowerUrl.includes('watch')) {
     category = 'Watches';
-    suggestedPrice = 12000;
   } else if (lowerName.includes('perfume') || lowerName.includes('fragrance') || lowerUrl.includes('perfume')) {
     category = 'Perfumes';
-    suggestedPrice = 5500;
   }
 
   // 6. Category curated Unsplash images
@@ -171,26 +162,69 @@ export const parseProductFromUrl = (rawUrl) => {
   // Amazon ASIN Image CDN
   const amazonImg = asin ? `https://images-na.ssl-images-amazon.com/images/P/${asin}.01._SCLZZZZZZZ_.jpg` : null;
 
+  // 7. Automated Retail Price & Currency Detection
+  const autoPrice = detectAutomatedPrice({
+    name: detectedName,
+    url: urlStr,
+    country: detectedCountry,
+    category,
+    exchangeRates
+  });
+
   return {
     name: detectedName,
     platform: detectedPlatform,
     country: detectedCountry,
     category,
-    suggestedPrice,
     asin,
     image: amazonImg || fallbackImage,
     fallbackImage,
+    mrp: '',
+    expectedPrice: '',
+    confidence: '',
+    isAutoDetected: true
   };
 };
 
 export const PreOrderWizard = ({ onComplete, onCancel }) => {
-  const { createCustomerPreOrder, customerProfile, prefilledPreOrder, setPrefilledPreOrder, showToast, preOrderFormSettings } = useApp();
+  const { 
+    createCustomerPreOrder, 
+    customerProfile, 
+    currentUser,
+    setIsAuthModalOpen,
+    setAuthModalMode,
+    prefilledPreOrder, 
+    setPrefilledPreOrder, 
+    showToast, 
+    preOrderFormSettings,
+    exchangeRates,
+    epsSettings
+  } = useApp();
 
   // Wizard Steps: 1 (Country & Link), 2 (Product Details), 3 (Cart), 4 (Customer Info), 5 (Review & Pay), 6 (Confirmed)
   const [step, setStep] = useState(1);
   const [country, setCountry] = useState('India');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Helper to get currency details & exchange rate for active sourcing country
+  const getCurrencyDetails = (countryName) => {
+    if (countryName === 'India') {
+      const rate = exchangeRates?.INR?.rateToBDT || 1.43;
+      return { code: 'INR', symbol: '₹', rate, label: 'Indian Rupee (INR)' };
+    }
+    if (countryName === 'Dubai') {
+      const rate = exchangeRates?.AED?.rateToBDT || 32.5;
+      return { code: 'AED', symbol: 'AED', rate, label: 'UAE Dirham (AED)' };
+    }
+    if (countryName === 'Thailand') {
+      const rate = exchangeRates?.THB?.rateToBDT || 3.55;
+      return { code: 'THB', symbol: '฿', rate, label: 'Thai Baht (THB)' };
+    }
+    return { code: 'BDT', symbol: '৳', rate: 1.0, label: 'Bangladesh Taka (BDT)' };
+  };
+
+  const currentFx = getCurrencyDetails(country);
   
   // Current Item in Builder
   const [currentItem, setCurrentItem] = useState({
@@ -205,7 +239,10 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
     size: 'Standard',
     color: 'Default',
     quantity: 1,
+    mrp: '',
     expectedPrice: '',
+    confidence: '',
+    isAutoDetected: false,
     notes: ''
   });
 
@@ -215,7 +252,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
       const rawUrl = (prefilledPreOrder.url || '').trim();
       const rawName = (prefilledPreOrder.name || '').trim();
       
-      const parsed = parseProductFromUrl(rawUrl || rawName);
+      const parsed = parseProductFromUrl(rawUrl || rawName, exchangeRates);
       
       const itemName = rawName || parsed?.name || 'Imported Product';
       const detectedCountry = prefilledPreOrder.country || parsed?.country || 'India';
@@ -223,29 +260,32 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
       const detectedBrand = prefilledPreOrder.platform || parsed?.platform || 'Global Online Store';
       const detectedImage = prefilledPreOrder.image || parsed?.image || parsed?.fallbackImage || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80';
       const detectedFallback = parsed?.fallbackImage || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80';
-      const estPrice = prefilledPreOrder.expectedPrice || parsed?.suggestedPrice || 4500;
-
-      setCountry(detectedCountry);
-
-      const newCartItem = {
-        id: `item-${Date.now()}`,
+      
+      const fx = getCurrencyDetails(detectedCountry);
+      
+      // Auto-Price calculation
+      const autoPrice = detectAutomatedPrice({
         name: itemName,
         url: rawUrl,
+        country: detectedCountry,
         category: detectedCategory,
-        brand: detectedBrand,
-        image: detectedImage,
-        fallbackImage: detectedFallback,
-        specs: { unit: 1, size: '', color: '' },
-        expectedPrice: estPrice,
-        notes: `Imported via ${detectedCountry} Agent`
-      };
+        exchangeRates
+      });
+
+      const estPrice = prefilledPreOrder.expectedPrice || autoPrice.expectedPrice;
+      const estMrp = prefilledPreOrder.mrp || autoPrice.mrp;
+
+      setCountry(detectedCountry);
 
       setCurrentItem({
         name: itemName,
         url: rawUrl,
         category: detectedCategory,
         brand: detectedBrand,
+        mrp: estMrp,
         expectedPrice: estPrice,
+        confidence: autoPrice.confidence,
+        isAutoDetected: true,
         quantity: 1,
         size: '',
         color: '',
@@ -254,12 +294,12 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
         fallbackImage: detectedFallback
       });
 
-      setItems([newCartItem]);
+      setItems([]); // Keep cart clean until user confirms in Step 2
       setStep(2); // Directly show specifications
       setPrefilledPreOrder(null);
-      showToast(`Analyzed ${detectedBrand}: "${itemName}"!`, 'success');
+      showToast(`🤖 Automated price detected for ${detectedBrand}: ${fx.symbol}${estMrp} (৳${estPrice.toLocaleString()} BDT)`, 'success');
     }
-  }, [prefilledPreOrder, setPrefilledPreOrder]);
+  }, [prefilledPreOrder, setPrefilledPreOrder, exchangeRates]);
 
   const allCountriesList = [
     { name: 'India', key: 'india', subtitle: 'Amazon, Flipkart, Nike, Zara' },
@@ -280,49 +320,62 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
   // Items in Order Cart (starts empty for clean user pre-orders)
   const [items, setItems] = useState([]);
 
-  // Live URL Change Handler - Parses product title, platform, country, and category instantly
-  const handleUrlChange = (newUrl) => {
-    setCurrentItem(prev => {
-      const updated = { ...prev, url: newUrl };
-      if (!newUrl || !newUrl.trim()) {
-        if (!prev.hasUserCustomImage) {
-          updated.image = '';
-          updated.name = '';
-        }
-        return updated;
+  // Auto-switch country & auto-detect price if user pastes a URL matching a different country
+  const handleUrlChange = (urlVal) => {
+    const rawUrl = urlVal.trim();
+    const parsed = parseProductFromUrl(rawUrl, exchangeRates);
+
+    if (parsed) {
+      if (parsed.country && parsed.country !== country) {
+        setCountry(parsed.country);
+        showToast(`Switched sourcing station to ${parsed.country}!`, 'info');
       }
 
-      const parsed = parseProductFromUrl(newUrl);
-      if (parsed) {
-        if (parsed.country && availableCountries.some(c => c.name === parsed.country)) {
-          setCountry(parsed.country);
-        }
-        updated.name = parsed.name;
-        updated.category = parsed.category;
-        updated.brand = parsed.platform;
-        if (!prev.hasUserCustomImage && parsed.image) {
-          updated.image = parsed.image;
-          updated.fallbackImage = parsed.fallbackImage || FALLBACK_PRODUCT_IMAGE;
-        }
-        if (!prev.expectedPrice || prev.expectedPrice === 8000) {
-          updated.expectedPrice = parsed.suggestedPrice;
-        }
-      }
-      return updated;
-    });
+      setCurrentItem(prev => ({
+        ...prev,
+        url: rawUrl,
+        name: parsed.name,
+        category: parsed.category,
+        brand: parsed.platform,
+        mrp: parsed.mrp,
+        expectedPrice: parsed.expectedPrice,
+        confidence: parsed.confidence,
+        isAutoDetected: true,
+        image: prev.hasUserCustomImage ? prev.image : (parsed.image || prev.image),
+        fallbackImage: parsed.fallbackImage
+      }));
+    } else {
+      setCurrentItem(prev => ({ ...prev, url: urlVal }));
+    }
   };
 
-  // Real Image Upload Handlers (File Picker & Drag-and-Drop)
+  // Image Upload Handlers
+  const handleImageDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      processImageFile(file);
+    } else {
+      showToast('Please drop a valid image file (PNG, JPG, WEBP)', 'warning');
+    }
+  };
+
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (file) {
+      processImageFile(file);
+    }
+  };
+
+  const processImageFile = (file) => {
     if (file.size > 8 * 1024 * 1024) {
-      showToast('Image file size must be less than 8MB', 'warning');
+      showToast('File size is too large. Please select an image under 8MB.', 'warning');
       return;
     }
     const reader = new FileReader();
-    reader.onload = (uploadEvt) => {
-      const dataUrl = uploadEvt.target.result;
+    reader.onload = (loadEvt) => {
+      const dataUrl = loadEvt.target.result;
       setCurrentItem(prev => ({
         ...prev,
         image: dataUrl,
@@ -335,51 +388,45 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
     reader.readAsDataURL(file);
   };
 
-  const handleImageDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-    if (file.size > 8 * 1024 * 1024) {
-      showToast('Image file size must be less than 8MB', 'warning');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (uploadEvt) => {
-      const dataUrl = uploadEvt.target.result;
-      setCurrentItem(prev => ({
-        ...prev,
-        image: dataUrl,
-        imageName: file.name,
-        imageSize: `${Math.round(file.size / 1024)} KB`,
-        hasUserCustomImage: true
-      }));
-      showToast(`Attached ${file.name}!`, 'success');
-    };
-    reader.readAsDataURL(file);
-  };
-
   // Customer Information
-  const [customerInfo, setCustomerInfo] = useState({
-    name: customerProfile?.name || 'Rahim Chowdhury',
-    phone: customerProfile?.phone || '+880 1712-345678',
-    email: customerProfile?.email || 'rahim.c@example.com',
-    address: customerProfile?.address || 'House 12, Road 5, Dhanmondi, Dhaka-1205',
+  const [customerInfo, setCustomerInfo] = useState(() => ({
+    name: customerProfile?.name || (currentUser?.name && currentUser?.role !== 'admin' ? currentUser.name : ''),
+    phone: customerProfile?.phone || (currentUser?.phone && currentUser?.role !== 'admin' ? currentUser.phone : ''),
+    email: customerProfile?.email || (currentUser?.email && currentUser?.role !== 'admin' ? currentUser.email : ''),
+    address: customerProfile?.address || '',
     district: customerProfile?.district || 'Dhaka',
     dateOfBirth: customerProfile?.dateOfBirth || '',
-    note: 'Please call 30 minutes before arrival.'
-  });
+    note: ''
+  }));
 
-  // Payment Selection
+  useEffect(() => {
+    if (customerProfile?.name || currentUser?.name) {
+      setCustomerInfo(prev => ({
+        ...prev,
+        name: prev.name || customerProfile?.name || (currentUser?.role !== 'admin' ? currentUser?.name : '') || '',
+        phone: prev.phone || customerProfile?.phone || (currentUser?.role !== 'admin' ? currentUser?.phone : '') || '',
+        email: prev.email || customerProfile?.email || (currentUser?.role !== 'admin' ? currentUser?.email : '') || '',
+        address: prev.address || customerProfile?.address || '',
+        district: prev.district || customerProfile?.district || 'Dhaka',
+        dateOfBirth: prev.dateOfBirth || customerProfile?.dateOfBirth || ''
+      }));
+    }
+  }, [customerProfile, currentUser]);
+
+  // Payment Selection - Unified Certified EPS Gateway
   const [paymentMethod, setPaymentMethod] = useState('EPS');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
 
-  // Financial Calculations
-  const subtotal = items.reduce((sum, it) => sum + (Number(it.expectedPrice) * (it.specs?.unit || 1)), 0);
-  const deliveryCharge = 200;
+  // Financial Calculations: 30% Advance Rule on Estimated Subtotal (Reactively supports currentItem during builder Step 2)
+  const standardDelivery = Number(preOrderFormSettings?.courierDeliveryCharge ?? 200);
+  const freeThreshold = Number(preOrderFormSettings?.freeShippingThreshold || 0);
+  const currentItemSubtotal = (Number(currentItem.expectedPrice) || 0) * (Number(currentItem.quantity) || 1);
+  const itemsSubtotal = items.reduce((sum, it) => sum + (Number(it.expectedPrice) * (it.specs?.unit || 1)), 0);
+  const subtotal = items.length > 0 ? itemsSubtotal : (step <= 2 ? currentItemSubtotal : 0);
+  const deliveryCharge = subtotal > 0 ? ((freeThreshold > 0 && subtotal >= freeThreshold) ? 0 : standardDelivery) : 0;
   const total = subtotal + deliveryCharge;
-  const advanceRequired = Math.round(total * 0.25); // 25% advance rule
+  const advanceRequired = Math.round(subtotal * 0.30); // 30% advance on product estimated subtotal!
 
   // Add Item to Cart
   const handleAddItemToCart = () => {
@@ -389,7 +436,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
     }
     const priceNum = Number(currentItem.expectedPrice || 0);
     if (isNaN(priceNum) || priceNum <= 0) {
-      showToast("Please enter a valid estimated price greater than ৳0.", "warning");
+      showToast(`Please enter the Store MRP (in ${currentFx.symbol} ${currentFx.code}) or Estimated BDT price greater than 0.`, "warning");
       return;
     }
     const qtyNum = Math.max(1, Math.floor(Number(currentItem.quantity || 1)));
@@ -404,6 +451,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
         color: currentItem.color || 'Default',
         unit: qtyNum
       },
+      mrp: currentItem.mrp || Math.round(priceNum / currentFx.rate),
       expectedPrice: priceNum,
       notes: currentItem.notes
     };
@@ -422,11 +470,15 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
       size: '',
       color: '',
       quantity: 1,
+      mrp: '',
       expectedPrice: '',
       notes: ''
     });
 
     setStep(3); // Go to Cart preview
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
   };
 
   const handleProceedToPayment = () => {
@@ -453,38 +505,64 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
     setItems(prev => prev.filter(it => it.id !== id));
   };
 
-  // Submit Payment & Create Confirmed Order
-  const handleConfirmAndPay = () => {
+  // Submit Payment & Create Confirmed Order via Official EPS Gateway
+  const handleConfirmAndPay = async () => {
+    if (!customerInfo.name.trim() || !customerInfo.phone.trim() || !customerInfo.address.trim()) {
+      if (showToast) showToast('Please provide your name, phone number, and delivery address in Step 4.', 'warning');
+      setStep(4);
+      return;
+    }
+
+    const epsStore = epsSettings?.storeId || '5c6d0f37-2974-4be8-818d-0736593e456e';
     setIsProcessingPayment(true);
 
-    setTimeout(() => {
-      const generatedTrxId = paymentMethod === 'EPS'
-        ? `EPS-TRX-${Math.floor(100000 + Math.random() * 900000)}`
-        : `TRX-${paymentMethod.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
+    try {
+      const merchantTransactionId = generateEpsTransactionId();
 
-      const newOrder = createCustomerPreOrder({
+      // Save pending order data to sessionStorage before redirect
+      const pendingOrder = {
+        type: 'preorder',
+        merchantTransactionId,
         country,
         items,
         customerInfo,
-        paymentMethod: paymentMethod === 'EPS' ? 'EPS Payment Gateway' : paymentMethod,
-        epsStoreId: paymentMethod === 'EPS' ? 'f49c63f4-3c57-495c-ac00-b136093671d4' : undefined,
-        transactionId: generatedTrxId,
+        epsStoreId: epsStore,
         advancePaid: advanceRequired
+      };
+      sessionStorage.setItem('eps_pending_order', JSON.stringify(pendingOrder));
+
+      // Call EPS API to initialize payment session
+      const session = await createEpsPaymentSession({
+        orderNumber: `PRE-${merchantTransactionId}`,
+        merchantTransactionId,
+        totalAmount: advanceRequired, // 30% advance
+        customerInfo,
+        orderType: 'Pre-Order',
+        items: items.map((item, idx) => ({
+          name: item.name || `Item ${idx + 1}`,
+          quantity: item.specs?.unit || 1,
+          price: item.expectedPrice || 0,
+          sellingPrice: item.expectedPrice || 0,
+          category: item.category || 'Pre-Order'
+        }))
       });
 
-      setConfirmedOrder(newOrder);
-      setIsProcessingPayment(false);
-      setStep(6); // Confirmation screen
+      if (!session.redirectUrl) {
+        throw new Error('EPS did not return a redirect URL. Please try again.');
+      }
 
-      // Trigger Confetti
-      try {
-        confetti({
-          particleCount: 120,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-      } catch (e) {}
-    }, 1500);
+      if (showToast) showToast('Redirecting to EPS Payment Gateway...', 'info');
+      window.location.href = session.redirectUrl;
+
+    } catch (err) {
+      console.error('EPS pre-order payment initialization failed:', err);
+      setIsProcessingPayment(false);
+      sessionStorage.removeItem('eps_pending_order');
+      if (showToast) showToast(
+        `EPS Gateway Error: ${err.message || 'Could not connect to EPS. Please try again or contact support.'}`,
+        'error'
+      );
+    }
   };
 
   return (
@@ -653,9 +731,13 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                         <p className="text-[10px] text-emerald-700 font-bold flex items-center gap-1 mt-0.5">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                           <span>Link verified for agent procurement</span>
-                          {currentItem.expectedPrice > 0 && (
-                            <span className="text-slate-400 font-normal ml-1">
+                          {currentItem.expectedPrice > 0 ? (
+                            <span className="text-slate-600 font-bold ml-1">
                               • Est. ৳{Number(currentItem.expectedPrice).toLocaleString()}
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 font-medium ml-1">
+                              • Enter Store MRP in Step 2 for live BDT conversion (1 {currentFx.code} = ৳{currentFx.rate})
                             </span>
                           )}
                         </p>
@@ -777,8 +859,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                           name: parsed.name,
                           category: parsed.category,
                           brand: parsed.platform,
-                          image: prev.hasUserCustomImage ? prev.image : (parsed.image || prev.image),
-                          expectedPrice: prev.expectedPrice || parsed.suggestedPrice
+                          image: prev.hasUserCustomImage ? prev.image : (parsed.image || prev.image)
                         }));
                       }
                     }
@@ -806,10 +887,10 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                       e.currentTarget.src = currentItem.fallbackImage || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop&q=80';
                     }}
                   />
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-brand-700">{country} Pre-Order</span>
-                    <h4 className="font-extrabold text-base text-navy-900">{currentItem.name || 'Custom Product'}</h4>
-                    <p className="text-xs text-slate-500 truncate max-w-md">{currentItem.url}</p>
+                    <h4 className="font-extrabold text-base text-navy-900 truncate">{currentItem.name || 'Custom Product'}</h4>
+                    <p className="text-xs text-slate-500 truncate max-w-md">{currentItem.url || 'Manual Specification'}</p>
                   </div>
                 </div>
 
@@ -820,7 +901,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                     value={currentItem.name}
                     onChange={(e) => setCurrentItem({ ...currentItem, name: e.target.value })}
                     placeholder="e.g. Nike Air Max 270 Men's Running Shoes"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500 font-medium"
                   />
                 </div>
 
@@ -848,53 +929,163 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-navy-900 mb-1">Unit / Quantity *</label>
-                    <div className="flex items-center border border-slate-300 rounded-xl overflow-hidden">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentItem({ ...currentItem, quantity: Math.max(1, (currentItem.quantity || 1) - 1) })}
-                        className="px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 text-sm font-bold"
-                        aria-label="Decrease quantity"
-                      >
-                        -
-                      </button>
-                      <input
-                        type="number"
-                        min="1"
-                        value={currentItem.quantity}
-                        onChange={(e) => {
-                          const v = parseInt(e.target.value, 10);
-                          setCurrentItem({ ...currentItem, quantity: isNaN(v) || v < 1 ? 1 : v });
-                        }}
-                        className="w-full text-center py-2.5 text-xs font-bold focus:outline-none"
-                        aria-label="Product quantity"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setCurrentItem({ ...currentItem, quantity: (currentItem.quantity || 1) + 1 })}
-                        className="px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 text-sm font-bold"
-                        aria-label="Increase quantity"
-                      >
-                        +
-                      </button>
+                {/* MRP in Local Sourcing Currency & Estimated BDT Price Calculation */}
+                <div className="p-4 sm:p-5 bg-gradient-to-br from-slate-50 to-brand-50/20 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-3">
+                    <div className="space-y-0.5">
+                      <span className="text-xs font-black text-navy-900 flex items-center gap-1.5">
+                        <Calculator className="w-4 h-4 text-brand-600" />
+                        <span>Store Price & Exchange Rate Calculator</span>
+                      </span>
+                      <p className="text-[11px] text-slate-500">
+                        Enter the price shown on the {currentItem.brand || country} store page
+                      </p>
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-brand-200 text-brand-700 text-xs font-black shadow-2xs self-start sm:self-auto">
+                      <Globe2 className="w-3.5 h-3.5 text-brand-600" />
+                      <span>Live FX: 1 {currentFx.code} = ৳{currentFx.rate} BDT</span>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-navy-900 mb-1">Estimated Price (৳ BDT) *</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={currentItem.expectedPrice || ''}
-                      onChange={(e) => {
-                        const val = Number(e.target.value);
-                        setCurrentItem({ ...currentItem, expectedPrice: isNaN(val) ? 0 : Math.max(0, val) });
-                      }}
-                      placeholder="e.g. 8000"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-brand-700 focus:ring-2 focus:ring-brand-500"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                    {/* 1. Unit / Qty */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Unit / Quantity *</label>
+                      <div className="flex items-center border border-slate-300 rounded-xl overflow-hidden bg-white shadow-2xs">
+                        <button
+                          type="button"
+                          onClick={() => setCurrentItem({ ...currentItem, quantity: Math.max(1, (currentItem.quantity || 1) - 1) })}
+                          className="px-3.5 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 text-sm font-bold transition-colors cursor-pointer"
+                          aria-label="Decrease quantity"
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          min="1"
+                          value={currentItem.quantity}
+                          onChange={(e) => {
+                            const v = parseInt(e.target.value, 10);
+                            setCurrentItem({ ...currentItem, quantity: isNaN(v) || v < 1 ? 1 : v });
+                          }}
+                          className="w-full text-center py-2 text-xs font-extrabold text-navy-900 focus:outline-none"
+                          aria-label="Product quantity"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setCurrentItem({ ...currentItem, quantity: (currentItem.quantity || 1) + 1 })}
+                          className="px-3.5 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 text-sm font-bold transition-colors cursor-pointer"
+                          aria-label="Increase quantity"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 2. Store MRP in Origin Currency */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Store MRP ({currentFx.symbol} {currentFx.code}) *
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5 text-xs font-black text-slate-400">
+                          {currentFx.symbol}
+                        </span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={currentItem.mrp || ''}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            const newMrp = isNaN(val) ? '' : Math.max(0, val);
+                            const calculatedBDT = newMrp ? Math.round(newMrp * currentFx.rate) : '';
+                            setCurrentItem(prev => ({
+                              ...prev,
+                              mrp: newMrp,
+                              expectedPrice: calculatedBDT
+                            }));
+                          }}
+                          placeholder={`e.g. ${country === 'India' ? '5995' : country === 'Dubai' ? '299' : '1500'}`}
+                          className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-slate-300 text-xs font-extrabold text-slate-800 bg-white focus:ring-2 focus:ring-brand-500 shadow-2xs"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 3. Estimated Price in BDT */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Estimated BDT Price (৳) *
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5 text-xs font-black text-brand-600">
+                          ৳
+                        </span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={currentItem.expectedPrice || ''}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            const newBDT = isNaN(val) ? '' : Math.max(0, val);
+                            const calculatedMRP = newBDT ? Math.round(newBDT / currentFx.rate) : '';
+                            setCurrentItem(prev => ({
+                              ...prev,
+                              expectedPrice: newBDT,
+                              mrp: calculatedMRP
+                            }));
+                          }}
+                          placeholder="e.g. 8573"
+                          className="w-full pl-7 pr-3 py-2.5 rounded-xl border border-brand-300 text-xs font-black text-brand-700 bg-brand-50/40 focus:ring-2 focus:ring-brand-500 shadow-2xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dynamic Math & 30% Advance Breakdown Pill */}
+                  {Number(currentItem.expectedPrice) > 0 ? (
+                    <div className="p-3 bg-white rounded-xl border border-brand-200/90 shadow-2xs space-y-1.5 animate-fade-in">
+                      <div className="flex flex-wrap items-center justify-between text-xs font-bold gap-2">
+                        <span className="text-slate-600 flex items-center gap-1.5">
+                          <span>🧮 Math Breakdown:</span>
+                          <span className="font-mono text-navy-900 font-extrabold">
+                            {currentFx.symbol}{Number(currentItem.mrp || 0).toLocaleString()} × ৳{currentFx.rate}
+                          </span>
+                          <span>=</span>
+                          <span className="font-mono text-brand-600 font-extrabold">
+                            ৳{Number(currentItem.expectedPrice).toLocaleString()} BDT / unit
+                          </span>
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[11px] font-black border border-emerald-200">
+                          30% Advance: ৳{Math.round(Number(currentItem.expectedPrice) * (currentItem.quantity || 1) * 0.30).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500">
+                        Total item subtotal: <strong className="text-navy-900">৳{(Number(currentItem.expectedPrice) * (currentItem.quantity || 1)).toLocaleString()} BDT</strong> ({currentItem.quantity || 1} {currentItem.quantity > 1 ? 'units' : 'unit'}). 70% remaining balance is settled upon delivery.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-2.5 bg-slate-100/80 rounded-xl text-[11px] text-slate-600 flex items-center gap-2">
+                      <Info className="w-4 h-4 text-brand-600 flex-shrink-0" />
+                      <span>
+                        Please enter the store price (Store MRP) from the product link. Our system converts it to Bangladeshi Taka (BDT) in real time.
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Sourcing Cost & Delivery Notice Note */}
+                  <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-[11px] text-amber-900 space-y-2">
+                    <p className="leading-relaxed">
+                      📌 <strong>Note:</strong> The Estimated Price is calculated from store MRP. International air shipping & handling from <strong>{country}</strong> and Bangladesh home delivery charge will be finalized and added to the invoice upon arrival in Bangladesh.
+                    </p>
+                    <a
+                      href="https://wa.me/8801712345678?text=Hello%20WrikMart,%20I%20would%20like%20to%20know%20the%20exact%20shipping%20cost%20for%20pre-ordering%20from%20"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-100/90 hover:bg-emerald-200/90 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>💬 Message us on WhatsApp / Chat to check exact shipping cost from {country}</span>
+                    </a>
                   </div>
                 </div>
 
@@ -912,7 +1103,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                 <button
                   type="button"
                   onClick={handleAddItemToCart}
-                  className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 px-4 rounded-xl shadow transition-all flex items-center justify-center gap-2 text-xs"
+                  className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3.5 px-4 rounded-xl shadow transition-all flex items-center justify-center gap-2 text-xs cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add to Pre-Order Cart</span>
@@ -943,33 +1134,55 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                 ) : (
                   <div className="space-y-3">
                     {items.map((it) => (
-                      <div key={it.id} className="flex items-center gap-4 p-4 rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
-                        <img 
-                          src={it.image || it.fallbackImage || FALLBACK_PRODUCT_IMAGE} 
-                          alt={it.name} 
-                          className="w-16 h-16 object-cover rounded-xl border flex-shrink-0 bg-white" 
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = it.fallbackImage || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&auto=format&fit=crop&q=80';
-                          }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-sm text-navy-900 truncate">{it.name}</h4>
-                          <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                            <span>Size: <strong className="text-slate-800">{it.specs.size}</strong></span>
-                            <span>•</span>
-                            <span>Color: <strong className="text-slate-800">{it.specs.color}</strong></span>
-                            <span>•</span>
-                            <span>Qty: <strong className="text-slate-800">{it.specs.unit}</strong></span>
+                      <div key={it.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5 sm:gap-4 p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-slate-50 shadow-sm relative">
+                        <div className="flex items-center gap-3 w-full sm:w-auto">
+                          <img 
+                            src={it.image || it.fallbackImage || FALLBACK_PRODUCT_IMAGE} 
+                            alt={it.name} 
+                            className="w-16 h-16 sm:w-16 sm:h-16 object-cover rounded-xl border border-slate-200 flex-shrink-0 bg-white" 
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = it.fallbackImage || FALLBACK_PRODUCT_IMAGE;
+                            }}
+                          />
+                          <div className="flex-1 sm:hidden min-w-0 pr-8">
+                            <h4 className="font-bold text-xs text-navy-900 line-clamp-2">{it.name}</h4>
+                            <span className="text-xs font-black text-brand-600 mt-0.5 block">
+                              ৳{(it.expectedPrice * it.specs.unit).toLocaleString()} BDT
+                            </span>
                           </div>
-                          <span className="text-xs font-bold text-brand-600 mt-1 block">
-                            ৳{(it.expectedPrice * it.specs.unit).toLocaleString()}
+                        </div>
+
+                        <div className="flex-1 min-w-0 w-full">
+                          <h4 className="font-bold text-sm text-navy-900 truncate hidden sm:block">{it.name}</h4>
+                          
+                          {/* Stacked badges for Mobile & Desktop */}
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] text-slate-600 mt-1">
+                            {it.mrp ? (
+                              <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-medium">
+                                Store MRP: <strong className="text-navy-900 font-bold">{currentFx.symbol}{Number(it.mrp).toLocaleString()}</strong>
+                              </span>
+                            ) : null}
+                            <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-medium">
+                              Size: <strong className="text-navy-900 font-bold">{it.specs.size || 'Standard'}</strong>
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 font-medium">
+                              Color: <strong className="text-navy-900 font-bold">{it.specs.color || 'Default'}</strong>
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md bg-brand-50 border border-brand-200 text-brand-700 font-bold">
+                              Qty: {it.specs.unit}
+                            </span>
+                          </div>
+
+                          <span className="text-xs font-black text-brand-600 mt-1.5 hidden sm:block">
+                            Total: ৳{(it.expectedPrice * it.specs.unit).toLocaleString()} BDT
                           </span>
                         </div>
+
                         <button
                           onClick={() => handleRemoveItem(it.id)}
-                          className="p-2 text-slate-400 hover:text-rose-600 transition-colors"
-                          title="Remove"
+                          className="absolute sm:static top-3 right-3 p-2 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                          title="Remove product"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -1007,6 +1220,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                     type="text"
                     value={customerInfo.name}
                     onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
+                    placeholder="e.g. Rahim Chowdhury"
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
@@ -1018,6 +1232,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                       type="tel"
                       value={customerInfo.phone}
                       onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
+                      placeholder="e.g. +880 1712-345678"
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500"
                     />
                   </div>
@@ -1027,6 +1242,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                       type="email"
                       value={customerInfo.email}
                       onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
+                      placeholder="e.g. customer@example.com"
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500"
                     />
                   </div>
@@ -1056,6 +1272,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                     rows="2"
                     value={customerInfo.address}
                     onChange={(e) => setCustomerInfo({ ...customerInfo, address: e.target.value })}
+                    placeholder="e.g. House 12, Road 5, Dhanmondi, Dhaka"
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500"
                   />
                 </div>
@@ -1082,96 +1299,80 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
               </div>
             )}
 
-            {/* STEP 5: Payment Method */}
+            {/* STEP 5: Payment Gateway - Official Certified EPS Gateway */}
             {step === 5 && (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold text-navy-900 mb-2">Select Advance Payment Gateway</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    
-                    {/* EPS Gateway Option */}
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('EPS')}
-                      className={`p-3.5 sm:p-4 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-2 relative overflow-hidden ${
-                        paymentMethod === 'EPS'
-                          ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/30 font-bold shadow-sm'
-                          : 'border-slate-200 text-slate-700 hover:border-slate-300 bg-slate-50'
-                      }`}
-                    >
-                      <span className="absolute top-1.5 right-1.5 px-1.5 py-0.2 bg-emerald-600 text-white text-[7px] font-black rounded uppercase">Fast</span>
-                      <img src="/eps/Group 93.png" alt="EPS Gateway" className="h-6 sm:h-7 w-auto object-contain" />
-                      <span className="block text-xs font-black text-emerald-950">EPS Gateway</span>
-                      <span className="text-[10px] text-slate-500">Cards, MFS & Banking</span>
-                    </button>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-xs font-bold text-navy-900">Official Payment Gateway</label>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                      ⚡ Instant Auto-Verification
+                    </span>
+                  </div>
 
-                    {/* bKash Option */}
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('bKash')}
-                      className={`p-3.5 sm:p-4 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-2 ${
-                        paymentMethod === 'bKash'
-                          ? 'border-[#E2136E] bg-pink-50/70 ring-2 ring-[#E2136E] font-bold shadow-sm'
-                          : 'border-slate-200 text-slate-700 hover:border-slate-300 bg-slate-50'
-                      }`}
-                    >
-                      <BKashLogo className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0" />
-                      <span className="block text-xs font-bold text-[#D81B60]">bKash Payment</span>
-                      <span className="text-[10px] text-slate-400">Direct Checkout</span>
-                    </button>
-
-                    {/* Nagad Option */}
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('Nagad')}
-                      className={`p-3.5 sm:p-4 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-2 ${
-                        paymentMethod === 'Nagad'
-                          ? 'border-[#F7941D] bg-orange-50/70 ring-2 ring-[#F7941D] font-bold shadow-sm'
-                          : 'border-slate-200 text-slate-700 hover:border-slate-300 bg-slate-50'
-                      }`}
-                    >
-                      <NagadLogo className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0" />
-                      <span className="block text-xs font-bold text-[#E64A19]">Nagad Direct</span>
-                      <span className="text-[10px] text-slate-400">Postal Digital Cash</span>
-                    </button>
-
-                    {/* Visa / Mastercard Option */}
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('Card')}
-                      className={`p-3.5 sm:p-4 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-2 ${
-                        paymentMethod === 'Card'
-                          ? 'border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-600 font-bold shadow-sm'
-                          : 'border-slate-200 text-slate-700 hover:border-slate-300 bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <VisaLogo className="w-6 h-3.5 sm:w-7 sm:h-4 flex-shrink-0" />
-                        <MastercardLogo className="w-5 h-3.5 sm:w-6 sm:h-4 flex-shrink-0" />
+                  {/* Certified EPS Payment Gateway Hero Box */}
+                  <div className="p-5 rounded-2xl border-2 border-emerald-500 bg-gradient-to-b from-emerald-50/90 to-white shadow-soft space-y-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white rounded-xl border border-emerald-200 shadow-2xs">
+                          <img src="/eps/Group 93.png" alt="EPS Gateway" className="h-8 w-auto object-contain" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-extrabold text-sm text-emerald-950">EPS Payment Gateway</h4>
+                            <span className="px-2 py-0.2 bg-emerald-600 text-white text-[8px] font-black rounded-full uppercase tracking-wider">
+                              Official Gateway
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-600">
+                            Single secure checkout engine for all Cards, MFS & Internet Banking
+                          </p>
+                        </div>
                       </div>
-                      <span className="block text-xs font-bold text-indigo-900">Cards / Bank</span>
-                      <span className="text-[10px] text-slate-400">Visa, Master, Amex</span>
-                    </button>
 
+                      <div className="text-left sm:text-right">
+                        <span className="text-[10px] font-bold text-emerald-800 bg-white px-2.5 py-1 rounded-lg border border-emerald-300 block">
+                          🔒 Bank & MFS Protected
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-slate-600 leading-relaxed">
+                      Pay securely with <strong>Visa, Mastercard, bKash, Nagad, Rocket, Upay</strong> or Internet Banking via the official EPS Payment Gateway.
+                    </p>
+
+                    <div className="p-2.5 rounded-xl border border-emerald-200/80 bg-white shadow-2xs">
+                      <img 
+                        src="/eps/Group 106.png" 
+                        alt="Supported EPS Payment Channels" 
+                        className="w-full h-auto object-contain rounded-lg max-h-11 mx-auto"
+                      />
+                    </div>
+
+                    <div className="p-3 bg-white rounded-xl border border-emerald-100 flex items-center justify-between text-xs text-slate-600">
+                      <div className="flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        <span>Official Store ID: <strong className="font-mono text-emerald-900">{epsSettings?.storeId || 'f49c63f4-3c57-495c-ac00-b136093671d4'}</strong></span>
+                      </div>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-mono">
+                        SSL-256-BIT
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-white rounded-xl border border-emerald-100 flex items-center gap-2.5">
+                      <ExternalLink className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <p className="text-[11px] text-slate-700 leading-snug">
+                        Clicking <strong>"Pay 30% Advance via EPS Gateway"</strong> will open the secure EPS payment page. Complete payment and you'll be returned automatically.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {paymentMethod === 'EPS' && (
-                  <div className="p-3 bg-emerald-50/80 rounded-2xl border border-emerald-200 text-xs text-emerald-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                      <span>Certified EPS PGW Merchant Gateway • Instant Verification</span>
-                    </div>
-                    <span className="font-mono text-[10px] font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-300">
-                      Store ID: f49c63f4-3c57-495c-ac00-b136093671d4
-                    </span>
-                  </div>
-                )}
-
+                {/* 30% Advance Guarantee Box */}
                 <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 text-xs text-emerald-900 flex items-center gap-3">
                   <ShieldCheck className="w-6 h-6 text-emerald-600 flex-shrink-0" />
                   <p className="leading-snug">
-                    <strong>100% Secure Purchase Guarantee:</strong> You only pay <strong>25% advance (৳{advanceRequired.toLocaleString()})</strong> now. The remaining due is collected upon physical doorstep delivery.
+                    <strong>100% Secure Purchase Guarantee:</strong> You only pay <strong>30% advance (৳{advanceRequired.toLocaleString()})</strong> now. The remaining due is collected upon physical doorstep delivery.
                   </p>
                 </div>
 
@@ -1179,15 +1380,19 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                   type="button"
                   disabled={isProcessingPayment}
                   onClick={handleConfirmAndPay}
-                  className="w-full bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white font-extrabold py-4 px-4 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm"
+                  className="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-4 px-4 rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 text-sm cursor-pointer disabled:opacity-50"
                 >
                   {isProcessingPayment ? (
                     <span className="inline-flex items-center gap-2">
                       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      Connecting to {paymentMethod} Gateway...
+                      <span>Connecting to Official EPS Gateway...</span>
                     </span>
                   ) : (
-                    <span>Pay Advance ৳{advanceRequired.toLocaleString()} & Confirm Order</span>
+                    <>
+                      <Lock className="w-4 h-4" />
+                      <span>Pay 30% Advance ৳{advanceRequired.toLocaleString()} via EPS Gateway</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
                   )}
                 </button>
               </div>
@@ -1207,12 +1412,24 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
 
               {/* Items Snapshot */}
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {items.map((it) => (
-                  <div key={it.id} className="flex items-center justify-between text-xs text-slate-700">
-                    <span className="truncate max-w-[160px] font-medium">{it.name} (x{it.specs.unit})</span>
-                    <span className="font-bold">৳{(it.expectedPrice * it.specs.unit).toLocaleString()}</span>
+                {items.length > 0 ? (
+                  items.map((it) => (
+                    <div key={it.id} className="flex items-center justify-between text-xs text-slate-700">
+                      <span className="truncate max-w-[160px] font-medium">{it.name} (x{it.specs.unit})</span>
+                      <span className="font-bold text-slate-900">৳{(it.expectedPrice * it.specs.unit).toLocaleString()}</span>
+                    </div>
+                  ))
+                ) : (currentItem.name || currentItem.expectedPrice) ? (
+                  <div className="flex items-center justify-between text-xs text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+                      <span className="truncate max-w-[150px] font-bold text-navy-900">{currentItem.name || 'Configuring Item'} (x{currentItem.quantity || 1})</span>
+                    </div>
+                    <span className="font-extrabold text-brand-600">৳{currentItemSubtotal.toLocaleString()}</span>
                   </div>
-                ))}
+                ) : (
+                  <p className="text-xs text-slate-400 italic py-1">No products added yet.</p>
+                )}
               </div>
 
               {/* Price Calculations */}
@@ -1229,14 +1446,15 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                   <span>Total Order Estimate:</span>
                   <span>৳{total.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between bg-brand-50 p-3 rounded-xl text-brand-800 font-extrabold text-sm border border-brand-200">
-                  <span>Advance Required (25%):</span>
-                  <span className="text-base text-brand-600">৳{advanceRequired.toLocaleString()}</span>
+                <div className="flex justify-between bg-brand-50 p-3 rounded-xl text-brand-800 font-extrabold text-sm border border-brand-200 shadow-2xs">
+                  <span>Advance Required (30% on Products):</span>
+                  <span className="text-base text-brand-600 font-black">৳{advanceRequired.toLocaleString()}</span>
                 </div>
               </div>
 
               <div className="text-[11px] text-slate-400 space-y-1">
                 <p>• Sourced from official {country} stores.</p>
+                <p>• Courier & handling added upon BD arrival.</p>
                 <p>• Remaining balance paid upon BD delivery.</p>
               </div>
             </div>

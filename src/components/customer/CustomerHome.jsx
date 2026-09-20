@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { CountryFlag } from '../common/CountryFlag';
 import { StoreBrandBadge } from '../common/BrandLogo';
 import { useApp } from '../../context/AppContext';
+import { detectAutomatedPrice } from '../../utils/productPricingEngine';
 import { 
   ShoppingBag, 
   Package, 
@@ -42,7 +43,8 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
     sourcingStores = [],
     currentRole,
     setAdminNav,
-    setCurrentRole
+    setCurrentRole,
+    exchangeRates
   } = useApp();
   const [quickUrl, setQuickUrl] = useState('');
   const storesSliderRef = useRef(null);
@@ -68,15 +70,22 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
     }
 
     const lower = clean.toLowerCase();
+
+    // Detect Sourcing Country & Platform from Link Domain
     let detectedCountry = 'India';
     let detectedPlatform = 'Global Store';
 
-    if (lower.includes('amazon.ae') || lower.includes('noon.com') || lower.includes('.ae') || lower.includes('dubai') || lower.includes('apple.com/ae')) {
+    if (lower.includes('.ae') || lower.includes('noon.com') || lower.includes('amazon.ae') || lower.includes('apple.com/ae') || lower.includes('dubai')) {
       detectedCountry = 'Dubai';
-      detectedPlatform = lower.includes('noon') ? 'Noon Dubai' : lower.includes('amazon') ? 'Amazon UAE' : lower.includes('apple') ? 'Apple Dubai' : 'Dubai Store';
-    } else if (lower.includes('shopee.co.th') || lower.includes('central.co.th') || lower.includes('.th') || lower.includes('thailand') || lower.includes('lazada')) {
+      if (lower.includes('noon')) detectedPlatform = 'Noon Dubai';
+      else if (lower.includes('apple')) detectedPlatform = 'Apple Dubai';
+      else if (lower.includes('sephora')) detectedPlatform = 'Sephora Dubai';
+      else detectedPlatform = 'Amazon UAE';
+    } else if (lower.includes('.th') || lower.includes('shopee.co.th') || lower.includes('central.co.th') || lower.includes('thailand') || lower.includes('lazada.co.th')) {
       detectedCountry = 'Thailand';
-      detectedPlatform = lower.includes('shopee') ? 'Shopee Thailand' : 'Thailand Store';
+      if (lower.includes('shopee')) detectedPlatform = 'Shopee Thailand';
+      else if (lower.includes('central')) detectedPlatform = 'Central Thailand';
+      else detectedPlatform = 'Thailand Online Hub';
     } else {
       detectedCountry = 'India';
       if (lower.includes('amazon') || lower.includes('amzn.')) detectedPlatform = 'Amazon India';
@@ -114,18 +123,29 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
       else title = 'Custom Imported Product';
     }
 
+    // Automated Retail Price Detection & FX Conversion
+    const autoPrice = detectAutomatedPrice({
+      name: title,
+      url: clean,
+      country: detectedCountry,
+      exchangeRates
+    });
+
     const payload = {
       url: clean,
       name: title,
       country: detectedCountry,
       platform: detectedPlatform,
-      expectedPrice: lower.includes('apple') || lower.includes('iphone') ? 85000 : 4500
+      mrp: autoPrice.mrp,
+      expectedPrice: autoPrice.expectedPrice,
+      confidence: autoPrice.confidence,
+      isAutoDetected: true
     };
 
     if (setPrefilledPreOrder) {
       setPrefilledPreOrder(payload);
     }
-    showToast(`Recognized ${detectedPlatform} link! Loading Pre-Order form...`, 'success');
+    showToast(`🤖 Analyzed ${detectedPlatform}! Auto-detected price: ${autoPrice.currencySymbol}${autoPrice.mrp.toLocaleString()} (৳${autoPrice.expectedPrice.toLocaleString()} BDT)`, 'success');
     onStartPreOrder();
   };
 
@@ -230,7 +250,7 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
 
             {/* Key Trust Micro Badges */}
             <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 text-[11px] sm:text-xs text-cyan-100/90 pt-1 font-medium">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" /> 25% Advance</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" /> 30% Advance</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" /> Cash on Delivery for Stock</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" /> Doorstep Courier</span>
             </div>
@@ -340,43 +360,40 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-3.5">
             {sourcingStores
               .filter(store => store.isActive !== false)
-              .map((store, i) => (
-                <button
-                  key={store.id || i}
-                  onClick={() => {
-                    if (setPrefilledPreOrder) {
-                      setPrefilledPreOrder({ 
-                        country: store.country || 'Global', 
-                        platform: store.name,
-                        url: store.url || ''
-                      });
-                    }
-                    onStartPreOrder();
-                  }}
-                  className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/80 shadow-soft hover:shadow-card hover:border-brand-500 text-left transition-all group flex flex-col justify-between cursor-pointer"
-                >
-                  <div className="mb-3.5">
-                    <StoreBrandBadge 
-                      storeName={store.name} 
-                      brand={store.brand} 
-                      logoUrl={store.logoUrl} 
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        {store.country}
-                      </span>
+              .map((store, i) => {
+                const targetUrl = store.url || `https://www.google.com/search?q=${encodeURIComponent(store.name + ' official store')}`;
+                return (
+                  <a
+                    key={store.id || i}
+                    href={targetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Open ${store.name} official website in a new tab`}
+                    className="p-4 sm:p-5 rounded-3xl bg-white border border-slate-200/80 shadow-soft hover:shadow-card hover:border-brand-500 text-left transition-all group flex flex-col justify-between cursor-pointer relative"
+                  >
+                    <div className="flex items-start justify-between mb-3.5">
+                      <StoreBrandBadge 
+                        storeName={store.name} 
+                        brand={store.brand} 
+                        logoUrl={store.logoUrl} 
+                      />
                     </div>
-                    <h3 className="font-bold text-xs sm:text-sm text-navy-900 group-hover:text-brand-600 transition-colors leading-tight">
-                      {store.name}
-                    </h3>
-                    <p className="text-[11px] text-slate-400 mt-1 truncate">
-                      {store.cat}
-                    </p>
-                  </div>
-                </button>
-              ))}
+                    <div>
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          {store.country}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-xs sm:text-sm text-navy-900 group-hover:text-brand-600 transition-colors leading-tight">
+                        {store.name}
+                      </h3>
+                      <p className="text-[11px] text-slate-400 mt-1 truncate">
+                        {store.cat}
+                      </p>
+                    </div>
+                  </a>
+                );
+              })}
           </div>
         )}
       </section>
@@ -508,8 +525,8 @@ export const CustomerHome = ({ onStartPreOrder, onBrowseStock, onOpenChat, onOpe
             },
             {
               step: '02',
-              title: 'Pay 25% Advance',
-              desc: 'Confirm your order by paying 25% advance safely through bKash, Nagad, or Debit/Credit Card.',
+              title: 'Pay 30% Advance',
+              desc: 'Confirm your order by paying 30% advance safely through EPS Gateway (Cards, bKash, Nagad, Internet Banking).',
               icon: <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />,
               color: 'text-emerald-600'
             },

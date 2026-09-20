@@ -90,6 +90,8 @@ export const AdminPreOrderSettings = () => {
   });
 
   // Pre-Order Form Settings State
+  const [courierDeliveryCharge, setCourierDeliveryCharge] = useState(() => preOrderFormSettings?.courierDeliveryCharge ?? 200);
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(() => preOrderFormSettings?.freeShippingThreshold ?? 0);
   const [countries, setCountries] = useState(() => preOrderFormSettings?.countries || {
     india: true,
     dubai: true,
@@ -126,9 +128,14 @@ export const AdminPreOrderSettings = () => {
 
   const handleSaveSettings = () => {
     if (setPreOrderFormSettings) {
-      setPreOrderFormSettings({ countries, requiredFields });
+      setPreOrderFormSettings({ 
+        countries, 
+        requiredFields,
+        courierDeliveryCharge: Number(courierDeliveryCharge),
+        freeShippingThreshold: Number(freeShippingThreshold)
+      });
     }
-    showToast("Pre-Order form settings saved successfully!", "success");
+    showToast("Pre-Order & Courier Delivery settings saved successfully!", "success");
   };
 
   // Open Add Store Modal
@@ -538,6 +545,75 @@ export const AdminPreOrderSettings = () => {
             </div>
           </div>
 
+          {/* Bangladesh Courier Delivery Charge Configuration */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">Bangladesh Courier Delivery Charge Settings</h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">Control the default courier charge applied to all Pre-Orders & Ready Stock deliveries nationwide</p>
+              </div>
+              <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold border border-emerald-200">
+                Active Fee: ৳{courierDeliveryCharge} BDT
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-navy-900 mb-1">Standard Courier Charge (৳ BDT) *</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-400">৳</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={courierDeliveryCharge}
+                    onChange={(e) => setCourierDeliveryCharge(e.target.value)}
+                    placeholder="e.g. 200, 150, 120"
+                    className="w-full pl-7 pr-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-navy-900 focus:ring-2 focus:ring-brand-500 bg-slate-50/50"
+                  />
+                </div>
+                {/* Quick Presets */}
+                <div className="flex items-center gap-1.5 mt-2">
+                  {[
+                    { label: 'Free (৳0)', value: 0 },
+                    { label: '৳100', value: 100 },
+                    { label: '৳120 (Dhaka)', value: 120 },
+                    { label: '৳150', value: 150 },
+                    { label: '৳200 (Standard)', value: 200 }
+                  ].map(p => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => setCourierDeliveryCharge(p.value)}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
+                        Number(courierDeliveryCharge) === p.value
+                          ? 'bg-brand-50 border-brand-500 text-brand-700 font-black'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-navy-900 mb-1">Free Courier Threshold (Optional)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-400">৳</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={freeShippingThreshold}
+                    onChange={(e) => setFreeShippingThreshold(e.target.value)}
+                    placeholder="e.g. 5000 (0 = disabled)"
+                    className="w-full pl-7 pr-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-navy-900 focus:ring-2 focus:ring-brand-500 bg-slate-50/50"
+                  />
+                </div>
+                <span className="text-[10px] text-slate-400 block mt-1">Orders above this amount get 100% Free Bangladesh Courier Delivery. Set 0 to disable.</span>
+              </div>
+            </div>
+          </div>
+
           {/* Form Fields Validation Checklist */}
           <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-soft space-y-4">
             <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">Required Pre-Order Customer Form Fields</h3>
@@ -557,9 +633,9 @@ export const AdminPreOrderSettings = () => {
 
             <button
               onClick={handleSaveSettings}
-              className="w-full bg-navy-900 hover:bg-navy-800 text-white font-bold py-3 rounded-xl text-xs transition-colors shadow-sm"
+              className="w-full bg-navy-900 hover:bg-navy-800 text-white font-bold py-3.5 rounded-xl text-xs transition-colors shadow-md cursor-pointer"
             >
-              Save Form Settings
+              Save All Pre-Order & Courier Settings
             </button>
           </div>
         </div>

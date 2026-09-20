@@ -19,12 +19,15 @@ import {
   RotateCcw,
   Package,
   Globe2,
-  PackageCheck
+  PackageCheck,
+  Edit3,
+  Trash2,
+  X
 } from 'lucide-react';
 import { CountryFlag } from '../common/CountryFlag';
 
 export const AdminOrderList = ({ onSelectOrder }) => {
-  const { orders, agents, assignAgentToOrder, updateOrderStatus, showToast } = useApp();
+  const { orders, agents, assignAgentToOrder, updateOrderStatus, deleteAdminOrder, showToast } = useApp();
   const [selectedOrderForReceive, setSelectedOrderForReceive] = useState(null);
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,6 +36,8 @@ export const AdminOrderList = ({ onSelectOrder }) => {
   const [selectedOrderType, setSelectedOrderType] = useState('All'); // 'All' | 'Pre-Order' | 'Stock Product'
   
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedOrderForEdit, setSelectedOrderForEdit] = useState(null);
+  const [orderToDelete, setOrderToDelete] = useState(null);
   const [selectedOrderForDamage, setSelectedOrderForDamage] = useState(null);
 
   const filteredOrders = orders.filter(order => {
@@ -61,42 +66,43 @@ export const AdminOrderList = ({ onSelectOrder }) => {
   };
 
   const exportOrdersToCSV = () => {
-    if (filteredOrders.length === 0) {
-      showToast('No orders found to export', 'warning');
-      return;
-    }
-    const headers = ['Order Number', 'Order Type', 'Date', 'Customer Name', 'Phone', 'District', 'Country', 'Assigned Agent', 'Items Count', 'Estimated Total (BDT)', 'Advance Paid (BDT)', 'Status', 'Payment Status'];
+    const headers = [
+      'Order ID', 'Type', 'Country', 'Customer Name', 'Phone', 
+      'District', 'Agent', 'Status', 'Payment Status', 
+      'Subtotal (BDT)', 'Delivery Charge (BDT)', 'Total (BDT)', 
+      'Advance Paid (BDT)', 'Due Amount (BDT)', 'Created Date'
+    ];
+    
     const rows = filteredOrders.map(o => [
       sanitizeCsvField(o.orderNumber),
       sanitizeCsvField(o.orderType || 'Pre-Order'),
-      sanitizeCsvField(o.createdAt),
-      sanitizeCsvField(o.customer?.name),
-      sanitizeCsvField(o.customer?.phone),
-      sanitizeCsvField(o.customer?.district || 'Dhaka'),
       sanitizeCsvField(o.country),
+      sanitizeCsvField(o.customer.name),
+      sanitizeCsvField(o.customer.phone),
+      sanitizeCsvField(o.customer.district || 'Dhaka'),
       sanitizeCsvField(o.assignedAgentName || 'Unassigned'),
-      Number(o.items?.length || 0),
-      Number(o.financials?.estimatedTotal || 0),
-      Number(o.financials?.advancePaid || 0),
       sanitizeCsvField(o.status),
-      sanitizeCsvField(o.paymentStatus)
+      sanitizeCsvField(o.paymentStatus || 'Advance Paid'),
+      sanitizeCsvField(o.financials.estimatedSubtotal),
+      sanitizeCsvField(o.financials.deliveryCharge),
+      sanitizeCsvField(o.financials.estimatedTotal),
+      sanitizeCsvField(o.financials.advancePaid),
+      sanitizeCsvField(o.financials.dueAmount),
+      sanitizeCsvField(o.createdAt)
     ]);
 
-    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\r\n');
-    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `WrikMart_Orders_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `wrikmart_orders_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    showToast(`Exported ${filteredOrders.length} orders to CSV!`, 'success');
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -185,7 +191,7 @@ export const AdminOrderList = ({ onSelectOrder }) => {
       {/* Orders Master Table */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-soft overflow-hidden">
         <div className="overflow-x-auto no-scrollbar sm:scrollbar-thin">
-          <table className="w-full text-left text-xs min-w-[760px]">
+          <table className="w-full text-left text-xs min-w-[820px]">
             <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100 uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="px-3.5 sm:px-5 py-3 sm:py-3.5">Order Number</th>
@@ -279,7 +285,7 @@ export const AdminOrderList = ({ onSelectOrder }) => {
                   </td>
 
                   <td className="px-3.5 sm:px-5 py-3 sm:py-3.5 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
+                    <div className="flex items-center justify-end gap-1 sm:gap-1.5 flex-nowrap">
                       {order.country !== 'Bangladesh' && (order.status === 'Purchased' || order.status === 'At Delivery House' || order.status === 'Shipped') && (
                         <button
                           onClick={() => setSelectedOrderForReceive(order)}
@@ -290,9 +296,27 @@ export const AdminOrderList = ({ onSelectOrder }) => {
                         </button>
                       )}
 
+                      {/* Edit Order Option */}
+                      <button
+                        onClick={() => setSelectedOrderForEdit(order)}
+                        className="p-1.5 text-brand-600 hover:text-brand-700 hover:bg-brand-50 rounded-lg transition-colors"
+                        title="Edit Order Details & Items"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Delete Order Option */}
+                      <button
+                        onClick={() => setOrderToDelete(order)}
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                        title="Delete Order"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+
                       <button
                         onClick={() => setSelectedOrderForDamage(order)}
-                        className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                         title={order.damageDetails ? "Edit Damage / Return Resolution" : "Report Damage / Return"}
                       >
                         <AlertTriangle className="w-3.5 h-3.5" />
@@ -300,10 +324,11 @@ export const AdminOrderList = ({ onSelectOrder }) => {
 
                       <button
                         onClick={() => onSelectOrder(order)}
-                        className="px-3 py-1.5 bg-brand-50 hover:bg-brand-100 active:scale-95 text-brand-700 font-bold rounded-lg transition-colors flex items-center gap-1"
+                        className="px-2.5 sm:px-3 py-1.5 bg-brand-50 hover:bg-brand-100 active:scale-95 text-brand-700 font-bold rounded-lg transition-colors flex items-center gap-1 whitespace-nowrap"
+                        title="360° Order Details View"
                       >
                         <Eye className="w-3.5 h-3.5" />
-                        <span>360° View</span>
+                        <span className="hidden sm:inline">360° View</span>
                       </button>
                     </div>
                   </td>
@@ -317,6 +342,69 @@ export const AdminOrderList = ({ onSelectOrder }) => {
       {/* Create Order Modal */}
       {showCreateModal && (
         <AdminCreateOrderModal onClose={() => setShowCreateModal(false)} />
+      )}
+
+      {/* Edit Order Modal */}
+      {selectedOrderForEdit && (
+        <AdminCreateOrderModal 
+          editingOrder={selectedOrderForEdit} 
+          onClose={() => setSelectedOrderForEdit(null)} 
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {orderToDelete && (
+        <div className="fixed inset-0 z-50 bg-navy-950/75 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-scale-in">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+
+            <div className="text-center space-y-1.5">
+              <h3 className="font-extrabold text-base text-navy-900">Delete Order #{orderToDelete.orderNumber}?</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Are you sure you want to delete this order for customer <strong className="text-navy-900">{orderToDelete.customer.name}</strong>? 
+                This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1">
+              <div className="flex justify-between text-slate-600">
+                <span>Order Type:</span>
+                <span className="font-bold text-navy-900">{orderToDelete.orderType || 'Pre-Order'}</span>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Total Amount:</span>
+                <span className="font-bold text-navy-900">৳{orderToDelete.financials?.estimatedTotal?.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Advance Paid:</span>
+                <span className="font-bold text-emerald-600">৳{orderToDelete.financials?.advancePaid?.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setOrderToDelete(null)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteAdminOrder(orderToDelete.id);
+                  setOrderToDelete(null);
+                }}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Order</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Damage / Return Modal */}

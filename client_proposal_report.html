@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WRIKMART COMMERCE PLATFORM - Comprehensive Ecosystem Proposal</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm 12mm 15mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #111827;
+    background-color: #f3f4f6;
+    font-size: 8.5pt;
+    line-height: 1.4;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 210mm;
+    height: 297mm;
+    max-height: 297mm;
+    padding: 14mm 16mm 12mm 16mm;
+    margin: 14px auto;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    position: relative;
+    page-break-after: always;
+    page-break-inside: avoid;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+
+  @media print {
+    body {
+      background: #ffffff;
+    }
+    .page {
+      margin: 0;
+      padding: 12mm 15mm 10mm 15mm;
+      box-shadow: none;
+      page-break-after: always;
+      height: 297mm;
+      max-height: 297mm;
+    }
+    .no-print {
+      display: none !important;
+    }
+  }
+
+  /* Page 1 Header */
+  .p1-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 7.5pt;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+  .p1-header .left {
+    color: #0052cc;
+  }
+  .p1-header .right {
+    color: #4b5563;
+  }
+
+  /* Header on Pages 2, 3, 4 */
+  .subpage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8pt;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+  }
+  .subpage-header .left {
+    font-weight: bold;
+    color: #000000;
+  }
+  .subpage-header .right {
+    color: #6b7280;
+  }
+
+  /* Main Title Block */
+  .title-block {
+    margin-bottom: 12px;
+  }
+  .main-title {
+    font-size: 21pt;
+    font-weight: bold;
+    color: #0c1a30;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+  .sub-title {
+    font-size: 9.5pt;
+    color: #374151;
+    margin-top: 5px;
+    line-height: 1.3;
+  }
+  .flagship-tag {
+    font-size: 8.5pt;
+    color: #4b5563;
+    margin-top: 3px;
+  }
+
+  /* Metadata Box Table */
+  .meta-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 14px;
+    font-size: 8pt;
+  }
+  .meta-table td {
+    border: 1px solid #e5e7eb;
+    padding: 5px 8px;
+    vertical-align: middle;
+  }
+  .meta-table .label {
+    font-weight: bold;
+    color: #111827;
+    background-color: #ffffff;
+    width: 20%;
+  }
+  .meta-table .val {
+    color: #374151;
+    width: 30%;
+  }
+
+  /* Section Titles */
+  .section-title {
+    font-size: 11pt;
+    font-weight: bold;
+    color: #000000;
+    border-bottom: 1.5px solid #000000;
+    padding-bottom: 2px;
+    margin-top: 10px;
+    margin-bottom: 8px;
+  }
+
+  /* Stat Badges */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 10px 0 14px 0;
+  }
+  .stat-box {
+    border: 1px solid #e5e7eb;
+    background-color: #fbfcfd;
+    padding: 8px 6px;
+    text-align: center;
+  }
+  .stat-title {
+    font-size: 6.5pt;
+    font-weight: bold;
+    color: #6b7280;
+    letter-spacing: 0.5px;
+  }
+  .stat-num {
+    font-size: 12.5pt;
+    font-weight: bold;
+    color: #007a5e;
+    margin: 2px 0;
+  }
+  .stat-num.blue {
+    color: #006699;
+  }
+  .stat-num.navy {
+    color: #0052cc;
+  }
+  .stat-desc {
+    font-size: 7pt;
+    color: #4b5563;
+  }
+
+  /* Tables */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7.8pt;
+    margin-top: 4px;
+    margin-bottom: 6px;
+  }
+  .data-table th {
+    background-color: #0f2347;
+    color: #ffffff;
+    font-weight: bold;
+    text-align: left;
+    padding: 6px 8px;
+    border: 1px solid #0f2347;
+  }
+  .data-table td {
+    border: 1px solid #e5e7eb;
+    padding: 6px 8px;
+    vertical-align: top;
+    line-height: 1.35;
+    background-color: #ffffff;
+  }
+  .data-table tr:nth-child(even) td {
+    background-color: #fcfdfe;
+  }
+
+  ul.table-list {
+    margin-left: 12px;
+    margin-top: 2px;
+  }
+  ul.table-list li {
+    margin-bottom: 2px;
+    line-height: 1.35;
+  }
+
+  /* Status Badges */
+  .status-badge-completed {
+    color: #059669;
+    font-weight: bold;
+    font-size: 8pt;
+  }
+  .status-badge-launch {
+    color: #2563eb;
+    font-weight: bold;
+    font-size: 8pt;
+  }
+
+  /* Footer */
+  .page-footer {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 4px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 7pt;
+    color: #6b7280;
+  }
+  .page-footer.centered {
+    justify-content: center;
+  }
+
+  /* Sign-Off Block */
+  .sign-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 12px;
+  }
+  .sign-col {
+    font-size: 8pt;
+  }
+  .sign-for {
+    font-weight: bold;
+    color: #000000;
+  }
+  .sign-org {
+    font-weight: bold;
+    color: #111827;
+    margin-bottom: 34px;
+  }
+  .sign-line {
+    border-top: 1px solid #000000;
+    padding-top: 4px;
+    font-weight: bold;
+  }
+  .sign-meta {
+    font-size: 7.5pt;
+    color: #374151;
+    line-height: 1.4;
+    margin-top: 2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ========================================================= -->
+<!-- PAGE 1                                                    -->
+<!-- ========================================================= -->
+<div class="page">
+  <div>
+    <div class="p1-header">
+      <span class="left">COMPREHENSIVE ECOSYSTEM PROPOSAL</span>
+      <span class="right">REACT.JS WEB + FASTAPI REST BACKEND</span>
+    </div>
+
+    <div class="title-block">
+      <div class="main-title">WRIKMART COMMERCE PLATFORM</div>
+      <div class="sub-title">Unified Web Portal (React 18) & Multi-Platform Overseas Agent Stations (FastAPI 3.11+)</div>
+      <div class="flagship-tag">Flagship Offering: Cross-Border Pre-Order Procurement & Ready Stock Logistics Infrastructure</div>
+    </div>
+
+    <table class="meta-table">
+      <tr>
+        <td class="label">Client Organization:</td>
+        <td class="val">WrikMart Global Logistics & E-Commerce Ltd.</td>
+        <td class="label">Delivery Suite:</td>
+        <td class="val">React.js Website + FastAPI Backend + Agent Hubs</td>
+      </tr>
+      <tr>
+        <td class="label">Document Date:</td>
+        <td class="val">September 2026</td>
+        <td class="label">Core Technology:</td>
+        <td class="val">React 18, FastAPI (Python 3.11+), PostgreSQL, EPS</td>
+      </tr>
+      <tr>
+        <td class="label">System Version:</td>
+        <td class="val">1.0.0 (Production Release)</td>
+        <td class="label">Target Channels:</td>
+        <td class="val">Web PWA, Mobile Touch, 3 Foreign Hubs, BD HQ</td>
+      </tr>
+    </table>
+
+    <div class="section-title">1. Executive Summary & Ecosystem Overview</div>
+    <p style="text-align: justify; margin-bottom: 6px;">
+      <strong>WrikMart</strong> (রিকমার্ট) is an institutional-grade, cross-border e-commerce and logistics ecosystem engineered to democratize access to authentic overseas products from high-growth retail markets (India, UAE-Dubai, and Thailand) for consumers across Bangladesh. The platform combines a <strong>Public High-Conversion React.js Web Platform</strong> with <strong>Dedicated Overseas Sourcing Agent Stations</strong>, backed by an institutional <strong>Python FastAPI REST API & Database Engine</strong>.
+    </p>
+    <p style="text-align: justify;">
+      Through automated cross-border e-commerce link parsing, verified foreign store purchase receipts, working-capital treasury management, sequential pre-order allocations, dual payment processing (Instant EPS Gateway & Doorstep Cash on Delivery), and real-time 9-stage milestone tracking, WrikMart bridges Bangladesh's cross-border retail trust deficit with 100% financial transparency, guaranteed store invoices, and rapid 24&ndash;48 hour local delivery.
+    </p>
+
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-title">SOURCING HUBS</div>
+        <div class="stat-num blue">3 NATIONS</div>
+        <div class="stat-desc">India, Dubai & Thailand</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">ADVANCE ESCROW</div>
+        <div class="stat-num">25% DEPOSIT</div>
+        <div class="stat-desc">75% COD on Delivery</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">READY STOCK SLA</div>
+        <div class="stat-num">24-48 HOURS</div>
+        <div class="stat-desc">Dhaka Central Warehouse</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">DELIVERY REACH</div>
+        <div class="stat-num navy">64 DISTRICTS</div>
+        <div class="stat-desc">Steadfast & Pathao Courier</div>
+      </div>
+    </div>
+
+    <div class="section-title">2. Dual-Channel Platform Architecture: Web & Mobile</div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 25%;">Ecosystem Channel</th>
+          <th style="width: 25%;">Technology Stack</th>
+          <th style="width: 50%;">Primary Audience & Key Capabilities</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. Public Marketing Website & Web App Portal</strong></td>
+          <td>
+            • React 18 (Vite)<br>
+            • Tailwind CSS 3.4<br>
+            • Lucide React Icons<br>
+            • Canvas Confetti<br>
+            • SSR / PWA Optimization
+          </td>
+          <td>
+            <strong>Discovery, Customer Onboarding & Web Access</strong>
+            <ul class="table-list">
+              <li>SEO-optimized public campaign showcase & foreign sourcing country highlights.</li>
+              <li>Intelligent link parser: auto-detects Amazon ASIN, Noon, Nike, and Sephora products.</li>
+              <li>Full 5-step Pre-Order Wizard with EPS checkout sheet & instant advance payment.</li>
+              <li>24&ndash;48h Ready Stock Catalog with 2-column mobile grid and 1-tap cart drawer.</li>
+              <li>Customer trust center, 9-stage live milestone tracker, and 24/7 support chat.</li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>2. Native Mobile & Overseas Agent Station</strong></td>
+          <td>
+            • Mobile Touch React PWA<br>
+            • Multi-Currency Engine<br>
+            • Local Currency (INR, AED, THB)<br>
+            • Android, iOS & Windows
+          </td>
+          <td>
+            <strong>Procurement Execution & Hub Consolidation</strong>
+            <ul class="table-list">
+              <li>Mobile-first performance with 5-tab thumb navigation bar & role switcher.</li>
+              <li>Tri-Country Station Switcher: India (Delhi), Dubai (Al Karama), Thailand (Bangkok).</li>
+              <li>Working capital wallet with live foreign exchange conversion to BDT.</li>
+              <li>Store invoice entry, photo receipt voucher upload, and air freight consolidation.</li>
+            </ul>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-footer centered">
+    <span>Confidential & Proprietary | WrikMart Global Logistics & E-Commerce Ltd.</span>
+  </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- PAGE 2                                                    -->
+<!-- ========================================================= -->
+<div class="page">
+  <div>
+    <div class="subpage-header">
+      <span class="left">WRIKMART COMMERCE PLATFORM</span>
+      <span class="right">Website & Mobile Ecosystem Proposal | Pre-Order Sourcing</span>
+    </div>
+
+    <table class="data-table" style="margin-top: 0;">
+      <thead>
+        <tr>
+          <th style="width: 25%;">Ecosystem Channel</th>
+          <th style="width: 25%;">Technology Stack</th>
+          <th style="width: 50%;">Primary Audience & Key Capabilities</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>3. Central REST Backend & Database Engine</strong></td>
+          <td>
+            • <strong>FastAPI (Python 3.11+)</strong><br>
+            • <strong>PostgreSQL & SQLAlchemy</strong><br>
+            • <strong>Redis & Celery Workers</strong><br>
+            • <strong>Dockerized Deployment</strong>
+          </td>
+          <td>
+            <strong>Unified Single Source of Truth (SSOT)</strong>
+            <ul class="table-list">
+              <li>JWT authentication, role-based access control (RBAC), and audit trails.</li>
+              <li>EPS Payment Gateway IPN webhook processing & automatic settlement.</li>
+              <li>Atomic non-overlapping order allocation & automated courier consignment generation.</li>
+              <li>Asynchronous web scrapers for real-time Amazon, Noon, and currency rate updates.</li>
+              <li>Multi-currency ledger for overseas agent working capital replenishment.</li>
+            </ul>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-title">3. Detailed Features: Web Platform vs. Mobile Application</div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 20%;">Feature Domain</th>
+          <th style="width: 40%;">Web Platform (React 18)</th>
+          <th style="width: 40%;">Mobile Application / Agent Station</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Landing & Discovery</strong></td>
+          <td>Rich SEO marketing site, hero product paste bar, country sourcing highlight cards, project stats, and trust pillars.</td>
+          <td>Branded splash onboarding, touch-friendly product carousel, swipeable country cards, and quick bookmarking.</td>
+        </tr>
+        <tr>
+          <td><strong>Link Parser & Pre-Order Matrix</strong></td>
+          <td>Full-screen interactive 5-step Pre-Order Wizard with auto-detected product titles, platform badges, and estimated prices.</td>
+          <td>Touch-optimized compact progress bar, 3-column country selection grid, and responsive specifications input.</td>
+        </tr>
+        <tr>
+          <td><strong>Customer KYC & Delivery Engine</strong></td>
+          <td>Web recipient address form, Bangladeshi district selector (Dhaka vs. Outside Dhaka), and delivery remarks.</td>
+          <td>Auto-filled recipient details, mobile phone number validation, and birthday discount voucher assignment.</td>
+        </tr>
+        <tr>
+          <td><strong>Checkout & Payment</strong></td>
+          <td>EPS PSO Payment Gateway popover (bKash, Nagad, Cards, Net Banking) + 25% advance calculation breakdown.</td>
+          <td>Native EPS checkout sheet + Cash On Delivery (COD) 75% balance collection option upon physical inspection.</td>
+        </tr>
+        <tr>
+          <td><strong>Order Tracking & Milestone History</strong></td>
+          <td>Detailed balance overview, 9-stage visual delivery timeline, courier tracking IDs, and digital invoice view.</td>
+          <td>Live shipment tracking cards, order progression bar, courier dispatch alert, and instant WhatsApp support channel.</td>
+        </tr>
+        <tr>
+          <td><strong>Admin & Agent Operations</strong></td>
+          <td>Responsive web admin portal for analytics, customer management, inventory controls, and financial exports.</td>
+          <td>Mobile Agent Purchase update modal, photo receipt uploader, damage reporting, and 1-tap hub delivery handover.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-footer">
+    <span>Confidential - For Client Use Only</span>
+    <span>Page 2 of 4</span>
+  </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- PAGE 3                                                    -->
+<!-- ========================================================= -->
+<div class="page">
+  <div>
+    <div class="subpage-header">
+      <span class="left">WRIKMART COMMERCE PLATFORM</span>
+      <span class="right">Website & Mobile Ecosystem Proposal | Pre-Order Sourcing</span>
+    </div>
+
+    <div class="section-title" style="margin-top: 0;">4. Payment Integration & Banking Architecture</div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 25%;">Channel</th>
+          <th style="width: 38%;">Supported Payment Methods</th>
+          <th style="width: 37%;">Settlement & Lot Assignment</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong>Mode 1: EPS Payment Gateway<br>(Easy Payment System)</strong>
+          </td>
+          <td>
+            • Mobile Wallets: bKash, Nagad, DBBL Rocket<br>
+            • Cards: Visa, Mastercard, DBBL Nexus<br>
+            • Internet Banking: City Touch, BRAC Astha, IBBL Cellfin
+          </td>
+          <td>
+            <strong>Instant Automated Settlement</strong><br>
+            Immediate IPN callback, automatic pre-order confirmation, and instant assignment to overseas sourcing agent queue.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Mode 2: Doorstep COD Handover<br>(Cash on Delivery)</strong>
+          </td>
+          <td>
+            • Cash on physical doorstep delivery<br>
+            • Courier rider digital MFS QR payment (bKash / Nagad)<br>
+            • Partner Couriers: Steadfast Courier, Pathao
+          </td>
+          <td>
+            <strong>Admin Reconciliation Queue</strong><br>
+            Customer physically inspects parcel seal; courier collects remaining 75% due; automated API reconciles payout into HQ.
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Mode 3: Overseas Agent Working<br>Capital Remittance</strong>
+          </td>
+          <td>
+            • Corporate Bank Wire (Telegraphic Transfer)<br>
+            • Regulated Exchange Rates:<br>
+            &nbsp;&nbsp;INR @ 1.43, AED @ 32.50, THB @ 3.55
+          </td>
+          <td>
+            <strong>Dual-Approval Treasury Wallet</strong><br>
+            Admin approves funds; agent wallet credited in local currency; agent uploads official store VAT purchase receipts.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-title">5. Deployment Architecture & Implementation Roadmap</div>
+    <p style="text-align: justify; margin-bottom: 8px;">
+      The WrikMart ecosystem is architected for seamless multi-cloud or Docker container hosting with robust continuous deployment pipelines:
+    </p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 25%;">Component</th>
+          <th style="width: 25%;">Deployment Target</th>
+          <th style="width: 50%;">Production Hosting Method</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>React.js Web Portal</strong></td>
+          <td>wrikmart.com (Port 3004)</td>
+          <td>Docker container / Nginx Reverse Proxy with gzip compression and SSL certificates.</td>
+        </tr>
+        <tr>
+          <td><strong>Overseas Agent Station (PWA)</strong></td>
+          <td>Mobile Web / PWA</td>
+          <td>Touch-optimized responsive web application with offline wallet caching.</td>
+        </tr>
+        <tr>
+          <td><strong>FastAPI REST Backend</strong></td>
+          <td>api.wrikmart.com (Port 9004)</td>
+          <td>Docker container / Python ASGI server (Uvicorn + Gunicorn) with PostgreSQL.</td>
+        </tr>
+        <tr>
+          <td><strong>PostgreSQL Database Engine</strong></td>
+          <td>Port 5436 / Internal</td>
+          <td>PostgreSQL 16 Alpine container with persistent storage volumes and automated daily backups.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-footer">
+    <span>Confidential - For Client Use Only</span>
+    <span>Page 3 of 4</span>
+  </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- PAGE 4                                                    -->
+<!-- ========================================================= -->
+<div class="page">
+  <div>
+    <div class="subpage-header">
+      <span class="left">WRIKMART COMMERCE PLATFORM</span>
+      <span class="right">Website & Mobile Ecosystem Proposal | Pre-Order Sourcing</span>
+    </div>
+
+    <table class="data-table" style="margin-top: 0;">
+      <thead>
+        <tr>
+          <th style="width: 22%;">Milestone</th>
+          <th style="width: 58%;">Scope & Deliverables</th>
+          <th style="width: 20%; text-align: center;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Phase 1: Architecture & UI</strong></td>
+          <td>React 18 web app + responsive mobile core with dual-role navigation.</td>
+          <td style="text-align: center;"><span class="status-badge-completed">COMPLETED</span></td>
+        </tr>
+        <tr>
+          <td><strong>Phase 2: Link Parser & Catalog</strong></td>
+          <td>Intelligent multi-store link parser, 5-step Pre-Order Wizard, Ready Stock grid.</td>
+          <td style="text-align: center;"><span class="status-badge-completed">COMPLETED</span></td>
+        </tr>
+        <tr>
+          <td><strong>Phase 3: Payments & Admin</strong></td>
+          <td>EPS Gateway checkout sheet, 25% advance collection, Admin order management.</td>
+          <td style="text-align: center;"><span class="status-badge-completed">COMPLETED</span></td>
+        </tr>
+        <tr>
+          <td><strong>Phase 4: Agent Stations & Wallets</strong></td>
+          <td>3 overseas foreign hub stations, multi-currency ledger, store receipt upload.</td>
+          <td style="text-align: center;"><span class="status-badge-completed">COMPLETED</span></td>
+        </tr>
+        <tr>
+          <td><strong>Phase 5: Production Launch</strong></td>
+          <td>Website deployment, FastAPI backend integration, live EPS merchant activation.</td>
+          <td style="text-align: center;"><span class="status-badge-launch">READY FOR LAUNCH</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="section-title">6. Proposal Acceptance & Sign-off</div>
+    <p style="text-align: justify; margin-bottom: 14px;">
+      By signing below, the client authorizes final production rollout, EPS payment gateway live merchant activation, and deployment of both the **WrikMart Website** and **Overseas Agent & Backend Ecosystem**.
+    </p>
+
+    <div class="sign-grid">
+      <div class="sign-col">
+        <div class="sign-for">For Client:</div>
+        <div class="sign-org">WrikMart Global Logistics & E-Commerce Ltd.</div>
+        <div class="sign-line">Authorized Signatory</div>
+        <div class="sign-meta">
+          <strong>Name:</strong> ____________________________________<br>
+          <strong>Title:</strong> Managing Director / Sponsor<br>
+          <strong>Date:</strong> ____ / ____ / 2026
+        </div>
+      </div>
+
+      <div class="sign-col">
+        <div class="sign-for">For Engineering & Delivery Partner:</div>
+        <div class="sign-org">Solutions Architecture Team</div>
+        <div class="sign-line">Authorized Signatory</div>
+        <div class="sign-meta">
+          <strong>Name:</strong> Lead Systems Architect<br>
+          <strong>Title:</strong> Principal Solutions Architect<br>
+          <strong>Date:</strong> September 17, 2026
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>Confidential - For Client Use Only</span>
+    <span>Page 4 of 4</span>
+  </div>
+</div>
+
+<div class="no-print" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+  <button onclick="window.print()" style="background: #0052cc; color: white; border: none; padding: 12px 22px; font-size: 13px; font-weight: bold; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); cursor: pointer;">
+    Print / Save as PDF (A4)
+  </button>
+</div>
+
+</body>
+</html>
