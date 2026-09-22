@@ -35,7 +35,7 @@ export const EpsPaymentReturn = ({ status }) => {
       if (status === "success") {
         let pendingData = null;
         try {
-          const raw = sessionStorage.getItem("eps_pending_order");
+          const raw = sessionStorage.getItem("eps_pending_order") || localStorage.getItem("wrikmart_pending_order");
           if (raw) pendingData = JSON.parse(raw);
         } catch (e) { console.error("Failed to parse eps_pending_order", e); }
 
@@ -50,10 +50,10 @@ export const EpsPaymentReturn = ({ status }) => {
         let verified = false;
         try {
           const epsData = await verifyEpsTransaction(trxId);
-          const s = String(epsData?.TransactionStatus || epsData?.status || "").toLowerCase();
+          const s = String(epsData?.Status || epsData?.TransactionStatus || epsData?.status || "").toLowerCase();
           verified = s.includes("success") || s === "1" || epsData?.TransactionStatusId === 1;
         } catch (err) {
-          // Sandbox/network limitation — trust the redirect itself as success signal
+          // Sandbox/network limitation â€” trust the redirect itself as success signal
           console.warn("EPS verify failed (treating success redirect as confirmed):", err.message);
           verified = true;
         }
@@ -93,6 +93,7 @@ export const EpsPaymentReturn = ({ status }) => {
             });
           }
           sessionStorage.removeItem("eps_pending_order");
+          localStorage.removeItem("wrikmart_pending_order");
           setConfirmedOrder(order);
           setPhase("success");
           try { confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } }); } catch (_) {}

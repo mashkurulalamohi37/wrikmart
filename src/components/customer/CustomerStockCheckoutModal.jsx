@@ -3,7 +3,8 @@ import { useApp } from '../../context/AppContext';
 import confetti from 'canvas-confetti';
 import {
   createEpsPaymentSession,
-  generateEpsTransactionId
+  generateEpsTransactionId,
+  verifyEpsTransaction
 } from '../../utils/epsPaymentService';
 import { 
   X, 
@@ -14,17 +15,19 @@ import {
   ArrowRight, 
   ShoppingBag, 
   Printer, 
-  ExternalLink,
-  Lock,
-  Clock,
-  Sparkles,
-  RotateCcw,
-  Check,
-  Cake,
-  Tag,
-  Copy,
-  HelpCircle,
-  AlertCircle
+  ExternalLink, 
+  Lock, 
+  Clock, 
+  Sparkles, 
+  RotateCcw, 
+  Check, 
+  Cake, 
+  Tag, 
+  Copy, 
+  HelpCircle, 
+  AlertCircle,
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 import { BKashLogo, NagadLogo, VisaLogo, MastercardLogo } from '../common/PaymentLogos';
 
@@ -67,6 +70,10 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
   const [isEpsRedirecting, setIsEpsRedirecting] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
   const [couponInput, setCouponInput] = useState('');
+  const [epsActiveSession, setEpsActiveSession] = useState(null);
+  const [epsVerificationStatus, setEpsVerificationStatus] = useState('waiting');
+  const [epsErrorMessage, setEpsErrorMessage] = useState('');
+  const [isCheckingEps, setIsCheckingEps] = useState(false);
 
   // CRITICAL: Always reset confirmedOrder and submission state when modal opens
   // This guarantees fresh checkout form is displayed and prevents getting stuck on "Order Confirmed"
@@ -75,6 +82,10 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
       setConfirmedOrder(null);
       setIsSubmitting(false);
       setIsEpsRedirecting(false);
+      setEpsActiveSession(null);
+      setEpsVerificationStatus('waiting');
+      setEpsErrorMessage('');
+      setIsCheckingEps(false);
     }
   }, [isOpen]);
 
@@ -205,13 +216,11 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
       return;
     }
 
-    // ── EPS Payment Gateway — Real Redirect Flow ──────────────────────────
+    // ── EPS Payment Gateway — Real-Time Verified Flow ──────────────────────────
     setIsEpsRedirecting(true);
     try {
       const merchantTransactionId = generateEpsTransactionId();
 
-      // Save all order data to sessionStorage BEFORE redirect
-      // (browser will lose React state when navigating away)
       const pendingOrder = {
         type: 'stock',
         merchantTransactionId,
@@ -225,6 +234,7 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
         grandTotal
       };
       sessionStorage.setItem('eps_pending_order', JSON.stringify(pendingOrder));
+      localStorage.setItem('wrikmart_pending_order', JSON.stringify(pendingOrder));
 
       // Call EPS API to initialize a payment session
       const session = await createEpsPaymentSession({
@@ -245,10 +255,21 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
         throw new Error('EPS did not return a redirect URL. Please try again.');
       }
 
-      if (showToast) showToast('Redirecting to EPS Payment Gateway...', 'info');
+      // Open EPS payment page in a secure focused popup window
+      const popup = window.open(session.redirectUrl, 'EPS_Payment_Window', 'width=520,height=760,top=80,left=80');
 
-      // Redirect browser to EPS hosted payment page
-      window.location.href = session.redirectUrl;
+      setEpsActiveSession({
+        merchantTransactionId,
+        totalAmount: grandTotal,
+        redirectUrl: session.redirectUrl,
+        pendingOrder,
+        popupWindow: popup
+      });
+      setEpsVerificationStatus('waiting');
+      setEpsErrorMessage('');
+      setIsEpsRedirecting(false);
+
+      if (showToast) showToast('EPS payment window opened. Please complete your payment.', 'info');
 
     } catch (err) {
       console.error('EPS payment initialization failed:', err);
@@ -259,6 +280,103 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
         'error'
       );
     }
+  };
+
+  const finalizeEpsStockOrder = (pending, trxId) => {
+    try {
+      const order = createCustomerStockOrder({
+        customerInfo: pending.customerInfo,
+        items: pending.items,
+        deliveryMethod: pending.deliveryMethod,
+        deliveryFee: pending.deliveryFee,
+        paymentMethod: 'EPS Payment Gateway',
+        epsStoreId: pending.epsStoreId,
+        transactionId: trxId,
+        subtotal: pending.subtotal,
+        discountAmount: pending.discountAmount,
+        grandTotal: pending.grandTotal,
+        advancePaid: pending.grandTotal,
+        paymentStatus: 'Fully Paid'
+      });
+      sessionStorage.removeItem('eps_pending_order');
+      localStorage.removeItem('wrikmart_pending_order');
+      setEpsActiveSession(null);
+      setConfirmedOrder(order);
+      setIsEpsRedirecting(false);
+      try { confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } }); } catch (_) {}
+      if (clearCart) clearCart();
+      if (onOrderPlaced) onOrderPlaced(order);
+      if (showToast) showToast('Payment verified successfully! Order placed.', 'success');
+    } catch (err) {
+      console.error('Error finalizing order:', err);
+      if (showToast) showToast('Error saving order. Contact support with Trx: ' + trxId, 'error');
+    }
+  };
+
+  // Real-time EPS polling effect
+  useEffect(() => {
+    if (!epsActiveSession || confirmedOrder || epsVerificationStatus === 'failed') return;
+    let isCancelled = false;
+
+    const intervalId = setInterval(async () => {
+      try {
+        const epsData = await verifyEpsTransaction(epsActiveSession.merchantTransactionId, epsSettings);
+        const statusStr = String(epsData?.Status || epsData?.TransactionStatus || epsData?.status || '').toLowerCase();
+
+        if (statusStr.includes('success') || statusStr === '1' || epsData?.TransactionStatusId === 1) {
+          if (isCancelled) return;
+          clearInterval(intervalId);
+          if (epsActiveSession.popupWindow && !epsActiveSession.popupWindow.closed) {
+            try { epsActiveSession.popupWindow.close(); } catch (_) {}
+          }
+          finalizeEpsStockOrder(epsActiveSession.pendingOrder, epsActiveSession.merchantTransactionId);
+        } else if (statusStr.includes('fail') || statusStr.includes('cancel')) {
+          if (isCancelled) return;
+          setEpsVerificationStatus('failed');
+          setEpsErrorMessage(epsData?.ErrorMessage || 'Transaction was cancelled or failed in gateway.');
+        }
+      } catch (err) {
+        console.warn('EPS polling check error:', err.message);
+      }
+    }, 3500);
+
+    return () => {
+      isCancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [epsActiveSession, confirmedOrder, epsVerificationStatus]);
+
+  const handleManualEpsVerify = async () => {
+    if (!epsActiveSession) return;
+    setIsCheckingEps(true);
+    try {
+      const epsData = await verifyEpsTransaction(epsActiveSession.merchantTransactionId, epsSettings);
+      const statusStr = String(epsData?.Status || epsData?.TransactionStatus || epsData?.status || '').toLowerCase();
+
+      if (statusStr.includes('success') || statusStr === '1' || epsData?.TransactionStatusId === 1) {
+        if (epsActiveSession.popupWindow && !epsActiveSession.popupWindow.closed) {
+          try { epsActiveSession.popupWindow.close(); } catch (_) {}
+        }
+        finalizeEpsStockOrder(epsActiveSession.pendingOrder, epsActiveSession.merchantTransactionId);
+      } else if (statusStr.includes('fail') || statusStr.includes('cancel')) {
+        setEpsVerificationStatus('failed');
+        setEpsErrorMessage(epsData?.ErrorMessage || 'Payment failed or cancelled.');
+        if (showToast) showToast('Payment was not completed in gateway.', 'warning');
+      } else {
+        if (showToast) showToast('Payment is still pending in EPS gateway. Please complete payment in the gateway window.', 'info');
+      }
+    } catch (err) {
+      if (showToast) showToast(`Verification check: ${err.message}`, 'error');
+    } finally {
+      setIsCheckingEps(false);
+    }
+  };
+
+  const reopenPaymentWindow = () => {
+    if (!epsActiveSession?.redirectUrl) return;
+    const popup = window.open(epsActiveSession.redirectUrl, 'EPS_Payment_Window', 'width=520,height=760,top=80,left=80');
+    setEpsActiveSession(prev => prev ? ({ ...prev, popupWindow: popup }) : null);
+    setEpsVerificationStatus('waiting');
   };
 
   return (
@@ -273,12 +391,18 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
             </div>
             <div>
               <h2 className="font-extrabold text-base sm:text-lg text-navy-900">
-                {confirmedOrder ? 'Order Confirmed!' : 'Ready Stock Checkout'}
+                {confirmedOrder 
+                  ? 'Order Confirmed!' 
+                  : epsActiveSession 
+                    ? 'Payment Verification' 
+                    : 'Ready Stock Checkout'}
               </h2>
               <p className="text-xs text-slate-500">
                 {confirmedOrder 
                   ? 'Your order has been routed to Dhaka Tejgaon fulfillment hub' 
-                  : 'Fast doorstep delivery with official store warranty'}
+                  : epsActiveSession
+                    ? 'EPS Gateway session active — auto-verifying in real time'
+                    : 'Fast doorstep delivery with official store warranty'}
               </p>
             </div>
           </div>
@@ -386,6 +510,132 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
                   <span>Track This Order</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
+              </div>
+            </div>
+          ) : epsActiveSession ? (
+            /* ========================================================= */
+            /* 1.5. LIVE EPS PAYMENT VERIFICATION SCREEN */
+            /* ========================================================= */
+            <div className="space-y-6 text-center animate-fade-in py-3">
+              {epsVerificationStatus === 'failed' ? (
+                <div className="w-20 h-20 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-sm">
+                  <AlertCircle className="w-10 h-10 stroke-[2.5]" />
+                </div>
+              ) : (
+                <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
+                  <span className="absolute inset-0 rounded-full bg-emerald-400/20 animate-ping" />
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/25 relative z-10">
+                    <Loader2 className="w-10 h-10 animate-spin" />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5 max-w-md mx-auto">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <Lock className="w-3.5 h-3.5" />
+                  Official EPS Payment Gateway
+                </span>
+                <h3 className="text-2xl font-black text-navy-900">
+                  {epsVerificationStatus === 'failed' ? 'Payment Not Completed' : 'Awaiting Payment Confirmation'}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {epsVerificationStatus === 'failed'
+                    ? (epsErrorMessage || 'The payment was cancelled or failed in the EPS gateway.')
+                    : 'A secure EPS payment window has opened. Complete your payment using bKash, Nagad, or Card.'}
+                </p>
+              </div>
+
+              {/* Transaction & Amount Card */}
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 text-left space-y-4 max-w-lg mx-auto">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Payable Amount</span>
+                    <span className="font-mono font-black text-2xl text-emerald-600">৳{Number(epsActiveSession.totalAmount || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Gateway Status</span>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                      epsVerificationStatus === 'failed'
+                        ? 'bg-rose-100 text-rose-700'
+                        : 'bg-emerald-100 text-emerald-700'
+                    }`}>
+                      {epsVerificationStatus === 'failed' ? (
+                        <>● Cancelled / Failed</>
+                      ) : (
+                        <>
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          Auto-Verifying...
+                        </>
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-xs space-y-2">
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span className="text-slate-400 text-[11px]">Merchant Transaction ID:</span>
+                    <span className="font-mono font-bold text-navy-900 bg-white px-2 py-0.5 rounded border border-slate-200">{epsActiveSession.merchantTransactionId}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span className="text-slate-400 text-[11px]">Supported Channels:</span>
+                    <span className="font-semibold text-slate-700">bKash, Nagad, Rocket, Visa, Mastercard</span>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-white rounded-xl border border-emerald-100 flex items-center gap-2.5 text-xs text-slate-600">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <p className="text-[11px] leading-tight">
+                    This window will <strong>automatically confirm your order</strong> as soon as EPS confirms payment. You do not need to refresh.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-2.5 max-w-lg mx-auto pt-1">
+                <button
+                  type="button"
+                  disabled={isCheckingEps}
+                  onClick={handleManualEpsVerify}
+                  className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md shadow-emerald-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60"
+                >
+                  {isCheckingEps ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Checking with EPS Gateway...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>I Have Completed Payment — Verify Now</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    type="button"
+                    onClick={reopenPaymentWindow}
+                    className="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Re-open Payment Gateway Window</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (epsActiveSession?.popupWindow && !epsActiveSession.popupWindow.closed) {
+                        try { epsActiveSession.popupWindow.close(); } catch (_) {}
+                      }
+                      setEpsActiveSession(null);
+                      setEpsVerificationStatus('waiting');
+                      setEpsErrorMessage('');
+                    }}
+                    className="py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-500 font-semibold text-xs transition-colors cursor-pointer"
+                  >
+                    Cancel / Choose Other Method
+                  </button>
+                </div>
               </div>
             </div>
           ) : (

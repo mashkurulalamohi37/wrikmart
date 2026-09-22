@@ -3,7 +3,8 @@ import { useApp } from '../../context/AppContext';
 import confetti from 'canvas-confetti';
 import {
   createEpsPaymentSession,
-  generateEpsTransactionId
+  generateEpsTransactionId,
+  verifyEpsTransaction
 } from '../../utils/epsPaymentService';
 import { 
   ArrowLeft, 
@@ -27,7 +28,9 @@ import {
   MessageCircle,
   Calculator,
   Bot,
-  Zap
+  Zap,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { BKashLogo, NagadLogo, VisaLogo, MastercardLogo } from '../common/PaymentLogos';
 import { CountryFlag } from '../common/CountryFlag';
@@ -417,6 +420,10 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
   const [paymentMethod, setPaymentMethod] = useState('EPS');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
+  const [epsActiveSession, setEpsActiveSession] = useState(null);
+  const [epsVerificationStatus, setEpsVerificationStatus] = useState('waiting');
+  const [epsErrorMessage, setEpsErrorMessage] = useState('');
+  const [isCheckingEps, setIsCheckingEps] = useState(false);
 
   // Financial Calculations: 30% Advance Rule on Estimated Subtotal (Reactively supports currentItem during builder Step 2)
   const standardDelivery = Number(preOrderFormSettings?.courierDeliveryCharge ?? 200);
@@ -505,7 +512,98 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
     setItems(prev => prev.filter(it => it.id !== id));
   };
 
-  // Submit Payment & Create Confirmed Order via Official EPS Gateway
+  const finalizeEpsPreOrder = (pending, trxId) => {
+    try {
+      const order = createCustomerPreOrder({
+        country: pending.country,
+        items: pending.items,
+        customerInfo: pending.customerInfo,
+        paymentMethod: 'EPS Payment Gateway',
+        epsStoreId: pending.epsStoreId,
+        transactionId: trxId,
+        advancePaid: pending.advancePaid
+      });
+      sessionStorage.removeItem('eps_pending_order');
+      localStorage.removeItem('wrikmart_pending_order');
+      setEpsActiveSession(null);
+      setConfirmedOrder(order);
+      setIsProcessingPayment(false);
+      setStep(6);
+      try { confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } }); } catch (_) {}
+      if (showToast) showToast('Payment verified successfully! Pre-order confirmed.', 'success');
+    } catch (err) {
+      console.error('Error finalizing pre-order:', err);
+      if (showToast) showToast('Error saving order. Contact support with Trx: ' + trxId, 'error');
+    }
+  };
+
+  // Real-time EPS polling effect for pre-orders
+  useEffect(() => {
+    if (!epsActiveSession || confirmedOrder || epsVerificationStatus === 'failed') return;
+    let isCancelled = false;
+
+    const intervalId = setInterval(async () => {
+      try {
+        const epsData = await verifyEpsTransaction(epsActiveSession.merchantTransactionId, epsSettings);
+        const statusStr = String(epsData?.Status || epsData?.TransactionStatus || epsData?.status || '').toLowerCase();
+
+        if (statusStr.includes('success') || statusStr === '1' || epsData?.TransactionStatusId === 1) {
+          if (isCancelled) return;
+          clearInterval(intervalId);
+          if (epsActiveSession.popupWindow && !epsActiveSession.popupWindow.closed) {
+            try { epsActiveSession.popupWindow.close(); } catch (_) {}
+          }
+          finalizeEpsPreOrder(epsActiveSession.pendingOrder, epsActiveSession.merchantTransactionId);
+        } else if (statusStr.includes('fail') || statusStr.includes('cancel')) {
+          if (isCancelled) return;
+          setEpsVerificationStatus('failed');
+          setEpsErrorMessage(epsData?.ErrorMessage || 'Transaction was cancelled or failed in gateway.');
+        }
+      } catch (err) {
+        console.warn('EPS pre-order polling check error:', err.message);
+      }
+    }, 3500);
+
+    return () => {
+      isCancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [epsActiveSession, confirmedOrder, epsVerificationStatus]);
+
+  const handleManualEpsVerify = async () => {
+    if (!epsActiveSession) return;
+    setIsCheckingEps(true);
+    try {
+      const epsData = await verifyEpsTransaction(epsActiveSession.merchantTransactionId, epsSettings);
+      const statusStr = String(epsData?.Status || epsData?.TransactionStatus || epsData?.status || '').toLowerCase();
+
+      if (statusStr.includes('success') || statusStr === '1' || epsData?.TransactionStatusId === 1) {
+        if (epsActiveSession.popupWindow && !epsActiveSession.popupWindow.closed) {
+          try { epsActiveSession.popupWindow.close(); } catch (_) {}
+        }
+        finalizeEpsPreOrder(epsActiveSession.pendingOrder, epsActiveSession.merchantTransactionId);
+      } else if (statusStr.includes('fail') || statusStr.includes('cancel')) {
+        setEpsVerificationStatus('failed');
+        setEpsErrorMessage(epsData?.ErrorMessage || 'Payment failed or cancelled.');
+        if (showToast) showToast('Payment was not completed in gateway.', 'warning');
+      } else {
+        if (showToast) showToast('Payment is still pending in EPS gateway. Please complete payment in the gateway window.', 'info');
+      }
+    } catch (err) {
+      if (showToast) showToast(`Verification check: ${err.message}`, 'error');
+    } finally {
+      setIsCheckingEps(false);
+    }
+  };
+
+  const reopenPaymentWindow = () => {
+    if (!epsActiveSession?.redirectUrl) return;
+    const popup = window.open(epsActiveSession.redirectUrl, 'EPS_Payment_Window', 'width=520,height=760,top=80,left=80');
+    setEpsActiveSession(prev => prev ? ({ ...prev, popupWindow: popup }) : null);
+    setEpsVerificationStatus('waiting');
+  };
+
+  // Submit Payment & Open Real-Time EPS Verification Window
   const handleConfirmAndPay = async () => {
     if (!customerInfo.name.trim() || !customerInfo.phone.trim() || !customerInfo.address.trim()) {
       if (showToast) showToast('Please provide your name, phone number, and delivery address in Step 4.', 'warning');
@@ -519,7 +617,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
     try {
       const merchantTransactionId = generateEpsTransactionId();
 
-      // Save pending order data to sessionStorage before redirect
+      // Save pending order data to sessionStorage and localStorage before gateway session
       const pendingOrder = {
         type: 'preorder',
         merchantTransactionId,
@@ -530,6 +628,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
         advancePaid: advanceRequired
       };
       sessionStorage.setItem('eps_pending_order', JSON.stringify(pendingOrder));
+      localStorage.setItem('wrikmart_pending_order', JSON.stringify(pendingOrder));
 
       // Call EPS API to initialize payment session
       const session = await createEpsPaymentSession({
@@ -551,13 +650,27 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
         throw new Error('EPS did not return a redirect URL. Please try again.');
       }
 
-      if (showToast) showToast('Redirecting to EPS Payment Gateway...', 'info');
-      window.location.href = session.redirectUrl;
+      // Open EPS payment page in a secure focused popup window
+      const popup = window.open(session.redirectUrl, 'EPS_Payment_Window', 'width=520,height=760,top=80,left=80');
+
+      setEpsActiveSession({
+        merchantTransactionId,
+        totalAmount: advanceRequired,
+        redirectUrl: session.redirectUrl,
+        pendingOrder,
+        popupWindow: popup
+      });
+      setEpsVerificationStatus('waiting');
+      setEpsErrorMessage('');
+      setIsProcessingPayment(false);
+
+      if (showToast) showToast('EPS payment window opened. Please complete your payment.', 'info');
 
     } catch (err) {
       console.error('EPS pre-order payment initialization failed:', err);
       setIsProcessingPayment(false);
       sessionStorage.removeItem('eps_pending_order');
+      localStorage.removeItem('wrikmart_pending_order');
       if (showToast) showToast(
         `EPS Gateway Error: ${err.message || 'Could not connect to EPS. Please try again or contact support.'}`,
         'error'
@@ -1301,101 +1414,226 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
 
             {/* STEP 5: Payment Gateway - Official Certified EPS Gateway */}
             {step === 5 && (
-              <div className="space-y-6">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="block text-xs font-bold text-navy-900">Official Payment Gateway</label>
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                      ⚡ Instant Auto-Verification
+              epsActiveSession ? (
+                <div className="space-y-6 text-center animate-fade-in py-2">
+                  {epsVerificationStatus === 'failed' ? (
+                    <div className="w-20 h-20 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-sm">
+                      <AlertCircle className="w-10 h-10 stroke-[2.5]" />
+                    </div>
+                  ) : (
+                    <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
+                      <span className="absolute inset-0 rounded-full bg-emerald-400/20 animate-ping" />
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/25 relative z-10">
+                        <Loader2 className="w-10 h-10 animate-spin" />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5 max-w-md mx-auto">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <Lock className="w-3.5 h-3.5" />
+                      Official EPS Gateway Checkout
                     </span>
+                    <h3 className="text-2xl font-black text-navy-900">
+                      {epsVerificationStatus === 'failed' ? 'Payment Not Completed' : 'Awaiting 30% Advance Payment'}
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      {epsVerificationStatus === 'failed'
+                        ? (epsErrorMessage || 'The payment was cancelled or failed in the EPS gateway.')
+                        : 'A secure EPS payment window has opened. Complete your payment using bKash, Nagad, or Card.'}
+                    </p>
                   </div>
 
-                  {/* Certified EPS Payment Gateway Hero Box */}
-                  <div className="p-5 rounded-2xl border-2 border-emerald-500 bg-gradient-to-b from-emerald-50/90 to-white shadow-soft space-y-4">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white rounded-xl border border-emerald-200 shadow-2xs">
-                          <img src="/eps/Group 93.png" alt="EPS Gateway" className="h-8 w-auto object-contain" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-extrabold text-sm text-emerald-950">EPS Payment Gateway</h4>
-                            <span className="px-2 py-0.2 bg-emerald-600 text-white text-[8px] font-black rounded-full uppercase tracking-wider">
-                              Official Gateway
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-600">
-                            Single secure checkout engine for all Cards, MFS & Internet Banking
-                          </p>
-                        </div>
+                  {/* Transaction & Amount Card */}
+                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 text-left space-y-4 max-w-lg mx-auto">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">30% Advance Amount</span>
+                        <span className="font-mono font-black text-2xl text-emerald-600">৳{Number(epsActiveSession.totalAmount || 0).toLocaleString()}</span>
                       </div>
-
-                      <div className="text-left sm:text-right">
-                        <span className="text-[10px] font-bold text-emerald-800 bg-white px-2.5 py-1 rounded-lg border border-emerald-300 block">
-                          🔒 Bank & MFS Protected
+                      <div className="text-right">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Status</span>
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          epsVerificationStatus === 'failed'
+                            ? 'bg-rose-100 text-rose-700'
+                            : 'bg-emerald-100 text-emerald-700'
+                        }`}>
+                          {epsVerificationStatus === 'failed' ? (
+                            <>● Cancelled / Failed</>
+                          ) : (
+                            <>
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                              Auto-Verifying...
+                            </>
+                          )}
                         </span>
                       </div>
                     </div>
 
-                    <p className="text-[11px] text-slate-600 leading-relaxed">
-                      Pay securely with <strong>Visa, Mastercard, bKash, Nagad, Rocket, Upay</strong> or Internet Banking via the official EPS Payment Gateway.
-                    </p>
-
-                    <div className="p-2.5 rounded-xl border border-emerald-200/80 bg-white shadow-2xs">
-                      <img 
-                        src="/eps/Group 106.png" 
-                        alt="Supported EPS Payment Channels" 
-                        className="w-full h-auto object-contain rounded-lg max-h-11 mx-auto"
-                      />
-                    </div>
-
-                    <div className="p-3 bg-white rounded-xl border border-emerald-100 flex items-center justify-between text-xs text-slate-600">
-                      <div className="flex items-center gap-2">
-                        <Lock className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                        <span className="font-semibold text-slate-700">Bangladesh Bank Certified EPS Gateway (PSO)</span>
+                    <div className="text-xs space-y-2">
+                      <div className="flex justify-between items-center text-slate-600">
+                        <span className="text-slate-400 text-[11px]">Merchant Transaction ID:</span>
+                        <span className="font-mono font-bold text-navy-900 bg-white px-2 py-0.5 rounded border border-slate-200">{epsActiveSession.merchantTransactionId}</span>
                       </div>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-mono">
-                        SSL-256-BIT
-                      </span>
+                      <div className="flex justify-between items-center text-slate-600">
+                        <span className="text-slate-400 text-[11px]">Supported Channels:</span>
+                        <span className="font-semibold text-slate-700">bKash, Nagad, Rocket, Visa, Mastercard</span>
+                      </div>
                     </div>
 
-                    <div className="p-3 bg-white rounded-xl border border-emerald-100 flex items-center gap-2.5">
-                      <ExternalLink className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                      <p className="text-[11px] text-slate-700 leading-snug">
-                        Clicking <strong>"Pay 30% Advance via EPS Gateway"</strong> will open the secure EPS payment page. Complete payment and you'll be returned automatically.
+                    <div className="p-3 bg-white rounded-xl border border-emerald-100 flex items-center gap-2.5 text-xs text-slate-600">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                      <p className="text-[11px] leading-tight">
+                        This window will <strong>automatically confirm your pre-order</strong> as soon as EPS confirms payment. You do not need to refresh.
                       </p>
                     </div>
                   </div>
-                </div>
 
-                {/* 30% Advance Guarantee Box */}
-                <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 text-xs text-emerald-900 flex items-center gap-3">
-                  <ShieldCheck className="w-6 h-6 text-emerald-600 flex-shrink-0" />
-                  <p className="leading-snug">
-                    <strong>100% Secure Purchase Guarantee:</strong> You only pay <strong>30% advance (৳{advanceRequired.toLocaleString()})</strong> now. The remaining due is collected upon physical doorstep delivery.
-                  </p>
-                </div>
+                  {/* Action Buttons */}
+                  <div className="space-y-2.5 max-w-lg mx-auto pt-1">
+                    <button
+                      type="button"
+                      disabled={isCheckingEps}
+                      onClick={handleManualEpsVerify}
+                      className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md shadow-emerald-600/25 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60"
+                    >
+                      {isCheckingEps ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Checking with EPS Gateway...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>I Have Completed Payment — Verify Now</span>
+                        </>
+                      )}
+                    </button>
 
-                <button
-                  type="button"
-                  disabled={isProcessingPayment}
-                  onClick={handleConfirmAndPay}
-                  className="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-4 px-4 rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 text-sm cursor-pointer disabled:opacity-50"
-                >
-                  {isProcessingPayment ? (
-                    <span className="inline-flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      <span>Connecting to Official EPS Gateway...</span>
-                    </span>
-                  ) : (
-                    <>
-                      <Lock className="w-4 h-4" />
-                      <span>Pay 30% Advance ৳{advanceRequired.toLocaleString()} via EPS Gateway</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              </div>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button
+                        type="button"
+                        onClick={reopenPaymentWindow}
+                        className="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Re-open Payment Gateway Window</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (epsActiveSession?.popupWindow && !epsActiveSession.popupWindow.closed) {
+                            try { epsActiveSession.popupWindow.close(); } catch (_) {}
+                          }
+                          setEpsActiveSession(null);
+                          setEpsVerificationStatus('waiting');
+                          setEpsErrorMessage('');
+                        }}
+                        className="py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-500 font-semibold text-xs transition-colors cursor-pointer"
+                      >
+                        Cancel & Return
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-xs font-bold text-navy-900">Official Payment Gateway</label>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                        ⚡ Instant Auto-Verification
+                      </span>
+                    </div>
+
+                    {/* Certified EPS Payment Gateway Hero Box */}
+                    <div className="p-5 rounded-2xl border-2 border-emerald-500 bg-gradient-to-b from-emerald-50/90 to-white shadow-soft space-y-4">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-white rounded-xl border border-emerald-200 shadow-2xs">
+                            <img src="/eps/Group 93.png" alt="EPS Gateway" className="h-8 w-auto object-contain" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-extrabold text-sm text-emerald-950">EPS Payment Gateway</h4>
+                              <span className="px-2 py-0.2 bg-emerald-600 text-white text-[8px] font-black rounded-full uppercase tracking-wider">
+                                Official Gateway
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-600">
+                              Single secure checkout engine for all Cards, MFS & Internet Banking
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-left sm:text-right">
+                          <span className="text-[10px] font-bold text-emerald-800 bg-white px-2.5 py-1 rounded-lg border border-emerald-300 block">
+                            🔒 Bank & MFS Protected
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="text-[11px] text-slate-600 leading-relaxed">
+                        Pay securely with <strong>Visa, Mastercard, bKash, Nagad, Rocket, Upay</strong> or Internet Banking via the official EPS Payment Gateway.
+                      </p>
+
+                      <div className="p-2.5 rounded-xl border border-emerald-200/80 bg-white shadow-2xs">
+                        <img 
+                          src="/eps/Group 106.png" 
+                          alt="Supported EPS Payment Channels" 
+                          className="w-full h-auto object-contain rounded-lg max-h-11 mx-auto"
+                        />
+                      </div>
+
+                      <div className="p-3 bg-white rounded-xl border border-emerald-100 flex items-center justify-between text-xs text-slate-600">
+                        <div className="flex items-center gap-2">
+                          <Lock className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                          <span className="font-semibold text-slate-700">Bangladesh Bank Certified EPS Gateway (PSO)</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-mono">
+                          SSL-256-BIT
+                        </span>
+                      </div>
+
+                      <div className="p-3 bg-white rounded-xl border border-emerald-100 flex items-center gap-2.5">
+                        <ExternalLink className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                        <p className="text-[11px] text-slate-700 leading-snug">
+                          Clicking <strong>"Pay 30% Advance via EPS Gateway"</strong> will open the secure EPS payment page. Complete payment and you'll be returned automatically.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 30% Advance Guarantee Box */}
+                  <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 text-xs text-emerald-900 flex items-center gap-3">
+                    <ShieldCheck className="w-6 h-6 text-emerald-600 flex-shrink-0" />
+                    <p className="leading-snug">
+                      <strong>100% Secure Purchase Guarantee:</strong> You only pay <strong>30% advance (৳{advanceRequired.toLocaleString()})</strong> now. The remaining due is collected upon physical doorstep delivery.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={isProcessingPayment}
+                    onClick={handleConfirmAndPay}
+                    className="w-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold py-4 px-4 rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 text-sm cursor-pointer disabled:opacity-50"
+                  >
+                    {isProcessingPayment ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        <span>Connecting to Official EPS Gateway...</span>
+                      </span>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>Pay 30% Advance ৳{advanceRequired.toLocaleString()} via EPS Gateway</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              )
             )}
 
           </div>
