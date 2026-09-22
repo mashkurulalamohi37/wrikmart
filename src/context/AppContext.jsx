@@ -501,12 +501,9 @@ export const AppProvider = ({ children }) => {
       const saved = localStorage.getItem('wrikmart_eps_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Automatically migrate if cached values contain old sandbox demo credentials or broken dummy domains
-        if (parsed.registeredDomain?.includes('kriktoy.com') || parsed.registeredDomain?.includes('kririktoy.com')) {
-          delete parsed.registeredDomain;
-        }
-        if (parsed.sandboxRegisteredDomain?.includes('kriktoy.com') || parsed.sandboxRegisteredDomain?.includes('kririktoy.com')) {
-          delete parsed.sandboxRegisteredDomain;
+        // Automatically fix typo if cached values contain 'kriktoy.com' with single 'r'
+        if (parsed.registeredDomain?.includes('kriktoy.com') && !parsed.registeredDomain?.includes('kririktoy.com')) {
+          parsed.registeredDomain = 'https://kririktoy.com';
         }
         if (parsed.userName === 'xyz.eps@gmail.com' || parsed.storeId === 'f49c63f4-3c57-495c-ac00-b136093671d4') {
           safeLocalStorageSet('wrikmart_eps_settings', DEFAULT_EPS_CONFIG);
