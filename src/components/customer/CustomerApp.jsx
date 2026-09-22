@@ -26,7 +26,8 @@ import {
   Save,
   Calendar,
   KeyRound,
-  Lock
+  Lock,
+  Tag
 } from 'lucide-react';
 
 import { useApp } from '../../context/AppContext';
@@ -50,6 +51,7 @@ export const CustomerApp = () => {
     currentUser,
     currentRole,
     setCurrentRole,
+    clearanceSettings,
     showToast
   } = useApp();
   const activeTab = customerTab;
@@ -92,7 +94,7 @@ export const CustomerApp = () => {
             {/* Ready Stock Catalog Tab */}
             <button
               onClick={() => setActiveTab('stock')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all relative ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all relative ${
                 activeTab === 'stock'
                   ? 'bg-brand-500 text-white shadow-sm'
                   : 'text-slate-600 hover:text-navy-900 hover:bg-slate-100'
@@ -104,6 +106,24 @@ export const CustomerApp = () => {
                 24h BD
               </span>
             </button>
+
+            {/* Defect / Clearance Products Tab (Controlled by Admin Settings) */}
+            {(clearanceSettings?.enabled !== false) && (
+              <button
+                onClick={() => setActiveTab('clearance')}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all relative ${
+                  activeTab === 'clearance'
+                    ? 'bg-rose-600 text-white shadow-sm'
+                    : 'text-slate-600 hover:text-navy-900 hover:bg-slate-100'
+                }`}
+              >
+                <Tag className={`w-4 h-4 ${activeTab === 'clearance' ? 'text-white' : 'text-rose-500'}`} />
+                <span>Defect / Clearance</span>
+                <span className="px-1.5 py-0.2 rounded bg-rose-500 text-white font-black text-[9px] uppercase tracking-wide animate-pulse">
+                  {clearanceSettings?.badgeText || '70% OFF'}
+                </span>
+              </button>
+            )}
 
             <button
               onClick={() => setActiveTab('preorder')}
@@ -211,6 +231,22 @@ export const CustomerApp = () => {
 
           {activeTab === 'stock' && (
             <CustomerStockCatalog 
+              onOpenCheckout={() => {
+                if (!currentUser) {
+                  if (showToast) showToast('Please create an account or sign in to proceed with your purchase.', 'warning');
+                  if (setAuthModalMode) setAuthModalMode('register');
+                  if (setIsAuthModalOpen) setIsAuthModalOpen(true);
+                  return;
+                }
+                setIsCheckoutOpen(true);
+              }}
+              onStartPreOrder={() => setActiveTab('preorder')} 
+            />
+          )}
+
+          {activeTab === 'clearance' && (
+            <CustomerStockCatalog 
+              initialCategory="Clearance"
               onOpenCheckout={() => {
                 if (!currentUser) {
                   if (showToast) showToast('Please create an account or sign in to proceed with your purchase.', 'warning');
@@ -690,7 +726,7 @@ export const CustomerApp = () => {
           {/* 2. Ready Stock */}
           <button
             onClick={() => setActiveTab('stock')}
-            className={`flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition-all min-w-[54px] active:scale-95 relative ${
+            className={`flex flex-col items-center gap-0.5 py-1 px-1.5 rounded-xl text-[10px] font-bold transition-all min-w-[48px] active:scale-95 relative ${
               activeTab === 'stock' ? 'text-brand-600 font-extrabold' : 'text-slate-400 hover:text-slate-600'
             }`}
           >
@@ -703,6 +739,25 @@ export const CustomerApp = () => {
             <span>Stock</span>
             {activeTab === 'stock' && <span className="w-1.5 h-1 rounded-full bg-brand-600 -mt-0.5"></span>}
           </button>
+
+          {/* 2.5 Defect & Clearance (Controlled by Admin Settings) */}
+          {(clearanceSettings?.enabled !== false) && (
+            <button
+              onClick={() => setActiveTab('clearance')}
+              className={`flex flex-col items-center gap-0.5 py-1 px-1.5 rounded-xl text-[10px] font-bold transition-all min-w-[48px] active:scale-95 relative ${
+                activeTab === 'clearance' ? 'text-rose-600 font-extrabold' : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              <div className="relative">
+                <Tag className={`w-5 h-5 transition-transform ${activeTab === 'clearance' ? 'scale-110 text-rose-600 stroke-[2.5]' : ''}`} />
+                <span className="absolute -top-1 -right-2 px-1 py-0.2 rounded-full bg-rose-500 text-white font-black text-[7px] leading-tight">
+                  Sale
+                </span>
+              </div>
+              <span>Clearance</span>
+              {activeTab === 'clearance' && <span className="w-1.5 h-1 rounded-full bg-rose-600 -mt-0.5"></span>}
+            </button>
+          )}
 
           {/* 3. Center Highlight Pre-Order CTA */}
           <button

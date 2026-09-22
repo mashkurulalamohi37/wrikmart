@@ -24,12 +24,39 @@ import { CountryFlag } from './CountryFlag';
 import { useApp } from '../../context/AppContext';
 
 const STORE_LINKS = {
+  'Nike India': 'https://www.nike.com/in',
   'Nike India Official': 'https://www.nike.com/in',
+  'Apple Store Dubai': 'https://www.apple.com/ae',
   'Apple Store Dubai Mall': 'https://www.apple.com/ae',
-  'Zara & H&M Global': 'https://www.zara.com/in',
+  'Zara Global': 'https://www.zara.com',
+  'Zara & H&M Global': 'https://www.zara.com',
   'Amazon & Flipkart India': 'https://www.amazon.in',
+  'Amazon India': 'https://www.amazon.in',
+  'Flipkart India': 'https://www.flipkart.com',
   'CentralWorld Bangkok': 'https://www.central.co.th',
-  'Noon UAE & Sephora': 'https://www.noon.com/uae-en'
+  'Noon UAE & Sephora': 'https://www.noon.com/uae-en',
+  'Noon UAE': 'https://www.noon.com/uae-en',
+  'Sephora': 'https://www.sephora.com'
+};
+
+const resolveStoreUrl = (store) => {
+  if (typeof store === 'object' && store?.url) return store.url;
+  const name = typeof store === 'object' ? store?.name : store;
+  if (!name) return 'https://www.google.com';
+  
+  if (STORE_LINKS[name]) return STORE_LINKS[name];
+  
+  const lower = name.toLowerCase();
+  if (lower.includes('nike')) return 'https://www.nike.com/in';
+  if (lower.includes('apple')) return 'https://www.apple.com/ae';
+  if (lower.includes('zara')) return 'https://www.zara.com';
+  if (lower.includes('amazon')) return 'https://www.amazon.in';
+  if (lower.includes('flipkart')) return 'https://www.flipkart.com';
+  if (lower.includes('central')) return 'https://www.central.co.th';
+  if (lower.includes('noon')) return 'https://www.noon.com/uae-en';
+  if (lower.includes('sephora')) return 'https://www.sephora.com';
+  
+  return `https://www.google.com/search?q=${encodeURIComponent(name + ' official store')}`;
 };
 
 const HELP_MODAL_DATA = {
@@ -131,22 +158,40 @@ const HELP_MODAL_DATA = {
     )
   },
   'Track Order Status': {
-    title: 'Real-Time Order Tracking',
+    title: 'Real-Time Order Tracking & Milestones',
     icon: <Clock className="w-5 h-5 text-purple-600" />,
+    actionBtn: 'orders',
     content: (
-      <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
-        <p>You can track the live progress of your order at every milestone from our website.</p>
-        <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
-          <span className="font-bold text-navy-900 block">Tracking Milestones:</span>
-          <ul className="list-disc pl-5 space-y-1 text-[11px]">
-            <li>1. Advance Paid & Assigned to Purchasing Agent</li>
-            <li>2. Purchased in Overseas Store (Receipt & Photo Attached)</li>
-            <li>3. Shipped via Air Cargo & Customs In-Transit</li>
-            <li>4. Received at Dhaka Central Sorting Hub</li>
-            <li>5. Handed over to Local Courier for Doorstep Delivery</li>
-          </ul>
+      <div className="space-y-3.5 text-xs text-slate-600 leading-relaxed">
+        <p>WrikMart provides full end-to-end milestone tracking so you always know where your package is located in real time.</p>
+        <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+          <span className="font-bold text-navy-900 block text-xs">5-Stage Live Order Milestones:</span>
+          <div className="space-y-2 text-[11px]">
+            <div className="flex items-start gap-2">
+              <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center shrink-0 text-[10px]">1</span>
+              <div><strong className="text-navy-900">30% Advance Confirmed:</strong> Order assigned to on-ground country agent in India, Dubai, or Thailand.</div>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center shrink-0 text-[10px]">2</span>
+              <div><strong className="text-navy-900">Purchased in Official Store:</strong> Agent visits store, pays tax invoice, uploads authentic store receipt & product photos.</div>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="w-5 h-5 rounded-full bg-cyan-100 text-cyan-800 font-bold flex items-center justify-center shrink-0 text-[10px]">3</span>
+              <div><strong className="text-navy-900">Air Freight Dispatch:</strong> Scheduled cargo flight to Dhaka DAC with customs declaration.</div>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="w-5 h-5 rounded-full bg-brand-100 text-brand-800 font-bold flex items-center justify-center shrink-0 text-[10px]">4</span>
+              <div><strong className="text-navy-900">Dhaka Central Sorting Hub:</strong> Custom-cleared, final QA scan at Tejgaon fulfillment warehouse.</div>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="w-5 h-5 rounded-full bg-purple-100 text-purple-800 font-bold flex items-center justify-center shrink-0 text-[10px]">5</span>
+              <div><strong className="text-navy-900">Doorstep Delivery (COD):</strong> Delivered via Pathao/Steadfast courier across all 64 districts; pay 70% balance at door.</div>
+            </div>
+          </div>
         </div>
-        <p>To view your live order updates, click <strong>"Track Orders"</strong> in the top navigation bar or mobile menu anytime.</p>
+        <p className="text-[11px] text-slate-500">
+          Want to see the active status and live tracking of your current orders right now? Click the button below to view your orders.
+        </p>
       </div>
     )
   },
@@ -234,11 +279,6 @@ export const Footer = () => {
   ];
 
   const handleHelpClick = (helpTitle) => {
-    if (helpTitle === 'Track Order Status' && setCustomerTab) {
-      setCustomerTab('orders');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
     setActiveModalKey(helpTitle);
   };
 
@@ -271,23 +311,24 @@ export const Footer = () => {
           {/* Col 1: Brand & Overview (lg:col-span-2) */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="h-11 w-11 bg-white p-1 rounded-xl shadow-teal-glow flex items-center justify-center border border-white/20 flex-shrink-0">
+              {/* Left: Sign logo with snug white background covering it cleanly */}
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white p-1.5 shadow-md shadow-emerald-950/30 flex items-center justify-center flex-shrink-0 border border-white/80 overflow-hidden">
                 <img 
-                  src="/wrikmart-logo.jpeg" 
-                  alt="WrikMart Logo" 
-                  className="w-full h-full object-contain rounded-lg"
+                  src="/wrikmart-icon.png" 
+                  alt="WrikMart Emblem" 
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-xl tracking-tight text-white font-sans leading-none">
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-xl sm:text-2xl tracking-tight text-white font-sans leading-none drop-shadow-xs">
                     Wrik<span className="text-brand-400">Mart</span>
                   </span>
-                  <span className="text-[9px] uppercase font-black tracking-wider bg-brand-500 text-white px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] uppercase font-black tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 px-2 py-0.5 rounded-md shadow-xs inline-flex items-center">
                     PRE-ORDER
                   </span>
                 </div>
-                <span className="text-[10px] text-slate-400 font-medium tracking-wide mt-1 block">
+                <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase mt-1 block">
                   {tagline}
                 </span>
               </div>
@@ -315,9 +356,7 @@ export const Footer = () => {
             <h4 className="font-bold text-white text-xs uppercase tracking-wider text-brand-400">Popular Stores</h4>
             <ul className="space-y-2 text-xs">
               {popularStores.map((store, idx) => {
-                const targetUrl = typeof store === 'object' && store.url 
-                  ? store.url 
-                  : (STORE_LINKS[store] || `https://www.google.com/search?q=${encodeURIComponent((typeof store === 'object' ? store.name : store) + ' official store')}`);
+                const targetUrl = resolveStoreUrl(store);
                 const storeLabel = typeof store === 'object' ? store.name : store;
 
                 return (
@@ -326,11 +365,13 @@ export const Footer = () => {
                       href={targetUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 group cursor-pointer"
+                      className="text-slate-400 hover:text-white transition-colors flex items-center justify-between group cursor-pointer py-0.5"
                       title={`Open official ${storeLabel} website in a new tab`}
                     >
-                      <span className="group-hover:translate-x-0.5 transition-transform">{storeLabel}</span>
-                      <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 text-brand-400 transition-opacity" />
+                      <span className="group-hover:translate-x-1 transition-transform group-hover:text-emerald-300 font-medium">
+                        {storeLabel}
+                      </span>
+                      <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 opacity-60 group-hover:opacity-100 transition-all flex-shrink-0" />
                     </a>
                   </li>
                 );
@@ -469,11 +510,30 @@ export const Footer = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="pt-3 border-t border-slate-100 flex justify-end">
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+              {activeModalData?.actionBtn === 'orders' ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveModalKey(null);
+                    if (setCustomerTab) {
+                      setCustomerTab('orders');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                >
+                  <span>Go to My Track Orders</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <div />
+              )}
+
               <button
                 type="button"
                 onClick={() => setActiveModalKey(null)}
-                className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-sm"
+                className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-sm cursor-pointer hover:bg-brand-500 transition-colors"
               >
                 Got It, Close
               </button>

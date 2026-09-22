@@ -29,7 +29,7 @@ import { FormattedDescription } from '../common/FormattedDescription';
 
 const CATEGORIES = [
   { id: 'All', label: 'All Ready Stock', icon: '🌟' },
-  { id: 'Clearance', label: 'Clearance & Deals', icon: '🏷️' },
+  { id: 'Clearance', label: 'Defect & Clearance Deals', icon: '🏷️' },
   { id: 'Electronics', label: 'Electronics & Audio', icon: '🎧' },
   { id: 'Watches', label: 'Watches', icon: '⌚' },
   { id: 'Footwear', label: 'Footwear & Sneakers', icon: '👟' },
@@ -40,7 +40,7 @@ const CATEGORIES = [
 
 const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&auto=format&fit=crop&q=80';
 
-export const CustomerStockCatalog = ({ onOpenCheckout }) => {
+export const CustomerStockCatalog = ({ onOpenCheckout, initialCategory, onStartPreOrder }) => {
   const { 
     inventory = [], 
     addToCart, 
@@ -50,6 +50,7 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
     currentUser,
     setIsAuthModalOpen,
     setAuthModalMode,
+    clearanceSettings,
     showToast
   } = useApp();
 
@@ -65,7 +66,10 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
     } catch (e) {}
 
     const invCatIds = (inventory || []).map(i => i?.category).filter(Boolean);
-    const existingIds = new Set(CATEGORIES.map(c => String(c.id).toLowerCase()));
+    const baseList = (clearanceSettings?.enabled === false)
+      ? CATEGORIES.filter(c => c.id !== 'Clearance')
+      : CATEGORIES;
+    const existingIds = new Set(baseList.map(c => String(c.id).toLowerCase()));
     
     const extraCats = [];
     customCats.forEach(c => {
@@ -85,16 +89,23 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
       }
     });
 
-    return [...CATEGORIES, ...extraCats];
-  }, [inventory]);
+    return [...baseList, ...extraCats];
+  }, [inventory, clearanceSettings?.enabled]);
 
   const [selectedCategory, setSelectedCategory] = useState(() => {
+    if (initialCategory) return initialCategory;
     try {
       return localStorage.getItem('wrikmart_stock_category') || 'All';
     } catch (e) {
       return 'All';
     }
   });
+
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
+    }
+  }, [initialCategory]);
 
   const handleSelectCategory = (catId) => {
     setSelectedCategory(catId);
@@ -406,6 +417,33 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
         </div>
       </div>
 
+      {/* Dedicated Defect & Clearance Deals Showcase Banner */}
+      {selectedCategory === 'Clearance' && (clearanceSettings?.enabled !== false) && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-orange-500/10 border-2 border-rose-400/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in shadow-xs">
+          <div className="flex items-start gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-black text-xl shrink-0 shadow-md shadow-rose-500/30">
+              🏷️
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="font-extrabold text-base sm:text-lg text-navy-950">
+                  {clearanceSettings?.bannerTitle || 'Defect & Clearance Deals (Open-Box / B-Stock)'}
+                </h2>
+                <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white font-black text-[9px] uppercase tracking-wide">
+                  {clearanceSettings?.badgeText || 'Heavily Discounted'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
+                {clearanceSettings?.bannerSubtitle || '100% authentic genuine items with slight packaging damage or cosmetic box creases incurred during international air cargo transit. Every piece is strictly inspected, tested, and backed by our full warranty at exceptional discount prices!'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-bold text-rose-800 bg-white/90 backdrop-blur-sm px-3.5 py-2 rounded-xl border border-rose-200 shadow-2xs shrink-0">
+            <span>{clearanceSettings?.guaranteeBadge || '🛡️ 100% Authentic Guarantee'}</span>
+          </div>
+        </div>
+      )}
+
       {/* 4. Products Grid */}
       {filteredProducts.length === 0 ? (
         <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center shadow-soft space-y-4">
@@ -413,8 +451,14 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
             <Package className="w-8 h-8" />
           </div>
           <div>
-            <h3 className="font-extrabold text-base text-navy-900">No Ready Stock Products Found</h3>
-            <p className="text-xs text-slate-500 mt-1">Try relaxing your search terms or clearing the in-stock filter.</p>
+            <h3 className="font-extrabold text-base text-navy-900">
+              {selectedCategory === 'Clearance' ? 'No Clearance Deals Currently Available' : 'No Ready Stock Products Found'}
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">
+              {selectedCategory === 'Clearance'
+                ? 'All defect and clearance products have been sold out! Check back soon for fresh arrivals.'
+                : 'Try relaxing your search terms or clearing the in-stock filter.'}
+            </p>
           </div>
           <button
             onClick={() => {
@@ -436,6 +480,10 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
             
             const discountPercent = product.originalMrp 
               ? Math.round(((product.originalMrp - product.sellingPrice) / product.originalMrp) * 100) 
+              : 0;
+
+            const savingsBDT = product.originalMrp && product.originalMrp > product.sellingPrice
+              ? product.originalMrp - product.sellingPrice
               : 0;
 
             return (
@@ -460,7 +508,7 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
                   {/* Top Badges */}
                   <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1 sm:gap-1.5 items-start">
                     {product.isDefect ? (
-                      <span className="px-2 sm:px-2.5 py-0.5 rounded-full bg-rose-600 text-white font-extrabold text-[9px] sm:text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                      <span className="px-2 sm:px-2.5 py-0.5 rounded-full bg-rose-600 text-white font-black text-[9px] sm:text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-sm">
                         <span>⚠️ Clearance Deal</span>
                       </span>
                     ) : product.badge ? (
@@ -500,7 +548,7 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
 
                 {/* Content Box */}
                 <div className="p-3 sm:p-5 flex-1 flex flex-col justify-between space-y-2 sm:space-y-3">
-                  <div className="space-y-1 sm:space-y-1.5">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-bold">
                       <span className="text-brand-600 uppercase tracking-wider truncate max-w-[90px]">{product.brand}</span>
                       <div className="flex items-center gap-1 text-amber-500 flex-shrink-0">
@@ -516,9 +564,17 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
                     >
                       {product.name}
                     </h3>
+                    
+                    {/* Defect Condition Note - Fully Visible */}
                     {product.isDefect && product.defectNote && (
-                      <div className="px-2 py-1 rounded-lg bg-amber-50 border border-amber-200 text-[10px] text-amber-900 font-medium line-clamp-1" title={product.defectNote}>
-                        ⚠️ {product.defectNote}
+                      <div className="p-2.5 sm:p-3 rounded-xl bg-amber-50 border border-amber-200/90 text-[11px] sm:text-xs text-amber-950 leading-relaxed shadow-2xs">
+                        <div className="flex items-start gap-1.5">
+                          <span className="shrink-0 text-amber-700 text-xs mt-0.5">⚠️</span>
+                          <p className="text-amber-950 font-normal leading-relaxed">
+                            <span className="font-extrabold text-amber-900">Condition: </span>
+                            <span>{product.defectNote}</span>
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -548,7 +604,7 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
                   <div className="pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2">
                     <div>
                       <div className="flex items-baseline gap-1 sm:gap-1.5 flex-wrap">
-                        <span className="text-sm sm:text-lg font-extrabold text-navy-900">
+                        <span className={`text-sm sm:text-lg font-extrabold ${product.isDefect ? 'text-rose-700' : 'text-navy-900'}`}>
                           ৳{Number(product?.sellingPrice ?? product?.price ?? 0).toLocaleString()}
                         </span>
                         {product?.originalMrp && Number(product.originalMrp) > Number(product?.sellingPrice ?? product?.price ?? 0) && (
@@ -557,6 +613,11 @@ export const CustomerStockCatalog = ({ onOpenCheckout }) => {
                           </span>
                         )}
                       </div>
+                      {savingsBDT > 0 && (
+                        <span className="text-[9px] font-extrabold text-rose-600 block mt-0.5">
+                          Save ৳{savingsBDT.toLocaleString()}
+                        </span>
+                      )}
                     </div>
 
                     {/* Quantity Stepper & Add Cart Button */}

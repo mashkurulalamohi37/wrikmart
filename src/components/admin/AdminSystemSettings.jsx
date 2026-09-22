@@ -289,6 +289,20 @@ export const AdminSystemSettings = () => {
               className="w-full px-3 py-2 bg-slate-50 rounded-xl border border-slate-200 font-mono text-[11px] text-slate-800 focus:ring-2 focus:ring-emerald-500"
             />
           </div>
+
+          <div className="sm:col-span-2 lg:col-span-3">
+            <label className="block font-bold text-slate-700 mb-1">Payment Return / Callback Base URL (Optional)</label>
+            <input
+              type="text"
+              value={epsForm.registeredDomain || ''}
+              onChange={(e) => setEpsForm({ ...epsForm, registeredDomain: e.target.value })}
+              placeholder="e.g. https://wrikmart.com (Leave blank to use current site URL automatically)"
+              className="w-full px-3 py-2 bg-slate-50 rounded-xl border border-slate-200 font-medium text-slate-800 focus:ring-2 focus:ring-emerald-500"
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              EPS will redirect customers back to this domain after payment. If left blank, it automatically defaults to the active website address (<code className="font-mono font-bold text-emerald-800">{typeof window !== 'undefined' ? window.location.origin : 'current host'}</code>).
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">

@@ -14,7 +14,8 @@ import {
   Lock,
   Camera,
   User,
-  Sparkles
+  Sparkles,
+  Tag
 } from 'lucide-react';
 import { HeaderSearchBar } from './HeaderSearchBar';
 
@@ -94,29 +95,29 @@ export const Header = () => {
             setCurrentRole('customer');
             if (setCustomerTab) setCustomerTab('home');
           }}
-          className="flex items-center gap-2 sm:gap-3 cursor-pointer group flex-shrink-0 select-none"
+          className="flex items-center gap-2.5 sm:gap-3.5 cursor-pointer group flex-shrink-0 select-none py-1"
           title="WrikMart Global Sourcing & Pre-Order"
         >
-          {/* Logo Icon Box */}
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white p-1 shadow-md shadow-emerald-950/30 group-hover:scale-105 transition-transform flex-shrink-0 flex items-center justify-center border border-white/30 overflow-hidden">
+          {/* Left: Sign logo with snug white background covering it cleanly */}
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white p-1.5 shadow-md shadow-emerald-950/30 flex-shrink-0 flex items-center justify-center border border-white/80 group-hover:scale-105 transition-transform overflow-hidden">
             <img 
-              src="/wrikmart-logo.jpeg" 
-              alt="WrikMart Icon" 
-              className="w-full h-full object-contain transform scale-125"
+              src="/wrikmart-icon.png" 
+              alt="WrikMart Emblem" 
+              className="w-full h-full object-contain"
             />
           </div>
 
-          {/* Clean Typography Beside Icon */}
+          {/* Right: Prominent Typography WrikMart with styled emerald PRE-ORDER badge */}
           <div className="flex flex-col justify-center">
-            <div className="flex items-center gap-1.5">
-              <span className="font-black text-lg sm:text-xl tracking-tight text-white font-sans leading-none">
+            <div className="flex items-center gap-2">
+              <span className="font-black text-xl sm:text-2xl tracking-tight text-white font-sans leading-none drop-shadow-xs">
                 Wrik<span className="text-brand-400">Mart</span>
               </span>
-              <span className="text-[9px] uppercase font-black tracking-wider px-2 py-0.5 rounded-md bg-gradient-to-r from-brand-500/30 to-emerald-500/30 text-brand-300 border border-brand-400/40 inline-block shadow-2xs">
+              <span className="text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-xs inline-flex items-center">
                 PRE-ORDER
               </span>
             </div>
-            <span className="text-[9px] text-slate-400 font-semibold tracking-wider uppercase hidden sm:block mt-0.5">
+            <span className="text-[9px] sm:text-[10px] text-slate-400 font-semibold tracking-wider uppercase hidden sm:block mt-0.5">
               Global Logistics & Sourcing
             </span>
           </div>
@@ -127,8 +128,8 @@ export const Header = () => {
           <HeaderSearchBar isMobile={false} />
         </div>
 
-        {/* Right Section: New Pre-Order CTA + Cart + User Login */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
+        {/* Right Section: Defect/Clearance + New Pre-Order CTA + Cart + User Login */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           
           {/* Quick Pre-Order CTA Button (Desktop / Tablet) */}
           <button
@@ -138,6 +139,22 @@ export const Header = () => {
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Pre-Order</span>
+          </button>
+
+          {/* Defect / Clearance Quick Button (Desktop) */}
+          <button
+            onClick={() => {
+              setCurrentRole('customer');
+              if (setCustomerTab) setCustomerTab('clearance');
+            }}
+            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-rose-300 font-bold text-xs shadow-xs transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+            title="Browse Defect & Clearance Deals"
+          >
+            <Tag className="w-3.5 h-3.5 text-rose-400" />
+            <span>Clearance</span>
+            <span className="px-1.5 py-0.2 rounded bg-rose-500 text-white font-black text-[8px] uppercase tracking-wide animate-pulse">
+              Sale
+            </span>
           </button>
 
           {/* Staff-Only Direct View Toggle (Never shown to guests or regular customers) */}

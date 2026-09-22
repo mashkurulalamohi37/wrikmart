@@ -545,7 +545,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
           sellingPrice: item.expectedPrice || 0,
           category: item.category || 'Pre-Order'
         }))
-      });
+      }, epsSettings);
 
       if (!session.redirectUrl) {
         throw new Error('EPS did not return a redirect URL. Please try again.');
@@ -1352,7 +1352,7 @@ export const PreOrderWizard = ({ onComplete, onCancel }) => {
                     <div className="p-3 bg-white rounded-xl border border-emerald-100 flex items-center justify-between text-xs text-slate-600">
                       <div className="flex items-center gap-2">
                         <Lock className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                        <span>Official Store ID: <strong className="font-mono text-emerald-900">{epsSettings?.storeId || 'f49c63f4-3c57-495c-ac00-b136093671d4'}</strong></span>
+                        <span className="font-semibold text-slate-700">Bangladesh Bank Certified EPS Gateway (PSO)</span>
                       </div>
                       <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-mono">
                         SSL-256-BIT

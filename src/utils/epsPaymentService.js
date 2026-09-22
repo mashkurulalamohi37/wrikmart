@@ -28,7 +28,7 @@ export const DEFAULT_EPS_CONFIG = {
   userName: 'krishnabasaksp@gmail.com',
   password: 'KririkToy8@',
   hashKey: 'FMUNISHOY2lWZXDkririktoy',
-  registeredDomain: 'https://kririktoy.com',
+  registeredDomain: '', // Leave empty to dynamically use window.location.origin
 
   // ── Sandbox credentials (Eps_Demo) ─────────────────────────
   sandboxMerchantId: '',
@@ -36,9 +36,7 @@ export const DEFAULT_EPS_CONFIG = {
   sandboxUserName: 'xyz.eps@gmail.com',
   sandboxPassword: 'Emon258@',
   sandboxHashKey: 'iRbuoCMiOwQIIXyEvq30l61J+XAq0D/htjKQwiZl4jn7szmMMJTNL7ua0iej2Jtw2ch+D+/uBQ7WgZKcf8hQ8w==',
-  // EPS sandbox also validates return URLs — use the live domain even for sandbox
-  // (change to http://localhost:5173 only if EPS whitelists it for your store)
-  sandboxRegisteredDomain: 'https://kririktoy.com',
+  sandboxRegisteredDomain: '',
 };
 
 /**
@@ -180,13 +178,29 @@ export async function createEpsPaymentSession({
   // Step 2: Compute x-hash on merchantTransactionId using the active hashKey
   const hash = await generateEpsHash(merchantTransactionId, activeHashKey);
 
-  // EPS validates return URLs against merchant's registered domain
-  const registeredDomain = isSandbox
-    ? (config.sandboxRegisteredDomain || config.registeredDomain || 'https://kririktoy.com')
-    : (config.registeredDomain || 'https://kririktoy.com');
-  const successUrl = `${registeredDomain}/payment/success`;
-  const failUrl = `${registeredDomain}/payment/fail`;
-  const cancelUrl = `${registeredDomain}/payment/cancel`;
+  // Resolve callback base domain: prefer custom config if provided, otherwise dynamically detect active browser origin
+  const activeOrigin = (typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes('null'))
+    ? window.location.origin
+    : 'https://wrikmart.com';
+
+  const configuredDomain = isSandbox
+    ? (config.sandboxRegisteredDomain || config.registeredDomain || '')
+    : (config.registeredDomain || '');
+
+  let returnBase = (configuredDomain || '').trim();
+  // If returnBase contains invalid/dead placeholder domains (e.g. kriktoy.com or kririktoy.com), strip it
+  if (returnBase.includes('kriktoy.com') || returnBase.includes('kririktoy.com')) {
+    returnBase = '';
+  }
+  if (!returnBase) {
+    returnBase = activeOrigin;
+  }
+  // Strip trailing slashes
+  returnBase = returnBase.replace(/\/+$/, '');
+
+  const successUrl = `${returnBase}/payment/success`;
+  const failUrl = `${returnBase}/payment/fail`;
+  const cancelUrl = `${returnBase}/payment/cancel`;
 
   const payload = {
     merchantId,

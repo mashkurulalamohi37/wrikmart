@@ -36,15 +36,24 @@ export const safeLocalStorageRemove = (key) => {
 };
 
 const VALID_ROLES = ['admin', 'agent', 'customer'];
-const VALID_CUSTOMER_TABS = ['home', 'stock', 'preorder', 'orders', 'chat', 'profile'];
+const VALID_CUSTOMER_TABS = ['home', 'stock', 'clearance', 'preorder', 'orders', 'chat', 'profile'];
 const VALID_ADMIN_NAVS = [
-  'dashboard', 'orders', 'customers', 'preorder_settings', 
-  'agents', 'balance', 'expenses', 'hubs', 'delivery', 
-  'history', 'reports', 'settings', 'footer_cms'
+  'dashboard', 'orders', 'stock_inventory', 'clearance_management', 'clearance',
+  'customers', 'preorder_settings', 'agents', 'balance', 'expenses', 'hubs', 
+  'delivery', 'history', 'reports', 'settings', 'footer_cms'
 ];
 const VALID_AGENT_TABS = [
   'dashboard', 'orders', 'purchase', 'expense', 'hub', 'history', 'chat'
 ];
+
+export const DEFAULT_CLEARANCE_SETTINGS = {
+  enabled: true,
+  badgeText: '70% OFF',
+  bannerTitle: 'Defect & Clearance Deals (Open-Box / B-Stock)',
+  bannerSubtitle: '100% authentic genuine items with slight packaging damage or cosmetic box creases incurred during international air cargo transit. Every piece is strictly inspected, tested, and backed by our full warranty at exceptional discount prices!',
+  guaranteeBadge: '🛡️ 100% Authentic Guarantee',
+  allowCustomerOffers: false
+};
 
 export const DEFAULT_FOOTER_SETTINGS = {
   companyName: 'WrikMart',
@@ -462,13 +471,43 @@ export const AppProvider = ({ children }) => {
     showToast('Footer settings reset to default', 'info');
   };
 
+  // Defect / Clearance Sales Storefront & Campaign Settings
+  const [clearanceSettings, setClearanceSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('wrikmart_clearance_settings');
+      if (saved) return { ...DEFAULT_CLEARANCE_SETTINGS, ...JSON.parse(saved) };
+    } catch (e) {}
+    return DEFAULT_CLEARANCE_SETTINGS;
+  });
+
+  const updateClearanceSettings = (newSettings) => {
+    setClearanceSettings(prev => {
+      const updated = typeof newSettings === 'function' ? newSettings(prev) : { ...prev, ...newSettings };
+      safeLocalStorageSet('wrikmart_clearance_settings', updated);
+      return updated;
+    });
+    showToast('Defect & Clearance storefront settings saved!', 'success');
+  };
+
+  const resetClearanceSettings = () => {
+    setClearanceSettings(DEFAULT_CLEARANCE_SETTINGS);
+    safeLocalStorageSet('wrikmart_clearance_settings', DEFAULT_CLEARANCE_SETTINGS);
+    showToast('Clearance settings reset to default.', 'info');
+  };
+
   // Official EPS Payment Gateway Production Settings (Kririk Toy Live)
   const [epsSettings, setEpsSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('wrikmart_eps_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Automatically migrate if cached values contain old sandbox demo credentials
+        // Automatically migrate if cached values contain old sandbox demo credentials or broken dummy domains
+        if (parsed.registeredDomain?.includes('kriktoy.com') || parsed.registeredDomain?.includes('kririktoy.com')) {
+          delete parsed.registeredDomain;
+        }
+        if (parsed.sandboxRegisteredDomain?.includes('kriktoy.com') || parsed.sandboxRegisteredDomain?.includes('kririktoy.com')) {
+          delete parsed.sandboxRegisteredDomain;
+        }
         if (parsed.userName === 'xyz.eps@gmail.com' || parsed.storeId === 'f49c63f4-3c57-495c-ac00-b136093671d4') {
           safeLocalStorageSet('wrikmart_eps_settings', DEFAULT_EPS_CONFIG);
           return DEFAULT_EPS_CONFIG;
@@ -1321,6 +1360,7 @@ export const AppProvider = ({ children }) => {
       specs: productData.specs || { Color: 'Standard', Warranty: 'Official 1 Year' },
       isDefect: Boolean(productData.isDefect),
       defectNote: productData.defectNote || '',
+      clearancePrice: productData.clearancePrice ? Number(productData.clearancePrice) : null,
       rating: 5.0,
       reviewsCount: 1,
       createdAt: new Date().toISOString()
@@ -1338,6 +1378,9 @@ export const AppProvider = ({ children }) => {
         if (updatedFields.sellingPrice !== undefined) {
           next.price = Number(updatedFields.sellingPrice);
           next.sellingPrice = Number(updatedFields.sellingPrice);
+        }
+        if (updatedFields.clearancePrice !== undefined) {
+          next.clearancePrice = updatedFields.clearancePrice ? Number(updatedFields.clearancePrice) : null;
         }
         if (updatedFields.currentStock !== undefined) {
           next.stock = Number(updatedFields.currentStock);
@@ -1365,6 +1408,68 @@ export const AppProvider = ({ children }) => {
     setInventory([]);
     safeLocalStorageSet('wrikmart_inventory_v3', []);
     showToast('Stock inventory reset to clean state.', 'info');
+  };
+
+  // Dedicated Defect & Clearance Operations
+  const convertProductToClearance = (id, { defectNote, clearancePrice, defectType, defectImage }) => {
+    setInventory(prev => prev.map(item => {
+      if (item.id === id) {
+        const regularPrice = item.sellingPrice || item.price || 0;
+        const parsedClearancePrice = Number(clearancePrice) > 0 ? Number(clearancePrice) : Math.round(regularPrice * 0.7);
+        return {
+          ...item,
+          isDefect: true,
+          defectNote: defectNote || 'Cosmetic box packaging damage incurred during air transit. Product is 100% brand new, authentic, and tested.',
+          defectType: defectType || 'Box Crease',
+          defectImage: defectImage || null,
+          clearancePrice: parsedClearancePrice,
+          originalMrp: item.originalMrp || regularPrice,
+          sellingPrice: parsedClearancePrice,
+          price: parsedClearancePrice,
+          badge: 'Clearance Deal'
+        };
+      }
+      return item;
+    }));
+    showToast('Product converted to Defect / Clearance sale!', 'success');
+  };
+
+  const revertProductFromClearance = (id) => {
+    setInventory(prev => prev.map(item => {
+      if (item.id === id) {
+        const restoredPrice = item.originalMrp || item.sellingPrice || item.price;
+        return {
+          ...item,
+          isDefect: false,
+          defectNote: '',
+          defectType: null,
+          defectImage: null,
+          clearancePrice: null,
+          sellingPrice: restoredPrice,
+          price: restoredPrice,
+          badge: 'In Stock'
+        };
+      }
+      return item;
+    }));
+    showToast('Product reverted back to standard inventory stock.', 'info');
+  };
+
+  const updateClearancePrice = (id, newClearancePrice) => {
+    const priceNum = Number(newClearancePrice);
+    if (!priceNum || priceNum <= 0) return;
+    setInventory(prev => prev.map(item => {
+      if (item.id === id) {
+        return {
+          ...item,
+          clearancePrice: priceNum,
+          sellingPrice: priceNum,
+          price: priceNum
+        };
+      }
+      return item;
+    }));
+    showToast('Clearance price updated!', 'success');
   };
 
   // ==========================================
@@ -2578,6 +2683,14 @@ export const AppProvider = ({ children }) => {
     deleteInventoryProduct,
     clearAllInventory,
     restoreDemoInventory,
+    // Defect & Clearance Sales Suite
+    clearanceSettings,
+    setClearanceSettings,
+    updateClearanceSettings,
+    resetClearanceSettings,
+    convertProductToClearance,
+    revertProductFromClearance,
+    updateClearancePrice,
     // Pre-Order & Order Management
     createAdminOrder,
     updateAdminOrder,
@@ -2609,7 +2722,7 @@ export const AppProvider = ({ children }) => {
     balanceTransfers, chatMessages, toast, cart, isCartOpen, coupons, appliedCoupon,
     customers, customerProfile, birthdaySettings, stockSearchQuery, prefilledPreOrder,
     selectedDistrict, preOrderFormSettings, sourcingStores, footerSettings, epsSettings, currentUser, isAuthModalOpen, authModalMode,
-    registeredUsers
+    registeredUsers, clearanceSettings
   ]);
 
   return (

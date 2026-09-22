@@ -239,7 +239,7 @@ export const CustomerStockCheckoutModal = ({ isOpen, onClose, onOrderPlaced }) =
           sellingPrice: item.sellingPrice || 0,
           category: item.category || 'Retail'
         }))
-      });
+      }, epsSettings);
 
       if (!session.redirectUrl) {
         throw new Error('EPS did not return a redirect URL. Please try again.');
