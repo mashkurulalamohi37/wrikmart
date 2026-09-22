@@ -547,8 +547,9 @@ export const CustomerStockCatalog = ({ onOpenCheckout, initialCategory, onStartP
                 </div>
 
                 {/* Content Box */}
-                <div className="p-3 sm:p-5 flex-1 flex flex-col justify-between space-y-2 sm:space-y-3">
-                  <div className="space-y-1.5">
+                <div className="p-3 sm:p-4 flex-1 flex flex-col">
+                  {/* Top Block: Brand, Rating, Title, Stock & Defect */}
+                  <div className="space-y-1.5 sm:space-y-2">
                     <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-bold">
                       <span className="text-brand-600 uppercase tracking-wider truncate max-w-[90px]">{product.brand}</span>
                       <div className="flex items-center gap-1 text-amber-500 flex-shrink-0">
@@ -559,49 +560,44 @@ export const CustomerStockCatalog = ({ onOpenCheckout, initialCategory, onStartP
 
                     <h3 
                       onClick={() => setSelectedProduct(product)}
-                      className="font-extrabold text-xs sm:text-sm text-navy-900 line-clamp-2 hover:text-brand-600 cursor-pointer transition-colors leading-tight"
+                      className="font-extrabold text-xs sm:text-sm text-navy-900 line-clamp-2 hover:text-brand-600 cursor-pointer transition-colors leading-tight min-h-[2.4em]"
                       title={product.name}
                     >
                       {product.name}
                     </h3>
+
+                    {/* Stock Level & Fast Delivery Info (Directly below title) */}
+                    <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-[11px]">
+                      <span className={`font-bold flex items-center gap-1 truncate ${
+                        isOutOfStock 
+                          ? 'text-rose-600' 
+                          : isLowStock 
+                            ? 'text-amber-600' 
+                            : 'text-emerald-600'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ${
+                          isOutOfStock ? 'bg-rose-500' : isLowStock ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'
+                        }`} />
+                        {isOutOfStock ? 'Out of Stock' : isLowStock ? `Only ${product.currentStock} left!` : `In Stock`}
+                      </span>
+
+                      <span className="text-slate-400 text-[9px] sm:text-[10px] font-medium flex items-center gap-1">
+                        <Truck className="w-3 h-3 text-brand-600" />
+                        24-48h
+                      </span>
+                    </div>
                     
-                    {/* Defect Condition Note - Fully Visible */}
+                    {/* Defect Condition Note - Compact Card Preview */}
                     {product.isDefect && product.defectNote && (
-                      <div className="p-2.5 sm:p-3 rounded-xl bg-amber-50 border border-amber-200/90 text-[11px] sm:text-xs text-amber-950 leading-relaxed shadow-2xs">
-                        <div className="flex items-start gap-1.5">
-                          <span className="shrink-0 text-amber-700 text-xs mt-0.5">⚠️</span>
-                          <p className="text-amber-950 font-normal leading-relaxed">
-                            <span className="font-extrabold text-amber-900">Condition: </span>
-                            <span>{product.defectNote}</span>
-                          </p>
-                        </div>
+                      <div className="p-2 rounded-xl bg-amber-50 border border-amber-200/90 text-[10px] sm:text-[11px] text-amber-950 leading-snug line-clamp-2 shadow-2xs">
+                        <span className="font-extrabold text-amber-900">⚠️ Condition: </span>
+                        <span>{product.defectNote}</span>
                       </div>
                     )}
                   </div>
 
-                  {/* Stock Level Meter */}
-                  <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-[11px]">
-                    <span className={`font-bold flex items-center gap-1 truncate ${
-                      isOutOfStock 
-                        ? 'text-rose-600' 
-                        : isLowStock 
-                          ? 'text-amber-600' 
-                          : 'text-emerald-600'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0 ${
-                        isOutOfStock ? 'bg-rose-500' : isLowStock ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'
-                      }`} />
-                      {isOutOfStock ? 'Out of Stock' : isLowStock ? `Only ${product.currentStock} left!` : `In Stock`}
-                    </span>
-
-                    <span className="text-slate-400 text-[9px] sm:text-[10px] font-medium hidden sm:flex items-center gap-1">
-                      <Truck className="w-3 h-3 text-brand-600" />
-                      24-48h
-                    </span>
-                  </div>
-
-                  {/* Price & Add to Cart Controls */}
-                  <div className="pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2">
+                  {/* Bottom Block: Price & Add to Cart Controls (Neatly Anchored to Bottom) */}
+                  <div className="mt-auto pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2">
                     <div>
                       <div className="flex items-baseline gap-1 sm:gap-1.5 flex-wrap">
                         <span className={`text-sm sm:text-lg font-extrabold ${product.isDefect ? 'text-rose-700' : 'text-navy-900'}`}>
