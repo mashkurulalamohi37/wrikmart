@@ -495,20 +495,12 @@ export const AppProvider = ({ children }) => {
     showToast('Clearance settings reset to default.', 'info');
   };
 
-  // Official EPS Payment Gateway Production Settings (Kririk Toy Live)
+  // Official EPS Payment Gateway Production Settings (WrikMart Live)
   const [epsSettings, setEpsSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('wrikmart_eps_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Automatically fix typo if cached values contain 'kriktoy.com' with single 'r'
-        if (parsed.registeredDomain?.includes('kriktoy.com') && !parsed.registeredDomain?.includes('kririktoy.com')) {
-          parsed.registeredDomain = 'https://kririktoy.com';
-        }
-        if (parsed.userName === 'xyz.eps@gmail.com' || parsed.storeId === 'f49c63f4-3c57-495c-ac00-b136093671d4') {
-          safeLocalStorageSet('wrikmart_eps_settings', DEFAULT_EPS_CONFIG);
-          return DEFAULT_EPS_CONFIG;
-        }
         return { ...DEFAULT_EPS_CONFIG, ...parsed };
       }
     } catch (e) {}
@@ -2069,19 +2061,31 @@ export const AppProvider = ({ children }) => {
     showToast(`Purchase details & MRP recorded! Order status updated to 'Purchased'.`, 'success');
   };
 
-  // Agent Marks Product Delivered to Hub
-  const markOrderAtHub = (orderId, hubId, expectedDeliveryDate) => {
+  // Agent Marks Product Delivered to Hub / In Transit
+  const markOrderAtHub = (orderId, hubId, expectedDeliveryDate, targetStatus = 'In Transit') => {
     const selectedHub = hubs.find(h => h.id === hubId) || hubs[0];
+    const isTransit = targetStatus === 'In Transit' || targetStatus === 'Shipped';
+    const finalStatus = isTransit ? 'In Transit' : 'At Delivery House';
 
     setOrders(prev => prev.map(order => {
       if (order.id === orderId) {
+        const timeNow = new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         const newTimeline = order.timeline.map(t => {
           if (t.step === 'Arrived at Hub') {
             return {
               ...t,
-              time: new Date().toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+              time: timeNow,
               actor: selectedHub.name,
               note: `Received at ${selectedHub.name} (Expected Delivery: ${expectedDeliveryDate || 'Soon'})`,
+              done: true
+            };
+          }
+          if (isTransit && t.step === 'Shipped to Bangladesh') {
+            return {
+              ...t,
+              time: timeNow,
+              actor: `${selectedHub.name} Air Freight`,
+              note: `Consignment handed over for international air transit to Bangladesh`,
               done: true
             };
           }
@@ -2090,7 +2094,7 @@ export const AppProvider = ({ children }) => {
 
         return {
           ...order,
-          status: 'At Delivery House',
+          status: finalStatus,
           hubId: selectedHub.id,
           hubName: selectedHub.name,
           timeline: newTimeline
@@ -2099,7 +2103,7 @@ export const AppProvider = ({ children }) => {
       return order;
     }));
 
-    showToast(`Order marked as Arrived at ${selectedHub.name}!`, 'success');
+    showToast(isTransit ? `Order #${orderId} marked In Transit to Bangladesh!` : `Order marked as Staged at ${selectedHub.name}!`, 'success');
   };
 
   // Admin updates order status down the pipeline

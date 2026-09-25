@@ -9,8 +9,13 @@ export const AgentHubDeliveryModal = ({ order, onClose }) => {
 
   const selectedHub = hubs.find(h => h.id === selectedHubId) || hubs[0];
 
-  const handleMarkDelivered = () => {
-    markOrderAtHub(order.id, selectedHubId, deliveryDate);
+  const handleStageAtHub = () => {
+    markOrderAtHub(order.id, selectedHubId, deliveryDate, 'At Delivery House');
+    onClose();
+  };
+
+  const handleDispatchToBD = () => {
+    markOrderAtHub(order.id, selectedHubId, deliveryDate, 'In Transit');
     onClose();
   };
 
@@ -22,15 +27,15 @@ export const AgentHubDeliveryModal = ({ order, onClose }) => {
           <div className="flex items-center gap-2">
             <Building2 className="w-5 h-5 text-purple-400" />
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300">Logistics Routing</span>
-              <h3 className="font-bold text-sm">Which Hub Delivery?</h3>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300">Logistics Routing & Staging</span>
+              <h3 className="font-bold text-sm">Overseas Hub Staging / Transit</h3>
             </div>
           </div>
           <button 
             type="button"
             onClick={onClose}
             aria-label="Close Hub Delivery Modal"
-            className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors"
+            className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -46,7 +51,7 @@ export const AgentHubDeliveryModal = ({ order, onClose }) => {
             <select
               value={selectedHubId}
               onChange={(e) => setSelectedHubId(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-white rounded-xl border border-slate-300 text-xs font-semibold focus:ring-2 focus:ring-brand-500"
+              className="w-full px-3.5 py-2.5 bg-white rounded-xl border border-slate-300 text-xs font-semibold focus:ring-2 focus:ring-brand-500 cursor-pointer"
             >
               {hubs.map((hub) => (
                 <option key={hub.id} value={hub.id}>
@@ -75,7 +80,7 @@ export const AgentHubDeliveryModal = ({ order, onClose }) => {
           )}
 
           <div>
-            <label className="block text-xs font-bold text-navy-900 mb-1">Expected Drop-off / Arrival Date</label>
+            <label className="block text-xs font-bold text-navy-900 mb-1">Expected Drop-off / Freight Dispatch Date</label>
             <input
               type="date"
               value={deliveryDate}
@@ -85,16 +90,28 @@ export const AgentHubDeliveryModal = ({ order, onClose }) => {
           </div>
 
           <p className="text-[11px] text-slate-400 leading-snug">
-            After reaching the selected hub, the package will be prepared for cross-border air freight to Bangladesh.
+            Choose whether the parcel is currently staged at the overseas hub warehouse or has been handed over for air cargo transit to Bangladesh.
           </p>
 
-          <button
-            onClick={handleMarkDelivered}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-md transition-all text-xs flex items-center justify-center gap-2"
-          >
-            <CheckCircle className="w-4 h-4" />
-            <span>Mark as Arrived at Hub</span>
-          </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            <button
+              type="button"
+              onClick={handleStageAtHub}
+              className="w-full bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300 font-bold py-3 px-3 rounded-xl transition-all text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Building2 className="w-4 h-4 text-purple-700" />
+              <span>Stage at Hub</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDispatchToBD}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-3 rounded-xl shadow-md transition-all text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Truck className="w-4 h-4" />
+              <span>In Transit to BD</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

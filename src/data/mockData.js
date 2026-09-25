@@ -253,6 +253,7 @@ export const INITIAL_STOCK_INVENTORY = [
     isDefect: true,
     defectNote: 'Outer box damaged during air transit. Product fabric is 100% mint and untouched with brand tags.',
     clearancePrice: 2100,
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     rating: 4.6,
     reviewsCount: 3,
     createdAt: new Date().toISOString()
@@ -278,6 +279,7 @@ export const INITIAL_STOCK_INVENTORY = [
     isDefect: true,
     defectNote: 'Outer cardboard box heavily dented during air cargo handling. Seal intact, accessories and AirPods 100% untouched.',
     clearancePrice: 19500,
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     rating: 4.9,
     reviewsCount: 5,
     createdAt: new Date().toISOString()

@@ -22,13 +22,13 @@ export const DEFAULT_EPS_CONFIG = {
   liveGatewayUrl: 'https://pg.eps.com.bd',
   sandboxGatewayUrl: 'https://sandboxpg.eps.com.bd',
 
-  // ── Live credentials (Kririk Toy) ──────────────────────────
+  // ── Live credentials (WrikMart Production Integration) ──
   merchantId: '2dcbaad3-46f4-4922-8c0e-3078c50dc1e1',
-  storeId: '5c6d0f37-2974-4be8-818d-0736593e456e',
+  storeId: '749c011e-3c97-405c-ac90-8e13695f67b4',
   userName: 'krishnabasaksp@gmail.com',
   password: 'KririkToy8@',
   hashKey: 'FMUNISHOY2lWZXDkririktoy',
-  registeredDomain: 'https://kririktoy.com',
+  registeredDomain: 'https://wrikmart.com',
 
   // ── Sandbox credentials (Eps_Demo) ─────────────────────────
   sandboxMerchantId: '',
@@ -189,12 +189,7 @@ export async function createEpsPaymentSession({
 
   let returnBase = (configuredDomain || '').trim();
   if (!returnBase) {
-    // If using the official Kririk Toy Store ID, EPS strictly validates against its registered domain 'kririktoy.com'
-    if (storeId === '5c6d0f37-2974-4be8-818d-0736593e456e') {
-      returnBase = 'https://kririktoy.com';
-    } else {
-      returnBase = activeOrigin;
-    }
+    returnBase = activeOrigin;
   }
   // Strip trailing slashes
   returnBase = returnBase.replace(/\/+$/, '');

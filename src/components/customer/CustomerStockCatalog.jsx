@@ -23,7 +23,9 @@ import {
   Tag,
   ArrowRight,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Video,
+  ExternalLink
 } from 'lucide-react';
 import { FormattedDescription } from '../common/FormattedDescription';
 
@@ -734,6 +736,27 @@ export const CustomerStockCatalog = ({ onOpenCheckout, initialCategory, onStartP
                       {selectedProduct.defectNote || 'Genuine imported stock offered at a heavily reduced clearance discount. 100% authentic and tested.'}
                     </p>
                   </div>
+                )}
+
+                {/* Product Condition / Review Video Link */}
+                {selectedProduct.videoUrl && (
+                  <a
+                    href={selectedProduct.videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-3 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-900 border border-rose-200 transition-all font-bold text-xs group cursor-pointer shadow-2xs"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
+                        <Video className="w-4 h-4" />
+                      </div>
+                      <div className="text-left">
+                        <span className="block text-rose-950 font-extrabold text-xs">Watch Product Condition Video</span>
+                        <span className="block text-[10px] text-rose-600 font-medium">Unboxing & condition demo (Opens in new tab)</span>
+                      </div>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-rose-500 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
+                  </a>
                 )}
 
                 <FormattedDescription 

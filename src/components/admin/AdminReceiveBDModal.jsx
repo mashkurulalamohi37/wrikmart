@@ -30,8 +30,8 @@ export const AdminReceiveBDModal = ({ order, onClose }) => {
 
   // Local Form State
   const [exchangeRate, setExchangeRate] = useState(defaultRate);
-  const [shippingCostBDT, setShippingCostBDT] = useState(order?.financials?.shippingCostBDT || 500);
-  const [localCourierCostBDT, setLocalCourierCostBDT] = useState(order?.financials?.localCourierCostBDT || 120);
+  const [shippingCostBDT, setShippingCostBDT] = useState(order?.financials?.shippingCostBDT ?? 0);
+  const [localCourierCostBDT, setLocalCourierCostBDT] = useState(order?.financials?.localCourierCostBDT ?? 0);
   const [courierPartner, setCourierPartner] = useState(order?.courierName || 'Steadfast Courier');
   const [condition, setCondition] = useState('Intact & Sealed');
   const [notes, setNotes] = useState('');
@@ -168,7 +168,7 @@ export const AdminReceiveBDModal = ({ order, onClose }) => {
                   </div>
 
                   <div className="flex items-center gap-2 self-end sm:self-auto flex-shrink-0">
-                    <span className="text-[10px] text-slate-500 font-bold whitespace-nowrap">Agent Cost ({currencySymbol}):</span>
+                    <span className="text-[10px] text-slate-500 font-bold whitespace-nowrap">Purchase Price ({currencySymbol}):</span>
                     <div className="relative w-28">
                       <input
                         type="number"

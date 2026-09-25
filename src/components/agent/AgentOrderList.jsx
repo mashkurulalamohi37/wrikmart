@@ -15,7 +15,8 @@ import {
   ChevronRight,
   Package,
   AlertTriangle,
-  RotateCcw
+  RotateCcw,
+  Truck
 } from 'lucide-react';
 import { CountryFlag } from '../common/CountryFlag';
 
@@ -209,18 +210,29 @@ export const AgentOrderList = ({ onSelectOrderForPurchase, onSelectOrderForHub, 
                     {order.status === 'Purchased' && (
                       <button
                         onClick={() => onSelectOrderForHub(order)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2 px-3 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-1.5"
-                        title="Deliver to Warehouse Hub"
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2 px-3 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                        title="Deliver to Overseas Warehouse Hub / In Transit"
                       >
                         <Building2 className="w-3.5 h-3.5" />
-                        <span>Hub Delivery</span>
+                        <span>Stage at Hub</span>
                       </button>
                     )}
 
                     {order.status === 'At Delivery House' && (
-                      <div className="px-3 py-1.5 rounded-xl bg-purple-50 text-purple-700 text-xs font-bold flex items-center gap-1 border border-purple-200">
-                        <Building2 className="w-3.5 h-3.5" />
-                        <span>Staged at Overseas Hub</span>
+                      <button
+                        onClick={() => onSelectOrderForHub(order)}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2 px-3 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                        title="Mark consignment as In Transit to Bangladesh"
+                      >
+                        <Truck className="w-3.5 h-3.5" />
+                        <span>Dispatch (In Transit)</span>
+                      </button>
+                    )}
+
+                    {order.status === 'In Transit' && (
+                      <div className="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-bold flex items-center gap-1 border border-indigo-200">
+                        <Truck className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>In Transit to BD</span>
                       </div>
                     )}
                   </>

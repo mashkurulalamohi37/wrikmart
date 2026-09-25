@@ -237,7 +237,7 @@ export const AdminOrderDetailModal = ({ order, onClose }) => {
                     <th className="p-3">Product</th>
                     <th className="p-3">Specs</th>
                     <th className="p-3">Customer Est.</th>
-                    <th className="p-3">Agent Purchase Cost</th>
+                    <th className="p-3">Purchase Price</th>
                     <th className="p-3">Printed MRP</th>
                     <th className="p-3">Store Link</th>
                   </tr>

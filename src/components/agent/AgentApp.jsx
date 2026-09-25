@@ -29,7 +29,8 @@ export const AgentApp = () => {
     setActiveAgentId,
     balanceTransfers,
     agentTab,
-    setAgentTab
+    setAgentTab,
+    currentUser
   } = useApp();
 
   const activeTab = agentTab || 'dashboard';
@@ -97,21 +98,28 @@ export const AgentApp = () => {
               <span>Wallet: {activeAgent.symbol}{activeAgent.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} {activeAgent.currency}</span>
             </div>
 
-            {/* Station Switcher Dropdown */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-bold text-slate-400">Station:</span>
-              <select
-                value={activeAgent.id}
-                onChange={(e) => setActiveAgentId(e.target.value)}
-                className="bg-slate-100 hover:bg-slate-200 border border-slate-300 font-extrabold text-navy-900 text-xs rounded-xl px-2.5 py-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500"
-              >
-                {agents.map(a => (
-                  <option key={a.id} value={a.id}>
-                    {a.country === 'India' ? '🇮🇳' : a.country === 'Dubai' ? '🇦🇪' : '🇹🇭'} {a.name} ({a.country})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Station Identifier / Switcher */}
+            {currentUser?.role === 'agent' ? (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 border border-slate-300 rounded-xl font-extrabold text-navy-900 text-xs shadow-2xs">
+                <CountryFlag country={activeAgent.country || activeAgent.flag} className="w-4 h-3 rounded-[2px]" />
+                <span>{activeAgent.name} ({activeAgent.country})</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-slate-400">Station:</span>
+                <select
+                  value={activeAgent.id}
+                  onChange={(e) => setActiveAgentId(e.target.value)}
+                  className="bg-slate-100 hover:bg-slate-200 border border-slate-300 font-extrabold text-navy-900 text-xs rounded-xl px-2.5 py-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  {agents.map(a => (
+                    <option key={a.id} value={a.id}>
+                      {a.country === 'India' ? '🇮🇳' : a.country === 'Dubai' ? '🇦🇪' : '🇹🇭'} {a.name} ({a.country})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -120,17 +128,21 @@ export const AgentApp = () => {
       <div className="md:hidden bg-white border-b border-slate-200 p-3 px-4 flex items-center justify-between gap-2 shadow-2xs">
         <div className="flex items-center gap-1.5 min-w-0">
           <CountryFlag country={activeAgent.country || activeAgent.flag} className="w-5 h-3.5 rounded-[2px]" />
-          <select
-            value={activeAgent.id}
-            onChange={(e) => setActiveAgentId(e.target.value)}
-            className="bg-slate-100 border border-slate-300 font-bold text-navy-900 text-xs rounded-lg px-2 py-1 cursor-pointer focus:outline-none"
-          >
-            {agents.map(a => (
-              <option key={a.id} value={a.id}>
-                {a.name} ({a.country})
-              </option>
-            ))}
-          </select>
+          {currentUser?.role === 'agent' ? (
+            <span className="font-bold text-navy-900 text-xs truncate">{activeAgent.name} ({activeAgent.country})</span>
+          ) : (
+            <select
+              value={activeAgent.id}
+              onChange={(e) => setActiveAgentId(e.target.value)}
+              className="bg-slate-100 border border-slate-300 font-bold text-navy-900 text-xs rounded-lg px-2 py-1 cursor-pointer focus:outline-none"
+            >
+              {agents.map(a => (
+                <option key={a.id} value={a.id}>
+                  {a.name} ({a.country})
+                </option>
+              ))}
+            </select>
+          )}
         </div>
         <div className="flex items-center gap-1 text-[11px] font-bold text-brand-700 bg-brand-50 px-2 py-1 rounded-lg border border-brand-200 flex-shrink-0">
           <Wallet className="w-3.5 h-3.5" />

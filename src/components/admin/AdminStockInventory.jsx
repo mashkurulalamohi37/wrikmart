@@ -39,7 +39,8 @@ import {
   ArrowRight,
   ToggleLeft,
   ToggleRight,
-  Info
+  Info,
+  Video
 } from 'lucide-react';
 import { FormattedDescription } from '../common/FormattedDescription';
 
@@ -303,6 +304,7 @@ export const AdminStockInventory = ({ initialTab = 'all' }) => {
     isDefect: false,
     defectNote: '',
     clearancePrice: '',
+    videoUrl: '',
     specs: [
       { key: 'Color', value: 'Black' },
       { key: 'Warranty', value: '1 Year Official' }
@@ -374,6 +376,7 @@ export const AdminStockInventory = ({ initialTab = 'all' }) => {
       isDefect: false,
       defectNote: '',
       clearancePrice: '',
+      videoUrl: '',
       specs: [
         { key: 'Color', value: '' },
         { key: 'Warranty', value: '1 Year Official' }
@@ -409,6 +412,7 @@ export const AdminStockInventory = ({ initialTab = 'all' }) => {
       isDefect: Boolean(product.isDefect),
       defectNote: product.defectNote || '',
       clearancePrice: product.clearancePrice || (product.isDefect ? product.sellingPrice : ''),
+      videoUrl: product.videoUrl || '',
       specs: specEntries.length > 0 ? specEntries : [{ key: 'Color', value: '' }]
     });
     setImagePreview(product.image || '');
@@ -501,6 +505,7 @@ export const AdminStockInventory = ({ initialTab = 'all' }) => {
       isDefect: Boolean(formData.isDefect),
       defectNote: formData.isDefect ? formData.defectNote.trim() : '',
       clearancePrice: formData.isDefect && formData.clearancePrice ? Number(formData.clearancePrice) : null,
+      videoUrl: formData.videoUrl ? formData.videoUrl.trim() : '',
       specs: specsObj
     };
 
@@ -1803,6 +1808,27 @@ export const AdminStockInventory = ({ initialTab = 'all' }) => {
                     )}
                   </div>
                 )}
+              </div>
+
+              {/* Product Video Link (YouTube / Facebook / Drive) */}
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-700 font-bold text-xs flex items-center gap-1.5">
+                    <Video className="w-4 h-4 text-rose-500" />
+                    <span>Product Video / Condition Demo Link (Optional)</span>
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-semibold">YouTube / Facebook / Drive</span>
+                </div>
+                <input
+                  type="url"
+                  value={formData.videoUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                  placeholder="e.g. https://www.youtube.com/watch?v=... or Facebook / Drive video link"
+                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-300 focus:ring-2 focus:ring-brand-500 font-medium text-slate-800 text-xs"
+                />
+                <p className="text-[10px] text-slate-500">
+                  If provided, a "Watch Product Condition Video" button will appear on the customer storefront so buyers can inspect the live unboxing/condition before purchasing.
+                </p>
               </div>
 
               {/* Dynamic Specifications */}
