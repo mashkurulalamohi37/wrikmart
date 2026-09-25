@@ -8,35 +8,36 @@
 const IS_DEV = import.meta.env.DEV;
 
 export const DEFAULT_EPS_CONFIG = {
-  environment: IS_DEV ? 'sandbox' : 'production',
+  // Always use Live Production Gateway
+  environment: 'production',
 
-  // Vite dev-proxy paths (CORS-free)
+  // Vite dev-proxy / Nginx paths
   liveApiUrl: '/api/eps',
-  sandboxApiUrl: '/api/eps-sandbox',
+  sandboxApiUrl: '/api/eps',
 
-  // Direct API base URLs (for reference / production builds with CORS headers)
+  // Direct API base URLs
   directLiveApiUrl: 'https://pgapi.eps.com.bd',
-  directSandboxApiUrl: 'https://sandboxpgapi.eps.com.bd',
+  directSandboxApiUrl: 'https://pgapi.eps.com.bd',
 
-  // Hosted payment page URLs (where browser redirects)
+  // Hosted payment page URLs
   liveGatewayUrl: 'https://pg.eps.com.bd',
-  sandboxGatewayUrl: 'https://sandboxpg.eps.com.bd',
+  sandboxGatewayUrl: 'https://pg.eps.com.bd',
 
-  // ── Live credentials (WrikMart Production Integration) ──
+  // ── Official Live Production Credentials (Kririk Toy) ──
   merchantId: '2dcbaad3-46f4-4922-8c0e-3078c50dc1e1',
-  storeId: '749c011e-3c97-405c-ac90-8e13695f67b4',
+  storeId: '5c6d0f37-2974-4be8-818d-0736593e456e',
   userName: 'krishnabasaksp@gmail.com',
   password: 'KririkToy8@',
   hashKey: 'FMUNISHOY2lWZXDkririktoy',
   registeredDomain: 'https://kririktoy.com',
 
-  // ── Sandbox credentials (Eps_Demo) ─────────────────────────
-  sandboxMerchantId: '',
-  sandboxStoreId: '35b518f6-aab7-4af1-b16c-335052e9a55c',
-  sandboxUserName: 'xyz.eps@gmail.com',
-  sandboxPassword: 'Emon258@',
-  sandboxHashKey: 'iRbuoCMiOwQIIXyEvq30l61J+XAq0D/htjKQwiZl4jn7szmMMJTNL7ua0iej2Jtw2ch+D+/uBQ7WgZKcf8hQ8w==',
-  sandboxRegisteredDomain: '',
+  // Fallback alias fields
+  sandboxMerchantId: '2dcbaad3-46f4-4922-8c0e-3078c50dc1e1',
+  sandboxStoreId: '5c6d0f37-2974-4be8-818d-0736593e456e',
+  sandboxUserName: 'krishnabasaksp@gmail.com',
+  sandboxPassword: 'KririkToy8@',
+  sandboxHashKey: 'FMUNISHOY2lWZXDkririktoy',
+  sandboxRegisteredDomain: 'https://kririktoy.com',
 };
 
 /**

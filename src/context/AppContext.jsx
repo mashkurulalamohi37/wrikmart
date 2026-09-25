@@ -509,13 +509,19 @@ export const AppProvider = ({ children }) => {
     showToast('Clearance settings reset to default.', 'info');
   };
 
-  // Official EPS Payment Gateway Production Settings (WrikMart Live)
+  // Official EPS Payment Gateway Production Settings (WrikMart Live - Kririk Toy)
   const [epsSettings, setEpsSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('wrikmart_eps_settings');
       if (saved) {
         const parsed = JSON.parse(saved);
-        return { ...DEFAULT_EPS_CONFIG, ...parsed };
+        // If stored settings contain old demo credentials, reset to real Live credentials
+        if (parsed.storeId === '749c011e-3c97-405c-ac90-8e13695f67b4' || 
+            parsed.storeId === '35b518f6-aab7-4af1-b16c-335052e9a55c' ||
+            parsed.environment === 'sandbox') {
+          return DEFAULT_EPS_CONFIG;
+        }
+        return { ...DEFAULT_EPS_CONFIG, ...parsed, storeId: '5c6d0f37-2974-4be8-818d-0736593e456e', environment: 'production' };
       }
     } catch (e) {}
     return DEFAULT_EPS_CONFIG;
