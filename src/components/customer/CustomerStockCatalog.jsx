@@ -591,9 +591,26 @@ export const CustomerStockCatalog = ({ onOpenCheckout, initialCategory, onStartP
                     
                     {/* Defect Condition Note - Compact Card Preview */}
                     {product.isDefect && product.defectNote && (
-                      <div className="p-2 rounded-xl bg-amber-50 border border-amber-200/90 text-[10px] sm:text-[11px] text-amber-950 leading-snug line-clamp-2 shadow-2xs">
-                        <span className="font-extrabold text-amber-900">⚠️ Condition: </span>
-                        <span>{product.defectNote}</span>
+                      <div className="p-2.5 rounded-xl bg-amber-50/90 border border-amber-200/90 shadow-2xs space-y-1.5">
+                        <p className="text-[10px] sm:text-[11px] text-amber-950 leading-normal line-clamp-2">
+                          <span className="font-extrabold text-amber-900">⚠️ Condition: </span>
+                          <span>{product.defectNote}</span>
+                        </p>
+                        {product.videoUrl && (
+                          <div className="pt-0.5">
+                            <a
+                              href={product.videoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1.5 text-[10px] font-extrabold text-rose-700 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-200/80 transition-all cursor-pointer shadow-2xs group"
+                            >
+                              <Video className="w-3 h-3 text-rose-600 animate-pulse group-hover:scale-110 transition-transform" />
+                              <span>Watch Condition Video</span>
+                              <ExternalLink className="w-2.5 h-2.5 text-rose-500" />
+                            </a>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

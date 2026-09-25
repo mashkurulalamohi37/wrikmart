@@ -292,7 +292,21 @@ export const AppProvider = ({ children }) => {
       if (saved !== null) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          // Merge with INITIAL_STOCK_INVENTORY so any updated fields (like videoUrl, defectNote) are automatically populated
+          const merged = parsed.map(item => {
+            const initialMatch = INITIAL_STOCK_INVENTORY.find(i => i.id === item.id);
+            if (initialMatch) {
+              return {
+                ...initialMatch,
+                ...item,
+                videoUrl: item.videoUrl || initialMatch.videoUrl || '',
+                isDefect: item.isDefect !== undefined ? item.isDefect : initialMatch.isDefect,
+                defectNote: item.defectNote || initialMatch.defectNote || '',
+              };
+            }
+            return item;
+          });
+          return merged;
         }
       }
     } catch (e) {}
@@ -1350,6 +1364,7 @@ export const AppProvider = ({ children }) => {
       isDefect: Boolean(productData.isDefect),
       defectNote: productData.defectNote || '',
       clearancePrice: productData.clearancePrice ? Number(productData.clearancePrice) : null,
+      videoUrl: productData.videoUrl ? productData.videoUrl.trim() : '',
       rating: 5.0,
       reviewsCount: 1,
       createdAt: new Date().toISOString()

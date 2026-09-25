@@ -28,7 +28,7 @@ export const DEFAULT_EPS_CONFIG = {
   userName: 'krishnabasaksp@gmail.com',
   password: 'KririkToy8@',
   hashKey: 'FMUNISHOY2lWZXDkririktoy',
-  registeredDomain: 'https://wrikmart.com',
+  registeredDomain: 'https://kririktoy.com',
 
   // ── Sandbox credentials (Eps_Demo) ─────────────────────────
   sandboxMerchantId: '',
@@ -178,18 +178,18 @@ export async function createEpsPaymentSession({
   // Step 2: Compute x-hash on merchantTransactionId using the active hashKey
   const hash = await generateEpsHash(merchantTransactionId, activeHashKey);
 
-  // Resolve callback base domain: prefer custom config if provided, otherwise dynamically detect active browser origin
-  const activeOrigin = (typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes('null'))
-    ? window.location.origin
-    : 'https://wrikmart.com';
-
+  // Resolve callback base domain: prefer registeredDomain from config, otherwise fallback to kririktoy.com
   const configuredDomain = isSandbox
     ? (config.sandboxRegisteredDomain || config.registeredDomain || '')
-    : (config.registeredDomain || '');
+    : (config.registeredDomain || 'https://kririktoy.com');
 
   let returnBase = (configuredDomain || '').trim();
   if (!returnBase) {
-    returnBase = activeOrigin;
+    returnBase = 'https://kririktoy.com';
+  }
+  // Ensure http/https protocol prefix
+  if (!returnBase.startsWith('http://') && !returnBase.startsWith('https://')) {
+    returnBase = `https://${returnBase}`;
   }
   // Strip trailing slashes
   returnBase = returnBase.replace(/\/+$/, '');
@@ -259,6 +259,19 @@ export async function createEpsPaymentSession({
 
   if (!response.ok) {
     const errText = await response.text().catch(() => '');
+    
+    // Auto-recovery: if EPS warns about domain mismatch with registered BaseUrl, retry with that exact domain
+    const domainMatch = errText.match(/BaseUrl\s*[:=\s]\s*([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i) ||
+                        errText.match(/Correct Url.*?:\s*([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+    if (domainMatch && domainMatch[1] && !customConfig._isRetry) {
+      const detectedDomain = domainMatch[1].trim();
+      console.warn(`[EPS] Auto-recovering domain mismatch to registered BaseUrl: ${detectedDomain}`);
+      return await createEpsPaymentSession(
+        { orderNumber, merchantTransactionId, totalAmount, customerInfo, orderType, items },
+        { ...customConfig, registeredDomain: `https://${detectedDomain}`, _isRetry: true }
+      );
+    }
+
     throw new Error(`EPS Session Error: HTTP ${response.status} - ${errText}`);
   }
 
